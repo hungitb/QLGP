@@ -1,0 +1,36 @@
+{
+  "name": "test2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "webpack serve",
+    "build": "NODE_ENV=production && webpack",
+    "build-win": "set NODE_ENV=production&& webpack"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jquery": "^3.5.31",
+    "css-loader": "^7.1.2",
+    "html-webpack-plugin": "^5.6.0",
+    "sass": "^1.79.4",
+    "sass-loader": "^16.0.2",
+    "style-loader": "^4.0.0",
+    "svg-sprite-loader": "^6.0.11",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.6.2",
+    "webpack": "^5.95.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.1.0"
+  },
+  "dependencies": {
+    "@daleighan/vanilla-js-router": "^0.1.2",
+    "bootstrap": "^5.3.3",
+    "bootstrap-icons": "^1.11.3",
+    "dotenv": "^16.4.5",
+    "jquery": "^3.7.1"
+  }
+}
