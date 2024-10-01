@@ -1,0 +1,7 @@
+
+#content {
+    // vannila js router auto append additional div container to wrap element
+    & > div {
+        height: 100%;
+    }
+}

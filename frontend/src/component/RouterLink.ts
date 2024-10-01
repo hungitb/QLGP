@@ -1,5 +1,5 @@
 
-import $Node from "./JqueryNode"
+import $Node from "../utils/JqueryNode"
 import $ from "jquery"
 
 export default function RouterLink({ link }: { link: string }) {

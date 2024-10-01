@@ -1,6 +1,6 @@
 import "bootstrap/dist/css/bootstrap.min.css"
-import "bootstrap-icons/font/bootstrap-icons.css"
 import "bootstrap"
+import "./style.scss"
 import $ from "jquery"
 import Router from "@daleighan/vanilla-js-router"
 
@@ -13,13 +13,13 @@ import $Statistic from "./component/Statistic"
 import $UpcomingEvents from "./component/UpcomingEvents"
 
 $(document.body).append(
-  $Node("main").addClass("d-flex flex-column").append(
+  $Node("main").addClass("d-flex flex-column").css({ height: '100vh', width: '100vw' }).append(
     $NavBar(),
-    $Node("div").css("flex", "1").attr("id", "content")
-  ).css({
-    height: '100vh',
-    width: '100vw'
-  })
+    $Node("div").attr("id", "content").css({
+      flex: 1,
+      overflow: "auto"
+    })
+  )
 )
 
 new Router("content", {

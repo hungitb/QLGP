@@ -1,39 +1,23 @@
 
-import $Node from "../utils/JqueryNode"
-import $RouterLink from "../utils/RouterLink"
 import $ from "jquery"
+import $Node from "../utils/JqueryNode"
+import $RouterLink from "./RouterLink"
+import $Icon from "./Icon"
 
-import "bootstrap-icons/icons/diagram-3-fill.svg"
-import "bootstrap-icons/icons/box-arrow-left.svg"
-import "bootstrap-icons/icons/pie-chart-fill.svg"
-import "bootstrap-icons/icons/calendar-event-fill.svg"
-import "bootstrap-icons/icons/house-door-fill.svg"
-
-interface $NavItemProp {
-  text: string;
-  icon: string;
-  link?: string;
-}
-
-function $NavItem({ text, icon, link = "/" }: $NavItemProp) {
-  return $Node("li").addClass("nav-item").append(
-    $RouterLink({ link }).addClass("nav-link").append(
-      $Node("svg", {
-        width: 16, height: 16, class: "bi me-2"
-      }).html(`<use xlink:href="#icon-${icon}"></use>`),
-      text
-    )
-    .on("routerLinkClicked", function () {
-      const active = (link == window.location.pathname)
-      $(this).toggleClass("active", active).toggleClass("link-dark", !active)
-    })
-    .trigger("routerLinkClicked")
-  )
-}
-
-function $NavList({ items }: { items: $NavItemProp[] }) {
+function $NavList({ items }: { items: { text: string, icon: string, link: string }[] }) {
   return $Node("ul").addClass("nav nav-pills flex-column").append(
-    items.map($NavItem)
+    items.map(function ({ text, icon, link }) {
+      return $Node("li").addClass("nav-item").append(
+        $RouterLink({ link }).addClass("nav-link").append(
+          $Icon({ icon }).css({ marginRight: "0.5rem" }), text
+        )
+        .on("routerLinkClicked", function () {
+          const active = (link == window.location.pathname)
+          $(this).toggleClass("active", active).toggleClass("link-dark", !active)
+        })
+        .trigger("routerLinkClicked")
+      )
+    })
   )
 }
 
@@ -47,7 +31,7 @@ export default function $NavBar() {
       }).append(
         $Node("span").addClass("navbar-toggler-icon")
       ),
-      $RouterLink({ link: "/" }).addClass("navbar-brand").html("Quản lý gia phả"),
+      $RouterLink({ link: "/" }).addClass("navbar-brand").css({ marginRight: 0 }).html("Quản lý gia phả"),
       $Node("div").addClass("offcanvas offcanvas-start").attr("id", "offcanvasNavbar").append(
         $Node("div").addClass("offcanvas-header").append(
           $Node("h5").addClass("offcanvas-title").html("Menu"),
