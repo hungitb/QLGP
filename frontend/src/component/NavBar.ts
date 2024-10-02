@@ -22,7 +22,7 @@ function $NavList({ items }: { items: { text: string, icon: string, link: string
 }
 
 export default function $NavBar() {
-  return $Node("nav").addClass("navbar bg-body-tertiary").append(
+  return $Node("nav").addClass("navbar bg-body-tertiary sticky-top").append(
     $Node("div").addClass("container-fluid").append(
       $Node("button").addClass("navbar-toggler").attr({
         "type": "button",

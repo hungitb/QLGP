@@ -9,7 +9,7 @@ export default function RouterLink({ link }: { link: string }) {
           e.stopPropagation()
           return
         }
-        window.router.goTo(link)
+        window.router.goTo(link) // vannila-js-router
         $("a").trigger("routerLinkClicked")
     }
 
