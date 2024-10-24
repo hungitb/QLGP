@@ -4,6 +4,11 @@ enum Gender {
     FEMALE = "FEMALE"
 }
 
+enum LifeStatus {
+    ALIVE = "ALIVE",
+    DEAD = "DEAD"
+}
+
 interface Person {
     id: string
     ownerUserId: string
@@ -14,11 +19,11 @@ interface Person {
     avatarUrl?: string
     birthday?: string
     deathday?: string
-
+    status?: LifeStatus
     spouseId?: string
     fatherId?: string
     motherId?: string
 }
 
-export { Gender }
+export { Gender, LifeStatus }
 export type { Person }

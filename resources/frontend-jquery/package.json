@@ -14,6 +14,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/bootstrap": "^5.2.10",
+    "@types/inquirer": "^9.0.7",
     "@types/jquery": "^3.5.31",
     "@types/uuid": "^10.0.0",
     "css-loader": "^7.1.2",
@@ -32,6 +33,7 @@
     "@daleighan/vanilla-js-router": "^0.1.2",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
+    "copy-webpack-plugin": "^12.0.2",
     "dotenv": "^16.4.5",
     "jquery": "^3.7.1",
     "uuid": "^10.0.0"
