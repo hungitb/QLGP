@@ -2,8 +2,8 @@
 import { DataTypes } from "sequelize"
 import type { Sequelize } from "sequelize"
 
-export default function getAccountTable (sequelize: Sequelize) {
-    return sequelize.define('Account', {
+export default function getUserTable (sequelize: Sequelize) {
+    return sequelize.define('User', {
         userId: {
             type: DataTypes.STRING,
             primaryKey: true
@@ -12,12 +12,20 @@ export default function getAccountTable (sequelize: Sequelize) {
             type: DataTypes.STRING,
             allowNull: false
         },
-        hashedPassword: {
+        password: {
             type: DataTypes.STRING,
             allowNull: false
         },
+        sessionToken: {
+            type: DataTypes.STRING,
+            defaultValue: null
+        },
+        sessionExpiry: {
+            type: DataTypes.BIGINT,
+            defaultValue: null
+        },
     },
     {
-        tableName: 'accounts'
+        tableName: 'users'
     })
 }

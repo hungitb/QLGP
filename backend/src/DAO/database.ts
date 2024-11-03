@@ -3,13 +3,13 @@ import { Sequelize } from "sequelize"
 import path from "path"
 
 import getPersonTable from "./tables/Person"
-import getAccountTable from "./tables/Account"
+import getUserTable from "./tables/User"
 import getFieldDefTable from "./tables/FieldDef"
 import getFieldValTable from "./tables/FieldVal"
 
 import type { IDAO } from "../../../general/model/IDAO"
 import type { Person } from "../../../general/model/Person"
-import type { Account } from "../../../general/model/Account"
+import type { User } from "../../../general/model/User"
 import type { FieldDef } from "../../../general/model/FieldDef"
 import type { FieldVal } from "../../../general/model/FieldVal"
 
@@ -31,7 +31,7 @@ function getDAO<K>(table: any): IDAO<K> {
 }
 
 export const personDAO = getDAO<Person>(getPersonTable(sequelize))
-export const accountDAO = getDAO<Account>(getAccountTable(sequelize))
+export const userDAO = getDAO<User>(getUserTable(sequelize))
 export const fieldDefDAO = getDAO<FieldDef>(getFieldDefTable(sequelize))
 export const fieldValDAO = getDAO<FieldVal>(getFieldValTable(sequelize))
 
