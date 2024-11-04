@@ -4,7 +4,7 @@ interface FieldVal {
     personId:  string
     fieldDefId: string
 
-    value?: string
+    value: string | null
 }
 
 export type { FieldVal }

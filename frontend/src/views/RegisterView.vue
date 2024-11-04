@@ -136,7 +136,7 @@ export default Vue.extend({
       this.clearRegisterErrorMessage();
 
       this.isLoadingRegister = true;
-      const [data, status] = await authApi.register({
+      const { data, status } = await authApi.register({
         username: this.username,
         password: this.password,
       });
@@ -151,12 +151,12 @@ export default Vue.extend({
         return;
       }
 
-      const [data2, status2] = await authApi.login({
+      const loginRespone = await authApi.login({
         username: this.username,
         password: this.password,
       });
 
-      if (status2 == 0 || status > 299) {
+      if (loginRespone.status == 0 || loginRespone.status > 299) {
         this.$router.push("/auth/login");
         return;
       }

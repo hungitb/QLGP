@@ -1,74 +1,73 @@
 import { v4 as uuidv4 } from "uuid";
 
+import { CommonMessages, AuthMessages, generateSessionToken, CommonResponse } from "./utils";
 import type { ControllerResultWrapper as CRW } from "./utils";
-import { CommonMessages, AuthMessages, generateSessionToken } from "./utils";
 import type { User } from "../model/User";
 import type { IDAO } from "../model/IDAO";
 
 export default function getAuthController(userDAO: IDAO<User>) {
-    async function login({ username, password }: { username: string, password: string }, loggedInUser: User | null): Promise<CRW<{ sessionToken: string, msg: string }>> {
+    async function login({ username, password }: { username: string, password: string }, loggedInUser: User | null): Promise<CRW> {
         const user = await userDAO.findOne({ where: { username } })
-        if (!user) return [{ msg: AuthMessages.USER_NAME_DOES_NOT_EXIST }, 400]
+        if (!user) return {
+            data: { msg: AuthMessages.USER_NAME_DOES_NOT_EXIST },
+            status: 400
+        }
 
         if (user.password != password) {
-            return [{ msg: AuthMessages.WRONG_PASSWORD }, 400]
+            return {
+                data: { msg: AuthMessages.WRONG_PASSWORD },
+                status: 400
+            }
         }
 
-        try {
-            user.sessionToken = process.env.QLGP_USE_BACKEND == "true" ? (await generateSessionToken()) : user.username
-            user.sessionExpiry = Date.now() + parseInt(process.env.QLGP_SESSION_DURATION || "30")*60*1000;
+        user.sessionToken = process.env.QLGP_USE_BACKEND == "true" ? (await generateSessionToken()) : user.username
+        user.sessionExpiry = Date.now() + parseInt(process.env.QLGP_SESSION_DURATION || "30")*60*1000;
 
-            userDAO.update({
-                sessionToken: user.sessionToken,
-                sessionExpiry: user.sessionExpiry
-            }, {
-                where: { userId: user.userId }
-            })
-        }
-        catch {
-            return [{ msg: CommonMessages.INTERNAL_SERVER_ERROR }, 500]
-        }
+        userDAO.update({
+            sessionToken: user.sessionToken,
+            sessionExpiry: user.sessionExpiry
+        }, {
+            where: { userId: user.userId }
+        })
 
-        return [{ sessionToken: user.sessionToken, msg: CommonMessages.OK }, 200]
+        return {
+            data: { sessionToken: user.sessionToken, msg: CommonMessages.OK },
+            status: 200
+        }
     }
 
-    async function register({ username, password }: { username: string, password: string }, loggedInUser: User | null): Promise<CRW<{ msg: string }>> {
+    async function register({ username, password }: { username: string, password: string }, loggedInUser: User | null): Promise<CRW> {
         const user = await userDAO.findOne({ where: { username } })
-        if (user) return [{ msg: AuthMessages.USERNAME_ALREADY_EXISTS }, 409]
+        if (user) return {
+            data: { msg: AuthMessages.USERNAME_ALREADY_EXISTS },
+            status: 409
+        }
 
-        const newUser = {
+        const newUser: User = {
             userId: uuidv4(),
             username,
-            password
+            password,
+            sessionExpiry: null,
+            sessionToken: null
         }
 
-        try {
-            await userDAO.create(newUser)
-        }
-        catch {
-            return [{ msg: CommonMessages.INTERNAL_SERVER_ERROR }, 500]
-        }
+        await userDAO.create(newUser);
 
-        return [{ msg: CommonMessages.OK }, 200]
+        return CommonResponse.OK;
     }
 
-    async function logout(data = {}, loggedInUser: User | null): Promise<CRW<{ msg: string }>> {
+    async function logout(data: {}, loggedInUser: User | null): Promise<CRW> {
         if (!loggedInUser) {
-            return [{ msg: CommonMessages.OK }, 200];
+            return CommonResponse.OK;
         }
 
-        try {
-            await userDAO.update({
-                sessionExpiry: null,
-                sessionToken: null
-            },
-            { where: { userId: loggedInUser.userId } })
-        }
-        catch {
-            return [{ msg: CommonMessages.INTERNAL_SERVER_ERROR }, 500]
-        }
+        await userDAO.update({
+            sessionExpiry: null,
+            sessionToken: null
+        },
+        { where: { userId: loggedInUser.userId } })
 
-        return [{ msg: CommonMessages.OK }, 200]
+        return CommonResponse.OK;
     }
 
     return {

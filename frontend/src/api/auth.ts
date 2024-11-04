@@ -1,5 +1,10 @@
 import api from "./api";
-import { useBackend, wrapAxiosCall } from "./utils";
+import {
+  useBackend,
+  wrapAxiosCall,
+  sessionTokenKeyStoreLoggedInUserInLocalStorage,
+  getLoggedInUserLocalStorage,
+} from "./utils";
 import type { ApiResponseWrapper as ARW } from "./utils";
 import getAuthController from "../../../general/controller/auth";
 import { userDAO } from "./DAO";
@@ -14,17 +19,10 @@ export const authApi = {
       return await wrapAxiosCall(() => api.get("/auth/me"));
     }
 
-    const sessionToken = localStorage.getItem("QLGP.sessionToken");
-    if (!sessionToken) {
-      return [{ user: null }, 200];
-    }
-
-    const user = await userDAO.findOne({ where: { sessionToken } });
-    if (!user) {
-      return [{ user: null }, 200];
-    }
-
-    return [{ user }, 200];
+    return {
+      data: { user: await getLoggedInUserLocalStorage() },
+      status: 200,
+    };
   },
   login: async (data: {
     username: string;
@@ -34,14 +32,17 @@ export const authApi = {
       return wrapAxiosCall(() => api.post("/auth/login", data));
     }
 
-    const [d, status] = await authController.login(data, null);
-    if (status == 200) {
-      const { sessionToken } = d as { sessionToken: string };
-      delete (d as { sessionToken?: string }).sessionToken;
-      localStorage.setItem("QLGP.sessionToken", sessionToken);
+    const response = await authController.login(data, null);
+    if (response.status == 200) {
+      const { sessionToken } = response.data;
+      delete response.data.sessionToken;
+      localStorage.setItem(
+        sessionTokenKeyStoreLoggedInUserInLocalStorage,
+        sessionToken || ""
+      );
     }
 
-    return [d, status];
+    return response;
   },
   register: async (data: {
     username: string;
@@ -58,7 +59,7 @@ export const authApi = {
       return wrapAxiosCall(() => api.post("/auth/logout"));
     }
 
-    localStorage.removeItem("QLGP.sessionToken");
+    localStorage.removeItem(sessionTokenKeyStoreLoggedInUserInLocalStorage);
     return await authController.logout({}, null);
   },
 };

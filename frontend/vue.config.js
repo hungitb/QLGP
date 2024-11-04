@@ -7,6 +7,7 @@ module.exports = defineConfig({
     plugins: [
       new EnvironmentPlugin([
         "NODE_ENV",
+        "GENERATE_FAKE_DATA",
         "QLGP_REQUIRE_LOGIN",
         "QLGP_USE_BACKEND",
       ]),

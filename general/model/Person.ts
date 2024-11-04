@@ -16,13 +16,13 @@ interface Person {
     
     callname: string
     gender: Gender
-    avatarUrl?: string
-    birthday?: string
-    deathday?: string
-    status?: LifeStatus
-    spouseId?: string
-    fatherId?: string
-    motherId?: string
+    avatarUrl: string | null
+    birthday: string | null
+    deathday: string | null
+    status: LifeStatus | null
+    spouseId: string | null
+    fatherId: string | null
+    motherId: string | null
 }
 
 export { Gender, LifeStatus }

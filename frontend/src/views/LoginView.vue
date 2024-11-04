@@ -102,7 +102,7 @@ export default Vue.extend({
       this.clearLoginErrorMessage();
 
       this.isLoadingLogin = true;
-      const [data, status] = await authApi.login({
+      const { data, status } = await authApi.login({
         username: this.username,
         password: this.password,
       });

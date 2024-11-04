@@ -28,7 +28,7 @@ export default Vue.extend({
     };
   },
   async mounted() {
-    const [data, status] = await authApi.getLoggedInUser();
+    const { data, status } = await authApi.getLoggedInUser();
     if (status < 299 && data.user) {
       this.$router.push("/");
       return;

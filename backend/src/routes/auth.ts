@@ -14,7 +14,7 @@ router.get("/me", wrapHandler(async (req, res) => {
 }));
 
 router.post("/login", wrapHandler(async (req, res) => {
-    const [data, status] = await authController.login(req.body, null);
+    const { data, status } = await authController.login(req.body, null);
     if (status == 200) {
         const { sessionToken } = data as { sessionToken: string };
         delete (data as { sessionToken?: string }).sessionToken;
@@ -24,13 +24,13 @@ router.post("/login", wrapHandler(async (req, res) => {
 }));
 
 router.post("/register", wrapHandler(async (req, res) => {
-    const [data, status] = await authController.register(req.body, null);
+    const { data, status } = await authController.register(req.body, null);
     res.status(status).json(data);
 }));
 
 router.post("/logout", wrapHandler(async (req, res) => {
     res.clearCookie("sessionToken");
-    const [data, status] = await authController.logout(req.body, null);
+    const { data, status } = await authController.logout(req.body, null);
     res.status(status).json(data);
 }));
 
