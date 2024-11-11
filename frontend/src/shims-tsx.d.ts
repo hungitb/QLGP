@@ -8,4 +8,7 @@ declare global {
       [elem: string]: any;
     }
   }
+  interface Window {
+    l: typeof console.log;
+  }
 }

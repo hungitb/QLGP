@@ -15,7 +15,7 @@ const personController = getPersonController(personDAO);
 
 export const personApi = {
   async getAllPeopleBaseInfo(
-    data: PaginateParams
+    data: PaginateParams = {}
   ): Promise<ARW<{ people: Person[]; total: number }>> {
     if (useBackend) {
       // to do

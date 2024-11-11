@@ -1,40 +1,48 @@
 <template>
   <v-container>
     <div>
+      <div class="py-2">
+        <AddPersonDialog>
+          <template v-slot:activator="{ attrs, on }">
+            <v-btn v-bind:attrs="attrs" v-on="on">
+              <v-icon left>mdi-account-plus</v-icon> Thêm người thân
+            </v-btn>
+          </template>
+        </AddPersonDialog>
+      </div>
       <v-data-table
         :headers="headers"
         :items="people"
         item-key="id"
         class="elevation-1"
-        :search="search"
         :options.sync="peopleListOption"
-        :custom-filter="personFilter"
         :server-items-length="totalPeople"
       >
+        <template v-slot:top>
+          <v-text-field
+            v-model="search"
+            label="Tìm kiếm"
+            class="mx-4"
+          ></v-text-field>
+        </template>
+
         <template v-slot:item.avatarUrl="{ item, isMobile }">
           <div :class="!isMobile ? 'pa-2' : 'pt-2'">
-            <v-avatar
-              size="40"
-              :color="item.gender != Gender.MALE ? 'pink' : 'primary'"
-            >
-              <img
-                :src="item.avatarUrl"
-                :alt="item.callname"
-                v-if="item.avatarUrl"
-              />
-              <v-icon dark v-else>
-                {{
-                  item.gender != Gender.MALE
-                    ? "mdi-account-tie-woman"
-                    : "mdi-account-tie"
-                }}
-              </v-icon>
-            </v-avatar>
+            <CustomPersonAvatar size="40" :person="item" textSize="5" />
           </div>
         </template>
 
         <template v-slot:item.gender="{ value }">
           {{ value != Gender.MALE ? "Nữ" : "Nam" }}
+        </template>
+
+        <template
+          v-slot:header.birthday="{ header }"
+          v-if="!peopleTableInMobileLayout"
+        >
+          <span style="display: inline-block; text-align: end; width: 72px">{{
+            header.text
+          }}</span>
         </template>
 
         <template v-slot:item.status_deathday="{ value }">
@@ -49,19 +57,16 @@
                 : "Đã mất"
             }}
           </span>
-          {{ value[0] && value[1] && "-" }}
+          <span
+            v-if="value[0] == LifeStatus.DEAD && value[1]"
+            style="color: blue"
+            >|</span
+          >
           {{ value[1] }}
         </template>
-
-        <template v-slot:top>
-          <v-text-field
-            v-model="search"
-            label="Tìm kiếm"
-            class="mx-4"
-          ></v-text-field>
-        </template>
-      </v-data-table></div
-  ></v-container>
+      </v-data-table>
+    </div></v-container
+  >
 </template>
 
 <script lang="ts">
@@ -69,8 +74,15 @@ import Vue from "vue";
 
 import { Gender, LifeStatus, type Person } from "../../../general/model/Person";
 import { personApi } from "@/api/person";
+import { transformDateString } from "../../../general/utils/DateUtils";
+import AddPersonDialog from "@/components/AddPersonDialog.vue";
+import CustomPersonAvatar from "@/components/CustomPersonAvatar.vue";
 
 export default Vue.extend({
+  components: {
+    AddPersonDialog,
+    CustomPersonAvatar,
+  },
   data: function () {
     return {
       search: "",
@@ -106,15 +118,12 @@ export default Vue.extend({
       ],
     };
   },
-  methods: {
-    personFilter(value: string, search: string, item: any) {
-      return (
-        value != null &&
-        search != null &&
-        typeof value === "string" &&
-        value.toString().toLocaleUpperCase().indexOf(search) !== -1
-      );
+  computed: {
+    peopleTableInMobileLayout() {
+      return this.$vuetify.breakpoint.width < 600; // 600: default mobile-breakpoint of v-data-table
     },
+  },
+  methods: {
     fetchPeopleFromServer() {
       this.loadingPeople = true;
 
@@ -126,18 +135,10 @@ export default Vue.extend({
           itemsPerPage,
           sortBy: sortBy[0],
           sortDesc: sortDesc[0],
+          search: this.search,
         })
         .then(({ data, status }) => {
           this.loadingPeople = false;
-          console.log(
-            {
-              page,
-              itemsPerPage,
-              sortBy: sortBy[0],
-              sortDesc: sortDesc[0],
-            },
-            data.people
-          );
           if (data.people) {
             this.people = data.people.map(
               ({
@@ -152,7 +153,15 @@ export default Vue.extend({
                 gender,
                 avatarUrl,
                 birthday,
-                status_deathday: [status || "", deathday || ""],
+                status_deathday: [
+                  status || "",
+                  deathday
+                    ? transformDateString(deathday, {
+                        showNormalDate: !this.peopleTableInMobileLayout,
+                        showLunarDate: !this.peopleTableInMobileLayout,
+                      })
+                    : "",
+                ],
               })
             );
           }
@@ -168,6 +177,12 @@ export default Vue.extend({
         this.fetchPeopleFromServer();
       },
       deep: true,
+    },
+    search: {
+      handler() {
+        this.peopleListOption.page = 1;
+        this.fetchPeopleFromServer();
+      },
     },
   },
   mounted() {

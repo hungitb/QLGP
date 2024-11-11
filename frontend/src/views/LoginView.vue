@@ -95,7 +95,7 @@ export default Vue.extend({
       this.loginErrorMessage = "";
     },
     async login() {
-      /* eslint-disable-line */ // @ts-ignore 
+      /* eslint-disable-line */ // @ts-ignore
       const valid = this.$refs.form.validate();
       if (!valid) return;
 

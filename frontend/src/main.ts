@@ -6,6 +6,10 @@ import vuetify from "./plugins/vuetify";
 
 Vue.config.productionTip = false;
 
+if (process.env.NODE_ENV == "development") {
+  window.l = console.log;
+}
+
 new Vue({
   router,
   store,

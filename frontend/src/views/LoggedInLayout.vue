@@ -1,5 +1,5 @@
 <template>
-  <v-app id="inspire">
+  <v-app>
     <v-navigation-drawer v-model="drawer" app>
       <div class="px-12 py-2">
         <v-img :src="require('@/assets/logo.png')" alt="Logo" />
@@ -39,7 +39,7 @@
       </template>
     </v-navigation-drawer>
 
-    <v-app-bar app>
+    <v-app-bar app color="primary">
       <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
 
       <!-- <v-toolbar-title>Quản lý gia phả</v-toolbar-title> -->
