@@ -4,7 +4,9 @@ export type PaginateParams = {
     sortBy?: string,
     sortDesc?: string,
     page?: string,
-    itemsPerPage?: string
+    itemsPerPage?: string,
+    search?: string,
+    searchFields?: string,
     [key: string]: any;
 }
 

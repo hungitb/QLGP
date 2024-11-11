@@ -1,12 +1,12 @@
 
 enum Gender {
-    MALE = "MALE",
-    FEMALE = "FEMALE"
+    MALE = "Nam",
+    FEMALE = "Nữ"
 }
 
 enum LifeStatus {
-    ALIVE = "ALIVE",
-    DEAD = "DEAD"
+    ALIVE = "Còn sống",
+    DEAD = "Đã mất"
 }
 
 interface Person {

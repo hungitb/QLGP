@@ -1,19 +1,30 @@
 
 import { getLunarDate } from "./amlich-hnd"
+import { isStringPureInterger } from "./ValidationUtils";
 
 const lunarDateYearRangeSupported = [1802, 2198];
 
-function isInvalidForm(s: string, { isMissingDay = false, isMissingMonth = false } = {}) {
-    const parts = s.split('/');
+// Xử lý trường hợp nếu 0 <= year <= 99 thì sẽ bị coi như là 1900 + year
+function createProperlyDateObject(year: number, monthIndex: number, day: number) {
+    const dateObj = new Date(year, monthIndex, day);
+    if (0 <= year && year <= 99) {
+        dateObj.setFullYear(year);
+    }
+    
+    return dateObj;
+}
+
+function isInvalidForm(s: string, { isMissingDay = false, isMissingMonth = false, strictYearPadding = true } = {}) {
+    const parts = s.split("/");
     const count = parts.length;
 
-    const allPartsAreInt = parts.every(p => {
-        if (isNaN(parseInt(p)) || isNaN(parseFloat(p))) return false;
-        const n = parseFloat(p);
-        if (n == Math.round(n) && n > 0) return true
-        return false
-    })
+    const allPartsAreInt = parts.every(p => isStringPureInterger(p, 1));
     if (!allPartsAreInt) return false;
+    
+    // Riêng năm thì không được bắt đầu bằng số 0
+    if (strictYearPadding && parts[parts.length - 1].startsWith("0")) {
+        return false;
+    }
 
     if (isMissingMonth) {
         return count == 1;
@@ -24,6 +35,22 @@ function isInvalidForm(s: string, { isMissingDay = false, isMissingMonth = false
     }
 
     return count == 3;
+}
+
+export function shortenDateString(date: string) {
+    if (isInvalidForm(date)) {
+        const [day, month, year] = date.split("/").map(s => parseInt(s))
+        return `${day}/${month}/${year}`
+    }
+    if (isInvalidForm(date, { isMissingDay: true })) {
+        const [month, year] = date.split("/").map(s => parseInt(s))
+        return `${month}/${year}`
+    }
+    if (isInvalidForm(date, { isMissingMonth: true })) {
+        const [year] = date.split("/").map(s => parseInt(s))
+        return `${year}`
+    }
+    return date;
 }
 
 export function normalDateToLunarDate(nd: string) {
@@ -81,7 +108,10 @@ export function lunarDateToNormalDate(ld: string, skipCheckingExistsLunarDate = 
         }
     }
 
-    const timestamp = find(new Date(lunarDateYearRangeSupported[0], 0, 1).getTime(), new Date(lunarDateYearRangeSupported[1] + 1, 0, 1).getTime())
+    const timestamp = find(
+        createProperlyDateObject(lunarDateYearRangeSupported[0], 0, 1).getTime(),
+        createProperlyDateObject(lunarDateYearRangeSupported[1] + 1, 0, 1).getTime()
+    )
     if (!timestamp) {
         return null;
     }
@@ -97,7 +127,7 @@ export function dateValidationMessage(date: string, { isLunarDate = false, isMis
     isMissingDay = (isMissingDay || isMissingMonth) && (!isLunarDate)
 
     if (!isInvalidForm(date, { isMissingDay, isMissingMonth })) {
-        return `Không đúng định dạng "${(isLunarDate ? "" : "ngày/") + (isMissingMonth ? "" : "tháng/") + "năm"}"`
+        return `Không đúng định dạng "${(isMissingDay ? "" : "ngày/") + (isMissingMonth ? "" : "tháng/") + "năm"}"`
     }
 
     if (isLunarDate) {
@@ -126,8 +156,9 @@ export function dateValidationMessage(date: string, { isLunarDate = false, isMis
             const [day, month, year] = date.split("/").map(s => parseInt(s));
             if (day < 1 || 31 < day) return "Ngày phải nằm trong khoảng 1-31";
             if (month < 1 || 12 < month) return "Tháng phải nằm trong khoảng 1-12";
+            if (year < 1) return "Năm phải lớn hơn 0";
 
-            const dateObj = new Date(year, month - 1, day);
+            const dateObj = createProperlyDateObject(year, month - 1, day);
             if (dateObj.getFullYear() != year || dateObj.getMonth() != month - 1 || dateObj.getDate() != day) {
                 return "Không tồn tại ngày này";
             }
@@ -135,6 +166,29 @@ export function dateValidationMessage(date: string, { isLunarDate = false, isMis
     }
 
     return null;
+}
+
+export function transformDateString(date: string, {
+    showLunarDate = true,
+    showNormalDate = true
+} = {}) {
+    if (!date.endsWith("AL")) {
+        const lunarDate = normalDateToLunarDate(date);
+        if (!lunarDate) return date;
+
+        if (showLunarDate) {
+            return `${date} (${lunarDate} AL)`
+        }
+        return date;
+    }
+
+    const lunarDate = date.replace("AL", "");
+    const normalDate = lunarDateToNormalDate(lunarDate);
+
+    if (!showNormalDate) return lunarDate + " AL";
+    if (!showLunarDate) return normalDate as string;
+
+    return `${normalDate} (${lunarDate} AL)`
 }
 
 export function compareTwoDateString(d1: string | null, d2: string | null, desc = false) {
