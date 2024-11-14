@@ -1,13 +1,7 @@
 <template>
-  <div id="family-tree">
-    <Viewer style="width: 100%; height: 100%">
-      <div
-        style="
-          height: 2000px;
-          width: 2000px;
-          background-image: linear-gradient(to right, red, yellow);
-        "
-      ></div>
+  <div id="family-tree" class="d-flex justify-center align-center">
+    <Viewer style="width: 600px; height: 600px; border: 1px solid">
+      <v-img src="favicon.ico" height="1000" width="1000" />
     </Viewer>
   </div>
 </template>
@@ -16,6 +10,7 @@
 import Vue from "vue";
 
 import Viewer from "@/components/Viewer.vue";
+import { personApi } from "@/api/person";
 
 enum Layout {
   MIN_HEIGHT = "MIN_HEIGHT",
@@ -51,6 +46,9 @@ export default Vue.extend({
         },
       },
     };
+  },
+  mounted() {
+    // to do
   },
 });
 </script>

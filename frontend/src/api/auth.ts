@@ -5,16 +5,13 @@ import {
   sessionTokenKeyStoreLoggedInUserInLocalStorage,
   getLoggedInUserLocalStorage,
 } from "./utils";
-import type { ApiResponseWrapper as ARW } from "./utils";
 import getAuthController from "../../../general/controller/auth";
 import { userDAO } from "./DAO";
 
 const authController = getAuthController(userDAO);
 
 export const authApi = {
-  getLoggedInUser: async (): Promise<
-    ARW<{ user: { username: string } | null }>
-  > => {
+  getLoggedInUser: async () => {
     if (useBackend) {
       return await wrapAxiosCall(() => api.get("/auth/me"));
     }
@@ -24,10 +21,7 @@ export const authApi = {
       status: 200,
     };
   },
-  login: async (data: {
-    username: string;
-    password: string;
-  }): Promise<ARW<{ msg: string }>> => {
+  login: async (data: { username: string; password: string }) => {
     if (useBackend) {
       return wrapAxiosCall(() => api.post("/auth/login", data));
     }
@@ -44,17 +38,14 @@ export const authApi = {
 
     return response;
   },
-  register: async (data: {
-    username: string;
-    password: string;
-  }): Promise<ARW<{ msg: string }>> => {
+  register: async (data: { username: string; password: string }) => {
     if (useBackend) {
       return wrapAxiosCall(() => api.post("/auth/register", data));
     }
 
     return await authController.register(data, null);
   },
-  logout: async (): Promise<ARW<{ msg: string }>> => {
+  logout: async () => {
     if (useBackend) {
       return wrapAxiosCall(() => api.post("/auth/logout"));
     }

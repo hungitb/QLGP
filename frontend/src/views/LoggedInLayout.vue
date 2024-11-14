@@ -39,7 +39,7 @@
       </template>
     </v-navigation-drawer>
 
-    <v-app-bar app color="primary">
+    <v-app-bar app dark color="primary">
       <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
 
       <!-- <v-toolbar-title>Quản lý gia phả</v-toolbar-title> -->
@@ -50,6 +50,7 @@
     </v-main>
 
     <FullViewLoading :tbb="true" v-if="isLoading"></FullViewLoading>
+    <FullViewLoading v-if="isLoadingUser"></FullViewLoading>
   </v-app>
 </template>
 
@@ -66,6 +67,7 @@ export default Vue.extend({
   },
   data: () => ({
     isLoading: false,
+    isLoadingUser: true,
     drawer: null as boolean | null,
     items: [
       { title: "Trang chủ", icon: "house-door-fill", link: "/" },
@@ -98,7 +100,14 @@ export default Vue.extend({
   watch: {
     $route: "updateSelectedItemFromRoute",
   },
-  mounted() {
+  async mounted() {
+    const { data, status } = await authApi.getLoggedInUser();
+    if (status > 299 || !data.user) {
+      this.$router.push("/auth/login");
+      return;
+    }
+
+    this.isLoadingUser = false;
     this.updateSelectedItemFromRoute(this.$route);
   },
 });

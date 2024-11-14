@@ -1,13 +1,7 @@
-import type { AxiosResponse } from "axios";
+import { type AxiosResponse } from "axios";
 
 import { userDAO } from "./DAO";
-
-export type ApiResponseWrapper<K extends object> = {
-  data: {
-    [attr in keyof K]?: K[attr];
-  } & { msg?: string };
-  status: number;
-};
+import { type ControllerHandlerResult as CHR } from "../../../general/controller/utils";
 
 export const sessionTokenKeyStoreLoggedInUserInLocalStorage =
   "QLGP.sessionToken";
@@ -26,7 +20,7 @@ export async function getLoggedInUserLocalStorage() {
 
 export function wrapAxiosCall(
   callback: () => Promise<AxiosResponse>
-): Promise<ApiResponseWrapper<Record<string, any>>> {
+): Promise<CHR<Record<string, any>>> {
   return new Promise((resolve) => {
     callback()
       .then((response) =>

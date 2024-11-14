@@ -1,13 +1,19 @@
 import { compareTwoDateString, normalDateToLunarDate } from "../utils/DateUtils";
 import { isStringPureInterger } from "../utils/ValidationUtils";
-import { CommonResponse, paginateAndSortItems } from "./utils";
-import type { PaginateParams } from "./utils";
-import { LifeStatus, type Person } from "../model/Person";
+import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR } from "./utils";
+import { LifeStatus, Gender, type Person } from "../model/Person";
 import type { User } from "../model/User";
 import type { IDAO } from "../model/IDAO";
 
+type ExtendedPerson = Person & {
+    children: {
+        child: ExtendedPerson;
+        spouseId: string | null;
+    }[];
+};
+
 export default function getPersonController(personDAO: IDAO<Person>) {
-    async function getAllPeopleBaseInfo(data: PaginateParams, loggedInUser: User | null) {
+    async function getAllPeopleBaseInfo(data: PaginateParams, loggedInUser: User | null): Promise<CHR<{ people: Person[]; total: number }>> {
         if (!loggedInUser) return CommonResponse[401];
 
         let people = await personDAO.findAll({ where: { ownerUserId: loggedInUser.userId } });
@@ -94,7 +100,98 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         };
     }
 
-    return {
-        getAllPeopleBaseInfo
+    async function getFamilyTreeInfo({ targetPersonId, level }: { targetPersonId?: string, level: string }, loggedInUser: User | null): Promise<CHR<{
+        ancestor: ExtendedPerson,
+        targetPersonId: string,
+        people: Person[]
+    }>> {
+        const levelInt = parseInt(level);
+        if (!loggedInUser || isNaN(levelInt)) return CommonResponse[401];
+        if (!targetPersonId) {
+            const personStandForUser = await personDAO.findOne({ where: { ownerUserId: loggedInUser.userId, isStandForUser: true } });
+            if (!personStandForUser) return CommonResponse[400];
+            targetPersonId = personStandForUser.id;
+        }
+
+        const people = await personDAO.findAll({ where: { ownerUserId: loggedInUser.userId } });
+
+        const mapIdToPerson: Record<string, ExtendedPerson> = {};
+        const childrenIdsOf: Record<string, string[]> = {};
+        const fatherIdOf: Record<string, string> = {};
+        const motherIdOf: Record<string, string> = {};
+        
+        people.forEach(person => {
+            mapIdToPerson[person.id] = Object.assign(person, {
+                children: [],
+            });
+            childrenIdsOf[person.id] = [];
+        });
+        people.forEach(person => {
+            if (person.motherId) {
+                motherIdOf[person.id] = person.motherId;
+                childrenIdsOf[person.motherId].push(person.id)
+            }
+            if (person.fatherId) {
+                fatherIdOf[person.id] = person.fatherId
+                childrenIdsOf[person.fatherId].push(person.id)
+            }
+        });
+
+        let ancestor = mapIdToPerson[targetPersonId];
+        const consideredAncestorIds = new Set([ancestor.id]);
+        const femaleIdsAllowedGetChildren = new Set<string>();
+
+        while(true) {
+            if (ancestor.fatherId && (!consideredAncestorIds.has(ancestor.fatherId))) {
+                ancestor = mapIdToPerson[ancestor.fatherId];
+            }
+            else if (levelInt > 2 && ancestor.motherId && (!consideredAncestorIds.has(ancestor.motherId))) {
+                ancestor = mapIdToPerson[ancestor.motherId];
+                femaleIdsAllowedGetChildren.add(ancestor.id);
+            }
+            else {
+                break;
+            }
+
+            consideredAncestorIds.add(ancestor.id);
+        }
+
+        const travelsaledPersonIds = new Set([ancestor.id]);
+        const queue = [ancestor];
+        while (queue.length != 0) {
+            const person = queue.pop();
+            if (!person) continue; // By pass typescript error
+
+            if (person.gender == Gender.MALE || levelInt > 2) {
+                childrenIdsOf[person.id].forEach(childId => {
+                    if (!travelsaledPersonIds.has(childId)) {
+                        travelsaledPersonIds.add(childId);
+
+                        const child = mapIdToPerson[childId];
+
+                        person.children.push({
+                            child,
+                            spouseId: person.id == child.fatherId ? child.motherId : child.fatherId,
+                        })
+
+                        queue.push(child);
+                    }
+                })
+            }
+        }
+
+        return {
+            data: {
+                ancestor,
+                targetPersonId,
+                people
+            },
+            status: 200,
+        }
     }
+
+    return {
+        getAllPeopleBaseInfo,
+        getFamilyTreeInfo
+    };
 }

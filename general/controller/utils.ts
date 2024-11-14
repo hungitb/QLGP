@@ -1,5 +1,11 @@
 
-export type ControllerResultWrapper = { data: Record<string, any>, status: number }
+export type ControllerHandlerResult<K extends object> = {
+    data: {
+      [attr in keyof K]?: K[attr];
+    } & { msg?: string };
+    status: number;
+};
+
 export type PaginateParams = {
     sortBy?: string,
     sortDesc?: string,
@@ -89,7 +95,8 @@ export enum CommonMessages {
     INTERNAL_SERVER_ERROR = "Server đang bị lỗi, vui lòng thử lại sau",
     OK = "OK",
     NOK = "Not OK",
-    UNAUTHORIZED = "Unauthorized"
+    UNAUTHORIZED = "Unauthorized",
+    BAD_REQUEST = "Bad request!"
 }
 
 export enum AuthMessages {
@@ -103,6 +110,7 @@ export async function generateSessionToken() {
 }
 
 export const CommonResponse = {
+    400: { data: { msg: CommonMessages.BAD_REQUEST }, status: 400 },
     401: { data: { msg: CommonMessages.UNAUTHORIZED }, status: 401 },
     OK: { data: { msg: CommonMessages.OK }, status: 200 }
 }
