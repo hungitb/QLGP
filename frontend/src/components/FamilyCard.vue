@@ -520,6 +520,65 @@ export default Vue.extend({
         );
       });
     },
+    /**
+     * Tìm HTML Elemnt Card của personId.
+     * Có thể sẽ có nhiều card hợp lệ do 1 người có thể xuất hiện nhiều lần.
+     * Vì vậy sẽ ưu tiên người ở vị chí chính, rồi mới đến người ở vị trí spouse
+     */
+    findCardElementByPersonId(
+      personId: string
+    ): [element: HTMLElement | null, asSpouse: boolean] {
+      if (this.person.id == personId) {
+        return [
+          (this.$refs as any)[this.mappingPersonIdToRef[personId]]
+            .$el as HTMLElement,
+          true,
+        ];
+      }
+
+      let foundElement: HTMLElement | null = null;
+
+      for (const child of this.allChildren) {
+        const childRef = this.mappingPersonIdToRef[child.id];
+        let childCardComponent = this.$refs[childRef] as any;
+        if (Array.isArray(childCardComponent)) {
+          // Có thể là Array nếu được gen từ v-if
+          childCardComponent = childCardComponent[0];
+        }
+        const [element, asSpouse]: [
+          element: HTMLElement | null,
+          asSpouse: boolean
+        ] = childCardComponent.findCardElementByPersonId(personId);
+        if (element) {
+          if (asSpouse) {
+            return [element, true];
+          }
+
+          if (!element) {
+            foundElement = element;
+          }
+        }
+      }
+
+      if (foundElement) {
+        return [foundElement, false];
+      }
+
+      for (const spouseId of [
+        this.person.spouseId,
+        ...Object.keys(this.groupChildrenHasSpouseDiffFromSpouse),
+      ]) {
+        if (spouseId == personId) {
+          return [
+            (this.$refs as any)[this.mappingPersonIdToRef[personId]]
+              .$el as HTMLElement,
+            true,
+          ];
+        }
+      }
+
+      return [null, false];
+    },
   },
   watch: {
     _distanceWithHorizontalLineAbove() {

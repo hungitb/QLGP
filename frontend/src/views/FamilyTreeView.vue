@@ -7,6 +7,7 @@
     <Viewer ref="viewer">
       <FamilyCard
         v-if="ancestor"
+        ref="familyCard"
         :person="ancestor"
         :peopleInfo="peopleInfo"
         :config="config"
@@ -17,7 +18,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
+import Vue, { nextTick } from "vue";
 
 import Viewer from "@/components/Viewer.vue";
 import FamilyCard from "@/components/FamilyCard.vue";
@@ -68,12 +69,24 @@ export default Vue.extend({
     setTimeout(this.resizeViewer, 100);
     this.interval = setInterval(this.resizeViewer, 2000);
 
-    personApi.getFamilyTreeInfo({ level: 3 }).then(({ data }) => {
+    personApi.getFamilyTreeInfo({ level: 3 }).then(async ({ data }) => {
       if (data.ancestor && data.people) {
         this.ancestor = data.ancestor;
         data.people.forEach((person) => {
           this.peopleInfo[person.id] = person;
         });
+
+        await nextTick();
+
+        const familyCard = this.$refs.familyCard as any;
+        const [targetElement] = familyCard.findCardElementByPersonId(
+          data.targetPersonId
+        );
+        (this.$refs.viewer as any)
+          .focusElement(targetElement, 5000)
+          .then(() => {
+            window.l("Done");
+          });
       }
     });
   },

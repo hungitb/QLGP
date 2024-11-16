@@ -12,6 +12,8 @@
 import { checkIfIsMobile } from "@/utils";
 import Vue from "vue";
 
+const FPS = 120;
+
 type Point = {
   clientX: number;
   clientY: number;
@@ -114,6 +116,47 @@ const ViewerPC = Vue.extend({
 
       this.render();
     },
+    focusElement(element: HTMLElement, speed?: number) {
+      // to do: Check if viewer conatins element, if not then return.
+
+      const elementBCR = element.getBoundingClientRect();
+      this.refreshBCROfElements();
+
+      const deltaX =
+        this.contentBCR.x +
+        this.contentBCR.width / 2 -
+        elementBCR.x -
+        elementBCR.width / 2;
+
+      const deltaY =
+        this.contentBCR.y +
+        this.contentBCR.height / 2 -
+        elementBCR.y -
+        elementBCR.height / 2;
+
+      if (!speed) {
+        this.moveRelative(deltaX, deltaY);
+        return Promise.resolve();
+      }
+
+      const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
+      const time = distance / speed;
+      const numTimeMoves = time * FPS;
+
+      return new Promise<void>((resolve) => {
+        const move = (index = 0) => {
+          if (index >= numTimeMoves) {
+            resolve();
+            return;
+          }
+          this.moveRelative(deltaX / numTimeMoves, deltaY / numTimeMoves);
+          setTimeout(() => {
+            move(index + 1);
+          }, 1000 / FPS);
+        };
+        move();
+      });
+    },
     onWheel(event: WheelEvent) {
       event.preventDefault();
       let delta = 1;
@@ -180,6 +223,7 @@ const ViewerPC = Vue.extend({
     this.contentElement.addEventListener("mouseup", this.onMouseup);
     this.contentElement.addEventListener("mousemove", this.onMousemove);
 
+    this.refreshBCROfElements();
     setTimeout(this.refreshBCROfElements, 100);
     this.interval = setInterval(this.refreshBCROfElements, 1000);
   },
@@ -199,6 +243,7 @@ const ViewerMobile = Vue.extend({
   data() {
     return {
       mustTriggerZoomManually: true,
+      isInitialDone: false,
       interval: undefined as number | undefined,
       isMobile: true,
       viewerElement: null as HTMLElement | null,
@@ -243,6 +288,67 @@ const ViewerMobile = Vue.extend({
         this.state.scale = newScale;
       }
     },
+    async focusElement(element: HTMLElement, speed?: number) {
+      // to do: Check if viewer conatins element, if not then return.
+
+      if (!this.viewerElement) return;
+
+      await this.awaitInitialDone();
+      const elementBCR = element.getBoundingClientRect();
+      this.refreshBCROfElements();
+
+      const deltaX =
+        this.viewerBCR.x +
+        this.viewerBCR.width / 2 -
+        elementBCR.x -
+        elementBCR.width / 2;
+
+      const deltaY =
+        this.viewerBCR.y +
+        this.viewerBCR.height / 2 -
+        elementBCR.y -
+        elementBCR.height / 2;
+
+      if (!speed) {
+        this.viewerElement.scrollLeft -= deltaX;
+        this.viewerElement.scrollTop -= deltaY;
+        return;
+      }
+
+      const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
+      const time = distance / speed;
+      const numTimeMoves = time * FPS;
+
+      // Scroll hay bị làm tròn nên làm sẽ khác PC 1 tí
+      const targetScrollLeft = this.viewerElement.scrollLeft - deltaX;
+      const targetScrollTop = this.viewerElement.scrollTop - deltaY;
+
+      await new Promise<void>((resolve) => {
+        const move = (index = 0) => {
+          if (index >= numTimeMoves || !this.viewerElement) {
+            // Check viewer element to by pass typescript check
+            resolve();
+            return;
+          }
+
+          const numTimeMovesRemaining = numTimeMoves - index;
+
+          this.viewerElement.scrollLeft +=
+            (targetScrollLeft - this.viewerElement.scrollLeft) /
+            numTimeMovesRemaining;
+          this.viewerElement.scrollTop +=
+            (targetScrollTop - this.viewerElement.scrollTop) /
+            numTimeMovesRemaining;
+
+          setTimeout(() => {
+            move(index + 1);
+          }, 1000 / FPS);
+        };
+        move();
+      });
+
+      return;
+    },
     onClick(event: MouseEvent) {
       this.scale((window as any).a ? 1 / 1.1 : 1.1, {
         clientX: event.clientX,
@@ -256,6 +362,19 @@ const ViewerMobile = Vue.extend({
           this.viewerElement.getBoundingClientRect()
         );
       }
+    },
+    awaitInitialDone() {
+      return new Promise<void>((resolve) => {
+        const check = () => {
+          if (this.isInitialDone) {
+            resolve();
+            return;
+          }
+
+          setTimeout(check, 10);
+        };
+        check();
+      });
     },
   },
   mounted() {
@@ -283,9 +402,12 @@ const ViewerMobile = Vue.extend({
         height: wrapperBCR.height + "px",
         width: wrapperBCR.width + "px",
       });
+
+      this.isInitialDone = true;
     };
     setContentElementSize();
 
+    this.refreshBCROfElements();
     setTimeout(this.refreshBCROfElements, 100);
     this.interval = setInterval(this.refreshBCROfElements, 1000);
   },
