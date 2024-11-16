@@ -1,7 +1,17 @@
 <template>
-  <div id="family-tree" class="d-flex justify-center align-center">
-    <Viewer style="width: 600px; height: 600px; border: 1px solid">
-      <v-img src="favicon.ico" height="1000" width="1000" />
+  <div
+    id="family-tree"
+    class="d-flex justify-center align-center"
+    ref="container"
+  >
+    <Viewer ref="viewer">
+      <FamilyCard
+        v-if="ancestor"
+        :person="ancestor"
+        :peopleInfo="peopleInfo"
+        :config="config"
+      />
+      <FullViewLoading v-else />
     </Viewer>
   </div>
 </template>
@@ -10,20 +20,26 @@
 import Vue from "vue";
 
 import Viewer from "@/components/Viewer.vue";
+import FamilyCard from "@/components/FamilyCard.vue";
+import FullViewLoading from "@/components/FullViewLoading.vue";
 import { personApi } from "@/api/person";
-
-enum Layout {
-  MIN_HEIGHT = "MIN_HEIGHT",
-  MIN_WIDTH = "MIN_WIDTH",
-}
+import { ExtendedPerson } from "../../../general/controller/person";
+import { Person } from "../../../general/model/Person";
+import { PersonCardLayout, type FamilyCardConfig } from "@/components/types";
 
 export default Vue.extend({
   components: {
     Viewer,
+    FamilyCard,
+    FullViewLoading,
   },
   data() {
     return {
+      ancestor: null as ExtendedPerson | null,
+      peopleInfo: {} as Record<string, Person>,
+      interval: null as number | null,
       config: {
+        level: 2,
         show: {
           image: true,
           name: true,
@@ -31,24 +47,40 @@ export default Vue.extend({
           birthday: true,
           status: true,
         },
-        layout: Layout.MIN_HEIGHT,
-        props: {
-          horizontalDistance: 80,
-          verticalDistance: 120,
-          [Layout.MIN_HEIGHT]: {
-            height: 180,
-            width: 360,
-          },
-          [Layout.MIN_WIDTH]: {
-            height: 600,
-            width: 300,
-          },
-        },
-      },
+        layout: PersonCardLayout.MIN_HEIGHT,
+        horizontalDistance: 80,
+        verticalDistance: 300,
+      } as FamilyCardConfig,
     };
   },
+  methods: {
+    resizeViewer() {
+      const container = this.$refs.container as HTMLElement;
+      const viewer = (this.$refs.viewer as any).$el as HTMLElement;
+      const containerBCR = container.getBoundingClientRect();
+
+      viewer.style.width = window.innerWidth - containerBCR.left + "px";
+      viewer.style.height = window.innerHeight - containerBCR.top + "px";
+    },
+  },
   mounted() {
-    // to do
+    this.resizeViewer();
+    setTimeout(this.resizeViewer, 100);
+    this.interval = setInterval(this.resizeViewer, 2000);
+
+    personApi.getFamilyTreeInfo({ level: 3 }).then(({ data }) => {
+      if (data.ancestor && data.people) {
+        this.ancestor = data.ancestor;
+        data.people.forEach((person) => {
+          this.peopleInfo[person.id] = person;
+        });
+      }
+    });
+  },
+  beforeDestroy() {
+    if (this.interval) {
+      clearInterval(this.interval);
+    }
   },
 });
 </script>

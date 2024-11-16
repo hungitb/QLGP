@@ -10,3 +10,22 @@ export enum DateFormat {
   dmy = "Ngày/Tháng/Năm",
   dmyAL = "Ngày/Tháng/Năm Âm lịch",
 }
+
+export enum PersonCardLayout {
+  MIN_HEIGHT = "MIN_HEIGHT",
+  MIN_WIDTH = "MIN_WIDTH",
+}
+
+export type FamilyCardConfig = {
+  level: number;
+  show: {
+    image: boolean;
+    name: boolean;
+    gender: boolean;
+    birthday: boolean;
+    status: boolean;
+  };
+  layout: PersonCardLayout;
+  horizontalDistance: number;
+  verticalDistance: number;
+};

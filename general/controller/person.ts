@@ -5,7 +5,7 @@ import { LifeStatus, Gender, type Person } from "../model/Person";
 import type { User } from "../model/User";
 import type { IDAO } from "../model/IDAO";
 
-type ExtendedPerson = Person & {
+export type ExtendedPerson = Person & {
     children: {
         child: ExtendedPerson;
         spouseId: string | null;

@@ -46,7 +46,7 @@
     </v-app-bar>
 
     <v-main>
-      <router-view></router-view>
+      <router-view v-if="!isLoadingUser"></router-view>
     </v-main>
 
     <FullViewLoading :tbb="true" v-if="isLoading"></FullViewLoading>

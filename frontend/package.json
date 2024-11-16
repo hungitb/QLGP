@@ -12,6 +12,7 @@
     "bootstrap-icons": "^1.11.3",
     "core-js": "^3.8.3",
     "dotenv": "^16.4.5",
+    "jquery": "^3.7.1",
     "vue": "^2.6.14",
     "vue-class-component": "^7.2.3",
     "vue-property-decorator": "^9.1.2",
@@ -20,6 +21,7 @@
     "vuex": "^3.6.2"
   },
   "devDependencies": {
+    "@types/jquery": "^3.5.32",
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
     "@vue/cli-plugin-babel": "~5.0.0",
@@ -57,7 +59,12 @@
     },
     "rules": {
       "vue/multi-word-component-names": "off",
-      "vue/valid-v-slot": ["error", { "allowModifiers": true }],
+      "vue/valid-v-slot": [
+        "error",
+        {
+          "allowModifiers": true
+        }
+      ],
       "prettier/prettier": [
         "error",
         {

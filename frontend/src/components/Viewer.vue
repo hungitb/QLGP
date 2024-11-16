@@ -265,11 +265,26 @@ const ViewerMobile = Vue.extend({
 
     this.contentElement.addEventListener("click", this.onClick);
 
-    const wrapperBCR = this.wrapperElement.getBoundingClientRect();
-    Object.assign(this.contentElement.style, {
-      height: wrapperBCR.height + "px",
-      width: wrapperBCR.width + "px",
-    });
+    let numTimeTries = 0;
+    const setContentElementSize = () => {
+      if (!this.wrapperElement || !this.contentElement) return;
+
+      numTimeTries++;
+
+      const wrapperBCR = this.wrapperElement.getBoundingClientRect();
+      if (
+        (wrapperBCR.height == 0 || wrapperBCR.width == 0) &&
+        numTimeTries < 10
+      ) {
+        setTimeout(setContentElementSize, 1);
+        return;
+      }
+      Object.assign(this.contentElement.style, {
+        height: wrapperBCR.height + "px",
+        width: wrapperBCR.width + "px",
+      });
+    };
+    setContentElementSize();
 
     setTimeout(this.refreshBCROfElements, 100);
     this.interval = setInterval(this.refreshBCROfElements, 1000);

@@ -283,10 +283,7 @@ function generateFakeData() {
     }
   }
 
-  console.log(
-    fakePeople.map((p) => p.spouseId),
-    fakeUsers
-  );
+  console.log(fakePeople, fakeUsers);
 
   return [fakeUsers, fakePeople];
 }
