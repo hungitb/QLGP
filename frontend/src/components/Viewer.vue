@@ -317,7 +317,7 @@ const ViewerMobile = Vue.extend({
 
       const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
       const time = distance / speed;
-      const numTimeMoves = time * FPS;
+      const numTimeMoves = Math.ceil(time * FPS);
 
       // Scroll hay bị làm tròn nên làm sẽ khác PC 1 tí
       const targetScrollLeft = this.viewerElement.scrollLeft - deltaX;
@@ -325,8 +325,14 @@ const ViewerMobile = Vue.extend({
 
       await new Promise<void>((resolve) => {
         const move = (index = 0) => {
-          if (index >= numTimeMoves || !this.viewerElement) {
+          if (!this.viewerElement) {
             // Check viewer element to by pass typescript check
+            resolve();
+            return;
+          }
+          if (index >= numTimeMoves) {
+            this.viewerElement.scrollLeft = targetScrollLeft;
+            this.viewerElement.scrollTop = targetScrollTop;
             resolve();
             return;
           }

@@ -42,12 +42,26 @@ function createDAO(
     return x;
   }
 
+  function createPromiseResolve(data?: any) {
+    const DELAY = 1000;
+
+    if (DELAY < 1) {
+      return Promise.resolve(data);
+    }
+
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(data), DELAY);
+    });
+  }
+
   const findByPk = (pk: string) => {
-    return Promise.resolve(makeCopy(rows.find((row) => row[pkName] == pk)));
+    return createPromiseResolve(
+      makeCopy(rows.find((row) => row[pkName] == pk))
+    );
   };
 
   const findOne = ({ where }: { where: Record<string, any> }) => {
-    return Promise.resolve(
+    return createPromiseResolve(
       makeCopy(
         rows.find((row) => Object.entries(where).every(([k, v]) => row[k] == v))
       )
@@ -55,7 +69,7 @@ function createDAO(
   };
 
   const findAll = ({ where }: { where: Record<string, any> }) => {
-    return Promise.resolve(
+    return createPromiseResolve(
       makeCopy(
         rows.filter((row) =>
           Object.entries(where).every(([k, v]) => row[k] == v)
@@ -65,7 +79,7 @@ function createDAO(
   };
 
   const count = ({ where }: { where: Record<string, any> }) => {
-    return Promise.resolve(
+    return createPromiseResolve(
       rows.filter((row) => Object.entries(where).every(([k, v]) => row[k] == v))
         .length
     );
@@ -74,7 +88,7 @@ function createDAO(
   const create = (obj: Record<string, any>) => {
     rows.push(obj);
     save();
-    return Promise.resolve();
+    return createPromiseResolve();
   };
 
   const destroy = ({ where }: { where: Record<string, any> }) => {
@@ -87,7 +101,7 @@ function createDAO(
 
     rows = rows.filter((row, index) => !toDeleteIndices.has(index));
     save();
-    return Promise.resolve();
+    return createPromiseResolve();
   };
 
   const update = (
@@ -102,7 +116,7 @@ function createDAO(
       }
     });
     save();
-    return Promise.resolve();
+    return createPromiseResolve();
   };
 
   return {
@@ -255,7 +269,7 @@ function generateFakeData() {
           [p1.spouseId, p1.fatherId, p1.motherId].some((id) => id == p2.id) ||
           [p2.spouseId, p2.fatherId, p2.motherId].some((id) => id == p1.id)
         ) {
-          return true;
+          return false;
         }
         return false;
       };

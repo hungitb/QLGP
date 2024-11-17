@@ -40,8 +40,10 @@ export function stringifyValuesOfObject<K extends Record<string, any>>(
   obj: K
 ): { [attr in keyof K]?: string } {
   const newObj: Record<string, any> = {};
-  Object.entries(obj).forEach(
-    ([k, v]) => (newObj[k] = v?.toString ? v.toString() : v)
-  );
+  Object.entries(obj).forEach(([k, v]) => {
+    if (v?.toString) {
+      newObj[k] = v.toString();
+    }
+  });
   return newObj;
 }

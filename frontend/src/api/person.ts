@@ -4,7 +4,9 @@ import {
   getLoggedInUserLocalStorage,
   stringifyValuesOfObject,
 } from "./utils";
-import getPersonController from "../../../general/controller/person";
+import getPersonController, {
+  CreatePersonParams,
+} from "../../../general/controller/person";
 import type { Person } from "../../../general/model/Person";
 import { personDAO } from "./DAO";
 import { PaginateParams } from "../../../general/controller/utils";
@@ -32,6 +34,26 @@ export const personApi = {
         targetPersonId?: string;
         level: string;
       },
+      await getLoggedInUserLocalStorage()
+    );
+  },
+  async createPerson(data: CreatePersonParams) {
+    if (useBackend) {
+      // to do
+    }
+
+    return await personController.createPerson(
+      data,
+      await getLoggedInUserLocalStorage()
+    );
+  },
+  async deletePerson(data: { id: string }) {
+    if (useBackend) {
+      // to do
+    }
+
+    return await personController.deletePerson(
+      data,
       await getLoggedInUserLocalStorage()
     );
   },

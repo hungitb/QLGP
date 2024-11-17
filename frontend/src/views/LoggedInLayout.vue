@@ -51,6 +51,13 @@
 
     <FullViewLoading :tbb="true" v-if="isLoading"></FullViewLoading>
     <FullViewLoading v-if="isLoadingUser"></FullViewLoading>
+
+    <!-- Force load, because in mobile view this is not pre load -->
+    <v-img
+      :src="require('@/assets/logo.png')"
+      alt="Logo"
+      style="display: none"
+    />
   </v-app>
 </template>
 
@@ -60,6 +67,8 @@ import type { Route } from "vue-router";
 
 import { authApi } from "@/api/auth";
 import FullViewLoading from "@/components/FullViewLoading.vue";
+import { mapActions } from "vuex";
+import { FETCH_PEOPLE } from "@/store";
 
 export default Vue.extend({
   components: {
@@ -82,6 +91,7 @@ export default Vue.extend({
     selectedItem: 0,
   }),
   methods: {
+    ...mapActions([FETCH_PEOPLE]),
     setSelectedItem(index: number) {
       this.selectedItem = index;
     },
@@ -109,6 +119,8 @@ export default Vue.extend({
 
     this.isLoadingUser = false;
     this.updateSelectedItemFromRoute(this.$route);
+
+    this[FETCH_PEOPLE]();
   },
 });
 </script>

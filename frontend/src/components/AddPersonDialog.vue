@@ -6,6 +6,7 @@
     :buttons="buttons"
     maxWidth="600px"
     :beforeShowAgain="resetForm"
+    :isLoading="isLoading"
   >
     <template v-slot:activator="{ on, attrs }">
       <slot name="activator" v-bind:on="on" v-bind:attrs="attrs"></slot>
@@ -78,6 +79,9 @@ import { type CustomDialogButtonProp, DateFormat } from "./types";
 import DateInputGroup from "./input/DateInputGroup.vue";
 import PersonInputGroup from "./input/PersonInputGroup.vue";
 import AvatarInput from "./input/AvatarInput.vue";
+import { personApi } from "@/api/person";
+import { mapActions } from "vuex";
+import { FETCH_PEOPLE } from "@/store";
 
 export default Vue.extend({
   components: {
@@ -88,16 +92,20 @@ export default Vue.extend({
   },
   data() {
     return {
-      dialog: true,
+      dialog: false,
+      isLoading: false,
       LifeStatus,
       Gender,
 
       avartarSrc: null,
       callname: "",
       gender: Gender.MALE,
-      birthdayDataObj: ["", DateFormat.dmy],
+      birthdayDataObj: ["", DateFormat.dmy] as [date: string, type: DateFormat],
       status: "null",
-      deathdayDataObj: ["", DateFormat.dmyAL],
+      deathdayDataObj: ["", DateFormat.dmyAL] as [
+        date: string,
+        type: DateFormat
+      ],
       fatherId: null,
       motherId: null,
       spouseId: null,
@@ -120,16 +128,26 @@ export default Vue.extend({
   },
   watch: {
     fatherId(v) {
-      window.l(v);
+      if (v == this.spouseId) {
+        this.spouseId = null;
+      }
     },
     motherId(v) {
-      window.l(v);
+      if (v == this.spouseId) {
+        this.spouseId = null;
+      }
     },
-    avartarSrc(v) {
-      window.l(v);
+    spouseId(v) {
+      if (v == this.fatherId) {
+        this.fatherId = null;
+      }
+      if (v == this.motherId) {
+        this.motherId = null;
+      }
     },
   },
   methods: {
+    ...mapActions([FETCH_PEOPLE]),
     resetForm() {
       this.avartarSrc = null;
       this.callname = "";
@@ -143,11 +161,39 @@ export default Vue.extend({
 
       (this.$refs.form as any)?.resetValidation?.();
     },
-    save(closeDialog: () => void) {
+    async save(closeDialog: () => void) {
       const valid = (this.$refs?.form as any)?.validate?.();
-      if (valid) {
-        closeDialog();
+      if (!valid) return;
+
+      function handleDateInputValue([date, type]: [
+        date: string,
+        type: DateFormat
+      ]) {
+        if (date == "") return null;
+        return date + (type == DateFormat.dmyAL ? "AL" : "");
       }
+
+      this.isLoading = true;
+
+      await personApi.createPerson({
+        person: {
+          avatarUrl: this.avartarSrc,
+          callname: this.callname,
+          gender: this.gender,
+          birthday: handleDateInputValue(this.birthdayDataObj),
+          status: this.status == "null" ? null : (this.status as LifeStatus),
+          deathday: handleDateInputValue(this.deathdayDataObj),
+          fatherId: this.fatherId,
+          motherId: this.motherId,
+          spouseId: this.spouseId,
+        },
+      });
+
+      await this[FETCH_PEOPLE]();
+
+      this.isLoading = false;
+
+      closeDialog();
     },
   },
 });

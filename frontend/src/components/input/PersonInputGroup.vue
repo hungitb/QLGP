@@ -3,12 +3,12 @@
     <v-autocomplete
       :label="label"
       outlined
-      :loading="isLoadingPeopleList"
       :items="peopleList"
       item-text="callname"
       item-value="id"
       :multiple="!one"
       v-model="selectedPersonIds"
+      :loading="$store.state.isLoadingPeople"
       chips
     >
       <template v-slot:selection="{ selected, attrs, item }">
@@ -37,10 +37,9 @@
 </template>
 
 <script lang="ts">
-import Vue, { PropType } from "vue";
+import Vue from "vue";
 
 import CustomPersonAvatar from "../CustomPersonAvatar.vue";
-import { personApi } from "@/api/person";
 import { Gender, Person } from "../../../../general/model/Person";
 
 export default Vue.extend({
@@ -49,6 +48,7 @@ export default Vue.extend({
   },
   props: {
     value: {
+      // type: Object as () => string[] | string | null,
       required: true,
     },
     label: {
@@ -68,38 +68,10 @@ export default Vue.extend({
       default: false,
     },
   },
-  data() {
-    return {
-      isLoadingPeopleList: true,
-      peopleList: [],
-    };
-  },
   computed: {
-    selectedPersonIds: {
-      get() {
-        return (this as any).value;
-      },
-      set(value) {
-        (this as any).$emit("input", value);
-      },
-    },
-  },
-  methods: {
-    remove(item: Person) {
-      if (this.one) {
-        this.selectedPersonIds = null;
-        return;
-      }
-      this.selectedPersonIds = this.selectedPersonIds.filter(
-        (v: string) => v != item.id
-      );
-    },
-  },
-  mounted() {
-    personApi.getAllPeopleBaseInfo().then(({ data, status }) => {
-      (this as any).isLoadingPeopleList = false;
-
-      (this as any).peopleList = data.people?.filter?.((p) => {
+    peopleList() {
+      const people = this.$store.state.people as Person[];
+      return people.filter?.((p) => {
         if (this.male) {
           return p.gender == Gender.MALE;
         }
@@ -108,7 +80,28 @@ export default Vue.extend({
         }
         return true;
       });
-    });
+    },
+    selectedPersonIds: {
+      get() {
+        return (this as any).value;
+      },
+      set(value: any) {
+        (this as any).$emit("input", value);
+      },
+    } as unknown as () => string[] | string | null,
+  },
+  methods: {
+    remove(item: Person) {
+      if (this.one) {
+        this.selectedPersonIds = null;
+        return;
+      }
+      if (this.selectedPersonIds && Array.isArray(this.selectedPersonIds)) {
+        this.selectedPersonIds = this.selectedPersonIds.filter(
+          (v: string) => v != item.id
+        );
+      }
+    },
   },
 });
 </script>

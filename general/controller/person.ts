@@ -1,3 +1,5 @@
+import { v4 as uuid } from "uuid";
+
 import { compareTwoDateString, normalDateToLunarDate } from "../utils/DateUtils";
 import { isStringPureInterger } from "../utils/ValidationUtils";
 import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR } from "./utils";
@@ -12,62 +14,81 @@ export type ExtendedPerson = Person & {
     }[];
 };
 
+export type CreatePersonParams = {
+    person: Omit<Person, "id" | "ownerUserId" | "isStandForUser">;
+    role?: {
+        roleName: string;
+        roleWithTargetPersonId: string;
+    };
+};
+
+export function filterPeople(people: Person[], search: string, searchFieldsAsString?: string) {
+    if (search.trim() == "") {
+        return people;
+    }
+
+    search = search.trim().toLowerCase();
+    while (search.includes("  ")) {
+        search = search.replace("  ", " ");
+    }
+    search = search.split(" ").map(s => {
+        // Số nguyên bắt đầu bằng số 0 thì bỏ số 0
+        if (isStringPureInterger(s, 2) && s != "0") {
+            while (s.startsWith("0")) s = s.slice(1);
+        }
+
+        // Support search ngày tháng
+        if (s.split("/").length <= 3 && s.split("/").every((p, index) => {
+            if (isStringPureInterger(p, 1)) return true;
+            if (p == "" && index == s.split("/").length - 1) { // Kết thúc bằng "/" có thể người dùng chưa nhập xong: VD: "09/09/"
+                return true;
+            }
+            return false;
+        })) {
+            s = s.split("/").map(p => {
+                if (p == "" || p == "0") return "";
+                return parseInt(p).toString();
+            })
+            .join("/")
+        }
+
+        return s;
+    })
+    .join(" ");
+
+    const allFields = !searchFieldsAsString;
+    const searchFields = searchFieldsAsString ? searchFieldsAsString.split(",") : [];
+
+    people = people.filter(person => {
+        let matched = false;
+        (allFields ? Object.keys(person) : searchFields).forEach(field => {
+            if (matched) return;
+            if (["id", "ownerUserId", "isStandForUser", "avatarUrl", "spouseId", "fatherId", "motherId"].includes(field)) return;
+            let val = person[field as keyof Person];
+            if (!val) return;
+
+            if (field == "deathday" && normalDateToLunarDate(val as string)) {
+                val += " " + normalDateToLunarDate(val as string) as string;
+            }
+
+            val = val.toString().toLowerCase();
+            if (val.includes(search)) {
+                matched = true
+            }
+        })
+        return matched;
+    });
+
+    return people;
+}
+
 export default function getPersonController(personDAO: IDAO<Person>) {
     async function getAllPeopleBaseInfo(data: PaginateParams, loggedInUser: User | null): Promise<CHR<{ people: Person[]; total: number }>> {
         if (!loggedInUser) return CommonResponse[401];
 
         let people = await personDAO.findAll({ where: { ownerUserId: loggedInUser.userId } });
-        if (data.search && data.search.trim() != "") {
-            let search = data.search.trim().toLowerCase();
-            while (search.includes("  ")) {
-                search = search.replace("  ", " ");
-            }
-            search = search.split(" ").map(s => {
-                // Số nguyên bắt đầu bằng số 0 thì bỏ số 0
-                if (isStringPureInterger(s, 2) && s != "0") {
-                    while (s.startsWith("0")) s = s.slice(1);
-                }
-
-                // Support search ngày tháng
-                if (s.split("/").length <= 3 && s.split("/").every((p, index) => {
-                    if (isStringPureInterger(p, 1)) return true;
-                    if (p == "" && index == s.split("/").length - 1) { // Kết thúc bằng "/" có thể người dùng chưa nhập xong: VD: "09/09/"
-                        return true;
-                    }
-                    return false;
-                })) {
-                    s = s.split("/").map(p => {
-                        if (p == "" || p == "0") return "";
-                        return parseInt(p).toString();
-                    })
-                    .join("/")
-                }
-
-                return s;
-            })
-            .join(" ");
-            const allFields = !data.searchFields;
-            const searchFields = data.searchFields ? data.searchFields.split(",") : [];
-
-            people = people.filter(person => {
-                let matched = false;
-                (allFields ? Object.keys(person) : searchFields).forEach(field => {
-                    if (matched) return;
-                    if (["id", "ownerUserId", "isStandForUser", "avatarUrl", "spouseId", "fatherId", "motherId"].includes(field)) return;
-                    let val = person[field as keyof Person];
-                    if (!val) return;
-
-                    if (field == "deathday" && normalDateToLunarDate(val as string)) {
-                        val += " " + normalDateToLunarDate(val as string) as string;
-                    }
-
-                    val = val.toString().toLowerCase();
-                    if (val.includes(search)) {
-                        matched = true
-                    }
-                })
-            return matched;
-            })
+        if (data.search) {
+            people = filterPeople(people, data.search, data.searchFields);
         }
         let compare: undefined | ((v1: any, v2: any, k1: Person, k2: Person) => number) = undefined;
 
@@ -190,8 +211,76 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         }
     }
 
+    async function createPerson(data: CreatePersonParams, loggedInUser: User | null): Promise<CHR<{ createdPersonId: string }>> {
+        if (!loggedInUser) {
+            return CommonResponse[400];
+        }
+        // to do: Check params
+
+        const newPerson: Person = {
+            id: uuid(),
+            ownerUserId: loggedInUser.userId,
+            isStandForUser: false,
+            ...data.person,
+        }
+
+        await personDAO.create(newPerson);
+
+        if (data.role) {
+            const { roleName, roleWithTargetPersonId } = data.role;
+            if (roleName == "father") {
+                await personDAO.update({ fatherId: newPerson.id }, { where: { id: roleWithTargetPersonId } });
+            }
+            else if (roleName == "mother") {
+                await personDAO.update({ motherId: newPerson.id }, { where: { id: roleWithTargetPersonId } });
+            }
+        }
+
+        // Đảm bảo 1 người chỉ có 1 vợ/chồng
+        if (newPerson.spouseId) {
+            const spouse = await personDAO.findByPk(newPerson.spouseId);
+            if (spouse && spouse.spouseId) {
+                await personDAO.update({ spouseId: null }, { where: { id: spouse.spouseId } });
+            }
+        }
+
+        // to do: Create FieldVal with for all people FieldDef
+
+        return {
+            data: {
+                createdPersonId: newPerson.id,
+            },
+            status: 200,
+        }
+    }
+
+    async function deletePerson({ id }: { id: string }, loggedInUser: User | null): Promise<CHR<{ msg: string }>> {
+        if (!loggedInUser) {
+            return CommonResponse[401];
+        }
+
+        const person = await personDAO.findByPk(id);
+        if (!person || person.ownerUserId != loggedInUser.userId || person.isStandForUser) {
+            return CommonResponse[400];
+        }
+
+        await Promise.all([
+            personDAO.update({ fatherId: null }, { where: { fatherId: id } }),
+            personDAO.update({ motherId: null }, { where: { motherId: id } }),
+            personDAO.update({ spouseId: null }, { where: { spouseId: id } }),
+        ]);
+
+        await personDAO.destroy({ where: { id } });
+
+        // to do: FieldVal & FieldDef
+
+        return CommonResponse.OK;
+    }
+
     return {
         getAllPeopleBaseInfo,
-        getFamilyTreeInfo
+        getFamilyTreeInfo,
+        createPerson,
+        deletePerson
     };
 }

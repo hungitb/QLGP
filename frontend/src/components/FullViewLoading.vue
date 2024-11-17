@@ -28,7 +28,7 @@ export default Vue.extend({
           right: 0,
           bottom: 0,
           zIndex: 10,
-          ...(this.tbb ? { backgroundColor: "rgba(0, 0, 0, 0.4)" } : {}),
+          backgroundColor: this.tbb ? "rgba(0, 0, 0, 0.4)" : "white",
         };
       }
       return {

@@ -1,3 +1,4 @@
+import { Person } from "../model/Person";
 
 export type ControllerHandlerResult<K extends object> = {
     data: {

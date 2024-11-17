@@ -4,16 +4,15 @@
     class="d-flex justify-center align-center"
     ref="container"
   >
-    <Viewer ref="viewer">
+    <Viewer ref="viewer" v-if="ancestor">
       <FamilyCard
-        v-if="ancestor"
         ref="familyCard"
         :person="ancestor"
         :peopleInfo="peopleInfo"
         :config="config"
       />
-      <FullViewLoading v-else />
     </Viewer>
+    <FullViewLoading :floating="false" v-else />
   </div>
 </template>
 
@@ -65,10 +64,6 @@ export default Vue.extend({
     },
   },
   mounted() {
-    this.resizeViewer();
-    setTimeout(this.resizeViewer, 100);
-    this.interval = setInterval(this.resizeViewer, 2000);
-
     personApi.getFamilyTreeInfo({ level: 3 }).then(async ({ data }) => {
       if (data.ancestor && data.people) {
         this.ancestor = data.ancestor;
@@ -78,7 +73,14 @@ export default Vue.extend({
 
         await nextTick();
 
+        this.resizeViewer();
+        setTimeout(this.resizeViewer, 100);
+        this.interval = setInterval(this.resizeViewer, 2000);
+
         const familyCard = this.$refs.familyCard as any;
+        if (!familyCard) {
+          return;
+        }
         const [targetElement] = familyCard.findCardElementByPersonId(
           data.targetPersonId
         );
