@@ -4,9 +4,7 @@
     buttonText
     :divider="false"
     :header="header"
-    :buttons="[
-      { text: confirmText, color: confirmColor, click: confirmAction },
-    ]"
+    :buttons="[{ text: confirmText, color: confirmColor, click }]"
     maxWidth="360px"
     :persistent="false"
     :contentPadiingTop="false"
@@ -46,14 +44,17 @@ export default Vue.extend({
       type: String,
       default: undefined,
     },
-    confirmAction: {
+    callbackBeforeClose: {
       type: Function,
-      required: true,
     },
-    isLoading: {
-      type: Boolean,
-      default: false,
+    callbackAfterClose: {
+      type: Function,
     },
+  },
+  data() {
+    return {
+      isLoading: false,
+    };
   },
   computed: {
     dialog: {
@@ -64,6 +65,19 @@ export default Vue.extend({
         (this as any).$emit("input", newValue);
       },
     } as unknown as () => boolean,
+  },
+  methods: {
+    async click() {
+      if (this.callbackBeforeClose) {
+        this.isLoading = true;
+        await this.callbackBeforeClose();
+        this.isLoading = false;
+      }
+      this.dialog = false;
+      if (this.callbackAfterClose) {
+        this.callbackAfterClose();
+      }
+    },
   },
 });
 </script>

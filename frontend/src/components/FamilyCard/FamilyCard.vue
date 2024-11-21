@@ -11,9 +11,10 @@
     <div class="parent">
       <PersonCard
         :person="person"
-        :peopleInfo="peopleInfo"
-        :layout="config.layout"
+        :config="config"
         :ref="mappingPersonIdToRef[person.id]"
+        :viewer="viewer"
+        @addPersonRelationShipDone="handlePersonAddRelationship"
       />
       <template v-if="drawSpouse">
         <div
@@ -23,9 +24,10 @@
         <PersonCard
           v-if="person.spouseId"
           :ref="mappingPersonIdToRef[person.spouseId + sffrmfsi]"
-          :person="peopleInfo[person.spouseId]"
-          :peopleInfo="peopleInfo"
-          :layout="config.layout"
+          :person="$store.state.personMapping[person.spouseId]"
+          :config="config"
+          :viewer="viewer"
+          @addPersonRelationShipDone="handlePersonAddRelationship"
         />
 
         <template
@@ -38,9 +40,10 @@
           <PersonCard
             :key="mappingPersonIdToRef[spouseId + sffrmfsi]"
             :ref="mappingPersonIdToRef[spouseId + sffrmfsi]"
-            :person="peopleInfo[spouseId]"
-            :peopleInfo="peopleInfo"
-            :layout="config.layout"
+            :person="$store.state.personMapping[spouseId]"
+            :config="config"
+            :viewer="viewer"
+            @addPersonRelationShipDone="handlePersonAddRelationship"
           />
         </template>
       </template>
@@ -51,13 +54,14 @@
         :key="mappingPersonIdToRef[child.id]"
         :ref="mappingPersonIdToRef[child.id]"
         :person="child"
-        :peopleInfo="peopleInfo"
         :config="config"
+        :viewer="viewer"
         :_distanceWithHorizontalLineAbove="
           mappingChildIdToDistanceBetweenChildCardWithHorizentalLineAbove[
             child.id
           ]
         "
+        @addPersonRelationShipDone="handlePersonAddRelationship"
       />
     </div>
   </div>
@@ -67,10 +71,10 @@
 import Vue from "vue";
 import $ from "jquery";
 
-import { type ExtendedPerson } from "../../../general/controller/person";
+import { type ExtendedPerson } from "../../../../general/controller/person";
 import PersonCard from "./PersonCard.vue";
-import { Person, Gender } from "../../../general/model/Person";
-import { type FamilyCardConfig } from "./types";
+import { Gender } from "../../../../general/model/Person";
+import { type FamilyCardConfig } from "../types";
 
 let currentNumber = 0;
 function getUniqueID() {
@@ -85,6 +89,10 @@ function getUniqueID() {
  * + Ông A, không có vợ, có con C với bà B và ông này cưới luôn cả con C
  */
 const sufixForRefMappingForSpouseId = "_as_spouse";
+/**
+ * Chiều rộng đường kẻ nối các card
+ */
+const lineWidth = 8;
 
 export default Vue.extend({
   name: "FamilyCard",
@@ -96,13 +104,12 @@ export default Vue.extend({
       type: Object as () => ExtendedPerson,
       required: true,
     },
-    peopleInfo: {
-      type: Object as () => Record<string, Person>,
-      required: true,
-    },
     config: {
       type: Object as () => FamilyCardConfig,
       required: true,
+    },
+    viewer: {
+      type: Object,
     },
     // Khoảng cách với đường kẻ ngang ở trên, đường kẻ ngang nối các con khác có chung spouse phụ với person chính hiện tại
     // Thông thường đường kẻ ngang này sẽ cách verticalDistance/2 nhưng nó có thể bị giảm khi thế hệ bên trên có nhiều cụm spouse
@@ -113,71 +120,29 @@ export default Vue.extend({
     },
   },
   data() {
-    const mappingPersonIdToRef: Record<string, string> = {};
-    const mappingChildIdToDistanceBetweenChildCardWithHorizentalLineAbove: Record<
-      string,
-      number
-    > = {};
-    const allChildren: ExtendedPerson[] = [];
-    const childrenNotKnowSpouse: ExtendedPerson[] = [];
-    const childrenHasSpouseSameCurrSpouse: ExtendedPerson[] = [];
-    const groupChildrenHasSpouseDiffFromSpouse: Record<
-      string,
-      ExtendedPerson[]
-    > = {};
-
-    mappingPersonIdToRef[this.person.id] = getUniqueID();
-    if (this.person.spouseId)
-      mappingPersonIdToRef[
-        this.person.spouseId + sufixForRefMappingForSpouseId
-      ] = getUniqueID();
-
-    this.person.children.forEach(({ child, spouseId }) => {
-      mappingPersonIdToRef[child.id] = getUniqueID();
-      mappingChildIdToDistanceBetweenChildCardWithHorizentalLineAbove[
-        child.id
-      ] = -1;
-
-      if (spouseId) {
-        mappingPersonIdToRef[spouseId + sufixForRefMappingForSpouseId] =
-          getUniqueID();
-        if (spouseId == this.person.spouseId) {
-          childrenHasSpouseSameCurrSpouse.push(child);
-        } else {
-          if (groupChildrenHasSpouseDiffFromSpouse[spouseId]) {
-            groupChildrenHasSpouseDiffFromSpouse[spouseId].push(child);
-          } else {
-            groupChildrenHasSpouseDiffFromSpouse[spouseId] = [child];
-          }
-        }
-      } else {
-        childrenNotKnowSpouse.push(child);
-      }
-    });
-
-    for (const children of [
-      childrenNotKnowSpouse,
-      childrenHasSpouseSameCurrSpouse,
-      ...Object.values(groupChildrenHasSpouseDiffFromSpouse),
-    ]) {
-      children.forEach((child) => allChildren.push(child));
-    }
     return {
       Gender,
       sffrmfsi: sufixForRefMappingForSpouseId,
       drawSpouse:
         (this.config.level == 2 && this.person.gender == Gender.MALE) ||
         this.config.level >= 3,
-      allChildren,
-      childrenNotKnowSpouse,
-      childrenHasSpouseSameCurrSpouse,
-      groupChildrenHasSpouseDiffFromSpouse,
-      mappingPersonIdToRef,
-      mappingChildIdToDistanceBetweenChildCardWithHorizentalLineAbove,
+      allChildren: [] as ExtendedPerson[],
+      childrenNotKnowSpouse: [] as ExtendedPerson[],
+      childrenHasSpouseSameCurrSpouse: [] as ExtendedPerson[],
+      groupChildrenHasSpouseDiffFromSpouse: {} as Record<
+        string,
+        ExtendedPerson[]
+      >,
+      mappingPersonIdToRef: {} as Record<string, string>,
+      mappingChildIdToDistanceBetweenChildCardWithHorizentalLineAbove:
+        {} as Record<string, number>,
       lines: [] as JQuery<HTMLElement>[], /* eslint-disable-line */ // @ts-ignore
     };
   },
   methods: {
+    handlePersonAddRelationship(payload: any) {
+      this.$emit("addPersonRelationShipDone", payload);
+    },
     drawLines() {
       if (
         (!this.drawSpouse || !this.person.spouseId) &&
@@ -197,7 +162,6 @@ export default Vue.extend({
         padding1 = false,
         padding2 = false
       ) => {
-        const lineWidth = 8;
         let lineHeight = Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
         const lineBackground = "black";
 
@@ -319,8 +283,10 @@ export default Vue.extend({
             const horiLineFromLeftToRight = x < x2;
             let reduceYLevel = 0;
             if (
-              (horiLineFromLeftToRight && x <= lastHorizontalRange[1]) ||
-              (!horiLineFromLeftToRight && x2 <= lastHorizontalRange[1])
+              (horiLineFromLeftToRight &&
+                x <= lastHorizontalRange[1] + lineWidth) ||
+              (!horiLineFromLeftToRight &&
+                x2 <= lastHorizontalRange[1] + lineWidth)
             ) {
               reduceYLevel =
                 lastHorizontalRange[2] + (horiLineFromLeftToRight ? 1 : -1);
@@ -520,6 +486,69 @@ export default Vue.extend({
         );
       });
     },
+    removeLines() {
+      this.lines.forEach((line) => line.remove());
+    },
+    transformData() {
+      const mappingPersonIdToRef: Record<string, string> = {};
+      const mappingChildIdToDistanceBetweenChildCardWithHorizentalLineAbove: Record<
+        string,
+        number
+      > = {};
+      const allChildren: ExtendedPerson[] = [];
+      const childrenNotKnowSpouse: ExtendedPerson[] = [];
+      const childrenHasSpouseSameCurrSpouse: ExtendedPerson[] = [];
+      const groupChildrenHasSpouseDiffFromSpouse: Record<
+        string,
+        ExtendedPerson[]
+      > = {};
+
+      mappingPersonIdToRef[this.person.id] = getUniqueID();
+      if (this.person.spouseId)
+        mappingPersonIdToRef[
+          this.person.spouseId + sufixForRefMappingForSpouseId
+        ] = getUniqueID();
+
+      this.person.children.forEach(({ child, spouseId }) => {
+        mappingPersonIdToRef[child.id] = getUniqueID();
+        mappingChildIdToDistanceBetweenChildCardWithHorizentalLineAbove[
+          child.id
+        ] = -1;
+
+        if (spouseId) {
+          mappingPersonIdToRef[spouseId + sufixForRefMappingForSpouseId] =
+            getUniqueID();
+          if (spouseId == this.person.spouseId) {
+            childrenHasSpouseSameCurrSpouse.push(child);
+          } else {
+            if (groupChildrenHasSpouseDiffFromSpouse[spouseId]) {
+              groupChildrenHasSpouseDiffFromSpouse[spouseId].push(child);
+            } else {
+              groupChildrenHasSpouseDiffFromSpouse[spouseId] = [child];
+            }
+          }
+        } else {
+          childrenNotKnowSpouse.push(child);
+        }
+      });
+
+      for (const children of [
+        childrenNotKnowSpouse,
+        childrenHasSpouseSameCurrSpouse,
+        ...Object.values(groupChildrenHasSpouseDiffFromSpouse),
+      ]) {
+        children.forEach((child) => allChildren.push(child));
+      }
+
+      this.allChildren = allChildren;
+      this.childrenNotKnowSpouse = childrenNotKnowSpouse;
+      this.childrenHasSpouseSameCurrSpouse = childrenHasSpouseSameCurrSpouse;
+      this.groupChildrenHasSpouseDiffFromSpouse =
+        groupChildrenHasSpouseDiffFromSpouse;
+      this.mappingPersonIdToRef = mappingPersonIdToRef;
+      this.mappingChildIdToDistanceBetweenChildCardWithHorizentalLineAbove =
+        mappingChildIdToDistanceBetweenChildCardWithHorizentalLineAbove;
+    },
     /**
      * Tìm HTML Elemnt Card của personId.
      * Có thể sẽ có nhiều card hợp lệ do 1 người có thể xuất hiện nhiều lần.
@@ -532,7 +561,7 @@ export default Vue.extend({
         return [
           (this.$refs as any)[this.mappingPersonIdToRef[personId]]
             .$el as HTMLElement,
-          true,
+          false,
         ];
       }
 
@@ -550,18 +579,16 @@ export default Vue.extend({
           asSpouse: boolean
         ] = childCardComponent.findCardElementByPersonId(personId);
         if (element) {
-          if (asSpouse) {
-            return [element, true];
+          if (!asSpouse) {
+            return [element, false];
           }
 
-          if (!element) {
-            foundElement = element;
-          }
+          foundElement = element;
         }
       }
 
       if (foundElement) {
-        return [foundElement, false];
+        return [foundElement, true];
       }
 
       for (const spouseId of [
@@ -569,11 +596,16 @@ export default Vue.extend({
         ...Object.keys(this.groupChildrenHasSpouseDiffFromSpouse),
       ]) {
         if (spouseId == personId) {
-          return [
-            (this.$refs as any)[this.mappingPersonIdToRef[personId]]
-              .$el as HTMLElement,
-            true,
+          let spouseCardComponent = (this.$refs as any)[
+            this.mappingPersonIdToRef[personId + sufixForRefMappingForSpouseId]
           ];
+          if (Array.isArray(spouseCardComponent))
+            spouseCardComponent = spouseCardComponent[0];
+          // Có thể sẽ null do điều kiện vẽ, ví dụ khi level quá bé.
+          // Cái mappingPersonIdToRef chỉ là tính trước thôi chứ có thể sẽ có person không vẽ
+          if (spouseCardComponent) {
+            return [spouseCardComponent.$el as HTMLElement, true];
+          }
         }
       }
 
@@ -582,10 +614,12 @@ export default Vue.extend({
   },
   watch: {
     _distanceWithHorizontalLineAbove() {
-      window.l("DRAWED");
-      this.lines.forEach((line) => line.remove());
+      this.removeLines();
       this.drawLines();
     },
+  },
+  created() {
+    this.transformData();
   },
   mounted() {
     this.drawLines();

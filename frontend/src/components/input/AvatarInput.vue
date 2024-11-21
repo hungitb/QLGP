@@ -22,6 +22,7 @@
           v-if="!imgSrc"
           outlined
           color="primary"
+          :disabled="disabled"
           @click="triggerFileInput"
         >
           <v-icon left>mdi-file-image-plus-outline</v-icon>
@@ -52,6 +53,10 @@ export default Vue.extend({
     },
     person: {
       required: true,
+    },
+    disabled: {
+      type: Boolean,
+      default: false,
     },
   },
   computed: {

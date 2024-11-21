@@ -2,13 +2,9 @@
   <v-container>
     <div>
       <div class="py-2">
-        <AddPersonDialog>
-          <template v-slot:activator="{ attrs, on }">
-            <v-btn v-bind:attrs="attrs" v-on="on">
-              <v-icon left>mdi-account-plus</v-icon> Thêm người thân
-            </v-btn>
-          </template>
-        </AddPersonDialog>
+        <v-btn @click="showDialogAddOrCreatePerson">
+          <v-icon left>mdi-account-plus</v-icon> Thêm người thân
+        </v-btn>
       </div>
     </div>
     <v-card>
@@ -80,6 +76,10 @@
         </template>
 
         <template v-slot:item.actions="{ item }">
+          <v-icon small class="mr-2" @click.stop="editPerson(item)">
+            mdi-pencil
+          </v-icon>
+
           <v-icon
             v-if="!item.isStandForUser"
             color="error"
@@ -90,18 +90,6 @@
           </v-icon>
         </template>
       </v-data-table>
-
-      <!-- Dialog confirm delete person -->
-      <DialogConfirm
-        v-model="dialogDelete"
-        :header="`Bạn có chắc chắn muốn xóa ${editedPerson?.callname} không?`"
-        info="Nếu xóa người này, mối quan hệ của những người liên quan với người này
-        sẽ bị xóa"
-        confirmText="Xóa"
-        confirmColor="error"
-        :confirmAction="deletePersonConfirmed"
-        :isLoading="isDialogDeleteLoading"
-      />
     </v-card>
   </v-container>
 </template>
@@ -114,28 +102,24 @@ import {
   compareTwoDateString,
   transformDateString,
 } from "../../../general/utils/DateUtils";
-import AddPersonDialog from "@/components/AddPersonDialog.vue";
 import CustomPersonAvatar from "@/components/CustomPersonAvatar.vue";
 import { filterPeople } from "../../../general/controller/person";
-import DialogConfirm from "@/components/DialogConfirm.vue";
 import { personApi } from "@/api/person";
 import { mapActions } from "vuex";
 import { FETCH_PEOPLE } from "@/store";
+import {
+  showDialogAddOrCreatePerson,
+  showDialogConfirm,
+} from "./Utilities.vue";
 
 export default Vue.extend({
   components: {
-    AddPersonDialog,
     CustomPersonAvatar,
-    DialogConfirm,
   },
   data: function () {
     return {
       Gender,
       LifeStatus,
-
-      dialogDelete: false,
-      isDialogDeleteLoading: false,
-      editedPerson: null as Person | null,
 
       search: "",
       page: 1,
@@ -181,8 +165,9 @@ export default Vue.extend({
     },
   },
   methods: {
-    ...mapActions([FETCH_PEOPLE]),
+    showDialogAddOrCreatePerson,
     transformDateString,
+    ...mapActions([FETCH_PEOPLE]),
     sortPeople(people: Person[], sortBy: string[], sortDesc: boolean[]) {
       let compare: (v1: any, v2: any, k1: Person, k2: Person) => number = (
         a: any,
@@ -235,25 +220,23 @@ export default Vue.extend({
       return indices.map((i) => people[i]);
     },
     deletePerson(person: Person) {
-      this.editedPerson = person;
-      this.dialogDelete = true;
-    },
-    deletePersonConfirmed() {
-      if (!this.editedPerson) {
-        this.dialogDelete = false;
-        return;
-      }
-
-      this.isDialogDeleteLoading = true;
-      personApi
-        .deletePerson({ id: this.editedPerson?.id })
-        .then(() => {
+      const onConfirmed = async () => {
+        await personApi.deletePerson({ id: person.id }).then(() => {
           this[FETCH_PEOPLE]();
-        })
-        .finally(() => {
-          this.dialogDelete = false;
-          this.isDialogDeleteLoading = false;
         });
+      };
+      showDialogConfirm({
+        onConfirmed,
+        header: `Bạn có chắc chắn muốn xóa ${person.callname} không?`,
+        info: "Nếu xóa người này, mối quan hệ của những người liên quan với người này sẽ bị xóa",
+        confirmText: "Xóa",
+        confirmColor: "error",
+      });
+    },
+    editPerson(person: Person) {
+      showDialogAddOrCreatePerson({
+        person,
+      });
     },
   },
 });

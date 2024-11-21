@@ -24,14 +24,14 @@ export const personApi = {
       await getLoggedInUserLocalStorage()
     );
   },
-  async getFamilyTreeInfo(data: { targetPersonId?: string; level: number }) {
+  async getFamilyTreeInfo(data: { subjectId?: string; level: number }) {
     if (useBackend) {
       // to do
     }
 
     return await personController.getFamilyTreeInfo(
       stringifyValuesOfObject(data) as {
-        targetPersonId?: string;
+        subjectId?: string;
         level: string;
       },
       await getLoggedInUserLocalStorage()
@@ -53,6 +53,16 @@ export const personApi = {
     }
 
     return await personController.deletePerson(
+      data,
+      await getLoggedInUserLocalStorage()
+    );
+  },
+  async updatePerson(data: Partial<Person> & { id: string }) {
+    if (useBackend) {
+      // to do
+    }
+
+    return await personController.updatePerson(
       data,
       await getLoggedInUserLocalStorage()
     );

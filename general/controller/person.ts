@@ -121,17 +121,16 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         };
     }
 
-    async function getFamilyTreeInfo({ targetPersonId, level }: { targetPersonId?: string, level: string }, loggedInUser: User | null): Promise<CHR<{
+    async function getFamilyTreeInfo({ subjectId, level }: { subjectId?: string, level: string }, loggedInUser: User | null): Promise<CHR<{
         ancestor: ExtendedPerson,
-        targetPersonId: string,
-        people: Person[]
+        subjectId: string,
     }>> {
         const levelInt = parseInt(level);
         if (!loggedInUser || isNaN(levelInt)) return CommonResponse[401];
-        if (!targetPersonId) {
+        if (!subjectId) {
             const personStandForUser = await personDAO.findOne({ where: { ownerUserId: loggedInUser.userId, isStandForUser: true } });
             if (!personStandForUser) return CommonResponse[400];
-            targetPersonId = personStandForUser.id;
+            subjectId = personStandForUser.id;
         }
 
         const people = await personDAO.findAll({ where: { ownerUserId: loggedInUser.userId } });
@@ -147,6 +146,13 @@ export default function getPersonController(personDAO: IDAO<Person>) {
             });
             childrenIdsOf[person.id] = [];
         });
+
+        const getPersonById = (id: string) => {
+            const person = mapIdToPerson[id];
+            // Make copy
+            return Object.assign({}, person, { children: [] }) as ExtendedPerson;
+        }
+
         people.forEach(person => {
             if (person.motherId) {
                 motherIdOf[person.id] = person.motherId;
@@ -158,16 +164,16 @@ export default function getPersonController(personDAO: IDAO<Person>) {
             }
         });
 
-        let ancestor = mapIdToPerson[targetPersonId];
+        let ancestor = getPersonById(subjectId);
         const consideredAncestorIds = new Set([ancestor.id]);
         const femaleIdsAllowedGetChildren = new Set<string>();
 
         while(true) {
             if (ancestor.fatherId && (!consideredAncestorIds.has(ancestor.fatherId))) {
-                ancestor = mapIdToPerson[ancestor.fatherId];
+                ancestor = getPersonById(ancestor.fatherId);
             }
             else if (levelInt > 2 && ancestor.motherId && (!consideredAncestorIds.has(ancestor.motherId))) {
-                ancestor = mapIdToPerson[ancestor.motherId];
+                ancestor = getPersonById(ancestor.motherId);
                 femaleIdsAllowedGetChildren.add(ancestor.id);
             }
             else {
@@ -177,35 +183,38 @@ export default function getPersonController(personDAO: IDAO<Person>) {
             consideredAncestorIds.add(ancestor.id);
         }
 
-        const travelsaledPersonIds = new Set([ancestor.id]);
-        const queue = [ancestor];
-        while (queue.length != 0) {
-            const person = queue.pop();
-            if (!person) continue; // By pass typescript error
+        // Travelsal and update children of person
+        function travesal(person: ExtendedPerson, path?: Set<string>) {
+            if (!path) path = new Set([person.id]);
+            else path.add(person.id);
 
             if (person.gender == Gender.MALE || levelInt > 2) {
                 childrenIdsOf[person.id].forEach(childId => {
-                    if (!travelsaledPersonIds.has(childId)) {
-                        travelsaledPersonIds.add(childId);
+                    if (!path) {
+                        return; // By pass typescript error
+                    }
+                    if (!path.has(childId)) {
 
-                        const child = mapIdToPerson[childId];
+                        const child = getPersonById(childId);
+                        travesal(child, path);
 
                         person.children.push({
                             child,
                             spouseId: person.id == child.fatherId ? child.motherId : child.fatherId,
-                        })
-
-                        queue.push(child);
+                        });
                     }
                 })
             }
+
+            path.delete(person.id);
         }
+
+        travesal(ancestor);
 
         return {
             data: {
                 ancestor,
-                targetPersonId,
-                people
+                subjectId
             },
             status: 200,
         }
@@ -236,7 +245,7 @@ export default function getPersonController(personDAO: IDAO<Person>) {
             }
         }
 
-        // Đảm bảo 1 người chỉ có 1 vợ/chồng
+        // Đảm bảo 1 người chỉ có 1 bạn đời
         if (newPerson.spouseId) {
             const spouse = await personDAO.findByPk(newPerson.spouseId);
             if (spouse && spouse.spouseId) {
@@ -277,10 +286,58 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         return CommonResponse.OK;
     }
 
+    async function updatePerson(data: Partial<Person> & { id: string }, loggedInUser: User | null): Promise<CHR<{ msg: string }>> {
+        if (!loggedInUser) return CommonResponse[401];
+
+        // to do: Validate data
+
+        const person = await personDAO.findByPk(data.id);
+        if (!person) return CommonResponse[400];
+
+        await Promise.all(Object.entries(data).map(async ([field, value]) => {
+            if (field == "gender" && value != person.gender) {
+                await Promise.all([
+                    personDAO.update({ fatherId: null }, { where: { fatherId: person.id } }),
+                    personDAO.update({ motherId: null }, { where: { motherId: person.id } }),
+                ]);
+            }
+            else if (field == "spouseId" && value != person.spouseId) {
+                // Ban đầu có spouse
+                if (person.spouseId) {
+                    await personDAO.update({ spouseId: null }, { where: { id: person.spouseId } });
+                }
+
+                // Update to certain value
+                if (value) {
+                    const newSpouse = await personDAO.findByPk(value as string);
+                    if (newSpouse) {
+                        if (newSpouse.spouseId) {
+                            await personDAO.update({ spouseId: null }, { where: { id: newSpouse.spouseId } });
+                        }
+                        await personDAO.update({ spouseId: person.id }, { where: { id: newSpouse.id } });
+                    }
+                }
+            }
+            else if (field == "status") {
+                if (value != LifeStatus.DEAD) {
+                    data.deathday = null;
+                }
+            }
+            else if (field == "deathday" && value) {
+                data.status = LifeStatus.DEAD;
+            }
+        }));
+
+        await personDAO.update(data, { where: { id: person.id } });
+
+        return CommonResponse.OK;
+    }
+
     return {
         getAllPeopleBaseInfo,
         getFamilyTreeInfo,
         createPerson,
-        deletePerson
+        deletePerson,
+        updatePerson
     };
 }

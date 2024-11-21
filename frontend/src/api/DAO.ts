@@ -43,7 +43,7 @@ function createDAO(
   }
 
   function createPromiseResolve(data?: any) {
-    const DELAY = 1000;
+    const DELAY = 100;
 
     if (DELAY < 1) {
       return Promise.resolve(data);
@@ -136,7 +136,7 @@ function createDAO(
 function generateFakeData() {
   if (!GENERATE_FAKE_DATA) return [];
 
-  const NUM_PEOPLE = 100;
+  const NUM_PEOPLE = 10;
   const MALE_RATE = 0.6;
   const DEATH_RATE = 0.4;
 
@@ -241,16 +241,18 @@ function generateFakeData() {
             (random() > 0.2 ? "AL" : "")
         : null;
 
+    const gender = random() < MALE_RATE ? Gender.MALE : Gender.FEMALE;
+
     fakePeople.push({
       id: randomId(),
       ownerUserId: fakseUserId,
       isStandForUser: false,
       callname: [
         sampleOne(["Nguyễn", "Lê", "Đinh", "Phạm"]),
-        sampleOne(["Văn", "Thị"]),
+        gender == Gender.MALE ? "Văn" : "Thị",
         sampleOne("ABCDEFGHIKLMNOPQRSTWZYJ".split("")),
       ].join(" "),
-      gender: random() < MALE_RATE ? Gender.MALE : Gender.FEMALE,
+      gender,
       birthday,
       deathday,
       status,
@@ -263,11 +265,15 @@ function generateFakeData() {
     const personMapping: Record<string, Person> = {};
     fakePeople.forEach((person) => (personMapping[person.id] = person));
 
-    for (let i = 0; i < Math.round((NUM_PEOPLE * NUM_PEOPLE) / 8); i++) {
+    for (let i = 0; i < Math.round(NUM_PEOPLE ** 2); i++) {
       const hasRelationship = (p1: Person, p2: Person) => {
         if (
-          [p1.spouseId, p1.fatherId, p1.motherId].some((id) => id == p2.id) ||
-          [p2.spouseId, p2.fatherId, p2.motherId].some((id) => id == p1.id)
+          [p1.id, p1.spouseId, p1.fatherId, p1.motherId].some(
+            (id) => id == p2.id
+          ) ||
+          [p2.id, p2.spouseId, p2.fatherId, p2.motherId].some(
+            (id) => id == p1.id
+          )
         ) {
           return false;
         }
@@ -276,7 +282,7 @@ function generateFakeData() {
       const [p1, p2] = sample(fakePeople, 2);
       if (hasRelationship(p1, p2)) continue;
 
-      if (p1.gender != p2.gender && random() < 0.4) {
+      if (random() < 0.2) {
         // 1 người chỉ có 1 vợ 1 chồng, vậy nên nếu cập nhật đôi này thì phải cập nhật tất cả những người liên quan
         [p1, p2].forEach((p) => {
           const pSpouse = p.spouseId ? personMapping[p.spouseId] : null;
@@ -325,3 +331,10 @@ export const fieldValDAO: IDAO<FieldVal> = createDAO(
   "id",
   fakeFieldVals
 ) as unknown as IDAO<FieldVal>;
+
+if (process.env.NODE_ENV == "development") {
+  (window as any).userDAO = userDAO;
+  (window as any).personDAO = personDAO;
+  (window as any).fieldDefDAO = fieldDefDAO;
+  (window as any).fieldValDAO = fieldValDAO;
+}

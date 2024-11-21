@@ -1,3 +1,5 @@
+import { DateFormat } from "./components/types";
+
 export function checkIfIsMobile() {
   let isMobile = false;
   (function (a) {
@@ -13,4 +15,32 @@ export function checkIfIsMobile() {
   })(navigator.userAgent || navigator.vendor || (window as any).opera);
 
   return isMobile;
+}
+
+export function handleDateInputValue([date, type]: [
+  date: string,
+  type: DateFormat
+]) {
+  if (date == "") return null;
+  return date + (type == DateFormat.dmyAL ? "AL" : "");
+}
+
+export function convertToDateInputValue(
+  s: string | null,
+  defaultDateType: DateFormat
+): [date: string, type: DateFormat] {
+  if (!s) return ["", defaultDateType];
+
+  if (s.endsWith("AL")) {
+    return [s.replace("AL", ""), DateFormat.dmyAL];
+  }
+
+  const numParts = s.split("/").length;
+  if (numParts == 1) {
+    return [s, DateFormat.y];
+  }
+  if (numParts == 2) {
+    return [s, DateFormat.my];
+  }
+  return [s, DateFormat.dmy];
 }

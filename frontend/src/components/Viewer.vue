@@ -71,6 +71,15 @@ const ViewerPC = Vue.extend({
           clientX: 0,
           clientY: 0,
         } as Point,
+        // Để kiểm tra click event
+        firstPanningStart: {
+          clientX: 0,
+          clientY: 0,
+        } as Point,
+        panningEnd: {
+          clientX: 0,
+          clientY: 0,
+        } as Point,
       },
     };
   },
@@ -115,6 +124,17 @@ const ViewerPC = Vue.extend({
       this.state.scale = newScale;
 
       this.render();
+    },
+    isClickEvent() {
+      const delta = 1;
+      return (
+        Math.abs(
+          this.state.firstPanningStart.clientX - this.state.panningEnd.clientX
+        ) < delta &&
+        Math.abs(
+          this.state.firstPanningStart.clientY - this.state.panningEnd.clientY
+        ) < delta
+      );
     },
     focusElement(element: HTMLElement, speed?: number) {
       // to do: Check if viewer conatins element, if not then return.
@@ -183,11 +203,21 @@ const ViewerPC = Vue.extend({
         clientX: event.clientX,
         clientY: event.clientY,
       };
+
+      this.state.firstPanningStart = {
+        clientX: event.clientX,
+        clientY: event.clientY,
+      };
     },
     onMouseup(event: MouseEvent) {
       event.preventDefault();
 
       this.state.panning = false;
+
+      this.state.panningEnd = {
+        clientX: event.clientX,
+        clientY: event.clientY,
+      };
     },
     onMousemove(event: MouseEvent) {
       event.preventDefault();
@@ -287,6 +317,10 @@ const ViewerMobile = Vue.extend({
           (pivot.clientY - this.viewerBCR.y);
         this.state.scale = newScale;
       }
+    },
+    isClickEvent() {
+      // Trên điện thoại sẽ luôn click được
+      return true;
     },
     async focusElement(element: HTMLElement, speed?: number) {
       // to do: Check if viewer conatins element, if not then return.

@@ -13,7 +13,9 @@
     <v-card style="position: relative">
       <v-card-title>
         <!-- Mặc định do vuetify set word-break=break-all làm cho chữ bị gãy khi xuống dòng nên pahri set lại -->
-        <span class="text-h5" style="word-break: unset">{{ header }}</span>
+        <span class="text-h5" style="word-break: initial">
+          <slot name="header">{{ header }}</slot>
+        </span>
       </v-card-title>
       <v-divider v-if="divider"></v-divider>
       <v-card-text ref="cardText">
@@ -36,7 +38,7 @@
           :key="text"
           :text="buttonText || undefined"
           :color="color || 'blue'"
-          @click.stop="click(closeDialog)"
+          @click.stop="click"
           >{{ text }}</v-btn
         >
         <v-btn
@@ -79,7 +81,7 @@ export default Vue.extend({
     },
     header: {
       type: String,
-      required: true,
+      default: "",
     },
     persistent: {
       type: Boolean,
@@ -101,7 +103,7 @@ export default Vue.extend({
     maxWidth: {
       type: String,
     },
-    beforeShowAgain: {
+    beforeClose: {
       type: Function,
       required: false,
     },
@@ -129,17 +131,20 @@ export default Vue.extend({
         return (this as any).value;
       },
       set(newValue: any) {
-        if (newValue) {
-          (this as any).beforeShowAgain?.();
-        }
-        setTimeout(() => ((this as any).$refs.cardText.scrollTop = 0), 300);
         (this as any).$emit("input", newValue);
       },
     } as unknown as () => boolean,
   },
-  methods: {
-    closeDialog() {
-      (this as any).dialog = false;
+  watch: {
+    value(newValue) {
+      if (!newValue) {
+        setTimeout(() => {
+          if ((this as any).$refs.cardText) {
+            (this as any).$refs.cardText.scrollTop = 0;
+          }
+          (this as any).beforeClose?.();
+        }, 300);
+      }
     },
   },
 });

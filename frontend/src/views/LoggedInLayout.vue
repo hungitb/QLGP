@@ -58,6 +58,9 @@
       alt="Logo"
       style="display: none"
     />
+
+    <!-- Import Utilities so that it is useable -->
+    <Utilities />
   </v-app>
 </template>
 
@@ -68,11 +71,13 @@ import type { Route } from "vue-router";
 import { authApi } from "@/api/auth";
 import FullViewLoading from "@/components/FullViewLoading.vue";
 import { mapActions } from "vuex";
-import { FETCH_PEOPLE } from "@/store";
+import { CLEAR_STORE, FETCH_PEOPLE } from "@/store";
+import Utilities from "./Utilities.vue";
 
 export default Vue.extend({
   components: {
     FullViewLoading,
+    Utilities,
   },
   data: () => ({
     isLoading: false,
@@ -91,10 +96,7 @@ export default Vue.extend({
     selectedItem: 0,
   }),
   methods: {
-    ...mapActions([FETCH_PEOPLE]),
-    setSelectedItem(index: number) {
-      this.selectedItem = index;
-    },
+    ...mapActions([FETCH_PEOPLE, CLEAR_STORE]),
     updateSelectedItemFromRoute(route: Route) {
       const matchingIndex = this.items.findIndex(
         (item) => item.link === route.path
@@ -104,6 +106,7 @@ export default Vue.extend({
     async logout() {
       this.isLoading = true;
       await authApi.logout();
+      this[CLEAR_STORE]();
       this.$router.push("/auth/login");
     },
   },

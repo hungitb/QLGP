@@ -117,8 +117,6 @@ export default Vue.extend({
         [DateFormat.dmyAL]: { isLunarDate: true },
       };
 
-      window.l(this.content, this.dataType);
-
       let validationMessage: string | null = null;
       if (this.required && this.content == "") {
         validationMessage = "Không được để trống";
