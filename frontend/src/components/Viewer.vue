@@ -9,8 +9,10 @@
 </template>
 
 <script lang="ts">
-import { checkIfIsMobile } from "@/utils";
 import Vue from "vue";
+import $ from "jquery";
+
+import { checkIfIsMobile } from "@/utils";
 
 const FPS = 120;
 
@@ -50,6 +52,15 @@ function processScale(scale: number) {
   else if (scale < 0.005) return 0.005;
   else if (scale > 10) return 10;
   return scale;
+}
+
+function processDuration(duration: number) {
+  if (duration < 1000) {
+    duration = 1000 * Math.pow(duration / 1000, 1 / 6);
+  }
+  duration = 1000 * Math.pow(duration / 1000, 1 / 2);
+
+  return duration;
 }
 
 const ViewerPC = Vue.extend({
@@ -154,38 +165,38 @@ const ViewerPC = Vue.extend({
         elementBCR.y -
         elementBCR.height / 2;
 
+      if (!this.wrapperElement) {
+        return Promise.resolve();
+      }
+
       if (!speed || (deltaX < 1 && deltaY < 1)) {
         this.moveRelative(deltaX, deltaY);
         return Promise.resolve();
       }
 
       const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
-      const time = distance / speed;
-      const numTimeMoves = time * FPS;
-
-      let totalMoveX = 0;
-      let totalMoveY = 0;
+      const duration = processDuration(distance / speed);
 
       return new Promise<void>((resolve) => {
-        const move = (index = 0) => {
-          if (index >= numTimeMoves) {
-            // Tổng move có thể bị lệch
-            this.moveRelative(deltaX - totalMoveX, deltaY - totalMoveY);
-            resolve();
-            return;
+        $({
+          translateX: this.state.translateX,
+          translateY: this.state.translateY,
+        }).animate(
+          {
+            translateX: this.state.translateX + deltaX,
+            translateY: this.state.translateY + deltaY,
+          },
+          {
+            duration,
+            step: (now, fx) => {
+              this.state[fx.prop as "translateX" | "translateY"] = now as never;
+              this.render();
+            },
+            done: () => {
+              resolve();
+            },
           }
-          const moveX = deltaX / numTimeMoves;
-          const moveY = deltaY / numTimeMoves;
-
-          totalMoveX += moveX;
-          totalMoveY += moveY;
-
-          this.moveRelative(moveX, moveY);
-          setTimeout(() => {
-            move(index + 1);
-          }, 1000 / FPS);
-        };
-        move();
+        );
       });
     },
     onWheel(event: WheelEvent) {
@@ -354,48 +365,38 @@ const ViewerMobile = Vue.extend({
         elementBCR.y -
         elementBCR.height / 2;
 
-      if (!speed) {
+      if (!speed || (deltaX < 1 && deltaY < 1)) {
         this.viewerElement.scrollLeft -= deltaX;
         this.viewerElement.scrollTop -= deltaY;
         return;
       }
 
       const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
-      const time = distance / speed;
-      const numTimeMoves = Math.ceil(time * FPS);
-
-      // Scroll hay bị làm tròn nên làm sẽ khác PC 1 tí
-      const targetScrollLeft = this.viewerElement.scrollLeft - deltaX;
-      const targetScrollTop = this.viewerElement.scrollTop - deltaY;
+      let duration = processDuration(distance / speed);
 
       await new Promise<void>((resolve) => {
-        const move = (index = 0) => {
-          if (!this.viewerElement) {
-            // Check viewer element to by pass typescript check
-            resolve();
-            return;
+        if (!this.viewerElement) return; // By pass typescript
+
+        $({
+          scrollLeft: this.viewerElement.scrollLeft,
+          scrollTop: this.viewerElement.scrollTop,
+        }).animate(
+          {
+            scrollLeft: this.viewerElement.scrollLeft - deltaX,
+            scrollTop: this.viewerElement.scrollTop - deltaY,
+          },
+          {
+            duration,
+            step: (now, fx) => {
+              if (this.viewerElement) {
+                this.viewerElement[fx.prop as "scrollLeft" | "scrollTop"] = now;
+              }
+            },
+            done: () => {
+              resolve();
+            },
           }
-          if (index >= numTimeMoves) {
-            this.viewerElement.scrollLeft = targetScrollLeft;
-            this.viewerElement.scrollTop = targetScrollTop;
-            resolve();
-            return;
-          }
-
-          const numTimeMovesRemaining = numTimeMoves - index;
-
-          this.viewerElement.scrollLeft +=
-            (targetScrollLeft - this.viewerElement.scrollLeft) /
-            numTimeMovesRemaining;
-          this.viewerElement.scrollTop +=
-            (targetScrollTop - this.viewerElement.scrollTop) /
-            numTimeMovesRemaining;
-
-          setTimeout(() => {
-            move(index + 1);
-          }, 1000 / FPS);
-        };
-        move();
+        );
       });
 
       return;

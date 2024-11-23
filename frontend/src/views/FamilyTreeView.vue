@@ -352,7 +352,7 @@ export default Vue.extend({
         }
       });
     },
-    async focusSubject(speed = 5000) {
+    async focusSubject(speed = 8) {
       const familyCard = this.$refs.familyCard as any;
       if (!familyCard) {
         return;
