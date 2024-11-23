@@ -3,6 +3,7 @@
     :size="size"
     :color="person.gender != Gender.MALE ? 'pink' : 'primary'"
     :left="left"
+    :tile="tile"
   >
     <v-img
       v-if="person.avatarUrl"
@@ -55,6 +56,10 @@ export default Vue.extend({
       default: null,
     },
     left: {
+      type: Boolean as PropType<boolean | undefined>,
+      default: undefined,
+    },
+    tile: {
       type: Boolean as PropType<boolean | undefined>,
       default: undefined,
     },

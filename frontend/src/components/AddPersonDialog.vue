@@ -190,10 +190,9 @@ export default defineComponent({
   },
   watch: {
     person() {
-      window.l(1);
       this.loadPersonProp();
     },
-    initData(v1, v2) {
+    initData() {
       this.resetForm();
     },
     status(val) {

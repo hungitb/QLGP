@@ -154,7 +154,7 @@ const ViewerPC = Vue.extend({
         elementBCR.y -
         elementBCR.height / 2;
 
-      if (!speed) {
+      if (!speed || (deltaX < 1 && deltaY < 1)) {
         this.moveRelative(deltaX, deltaY);
         return Promise.resolve();
       }
@@ -163,13 +163,24 @@ const ViewerPC = Vue.extend({
       const time = distance / speed;
       const numTimeMoves = time * FPS;
 
+      let totalMoveX = 0;
+      let totalMoveY = 0;
+
       return new Promise<void>((resolve) => {
         const move = (index = 0) => {
           if (index >= numTimeMoves) {
+            // Tổng move có thể bị lệch
+            this.moveRelative(deltaX - totalMoveX, deltaY - totalMoveY);
             resolve();
             return;
           }
-          this.moveRelative(deltaX / numTimeMoves, deltaY / numTimeMoves);
+          const moveX = deltaX / numTimeMoves;
+          const moveY = deltaY / numTimeMoves;
+
+          totalMoveX += moveX;
+          totalMoveY += moveY;
+
+          this.moveRelative(moveX, moveY);
           setTimeout(() => {
             move(index + 1);
           }, 1000 / FPS);
@@ -389,12 +400,6 @@ const ViewerMobile = Vue.extend({
 
       return;
     },
-    onClick(event: MouseEvent) {
-      this.scale((window as any).a ? 1 / 1.1 : 1.1, {
-        clientX: event.clientX,
-        clientY: event.clientY,
-      });
-    },
     refreshBCROfElements() {
       if (this.viewerElement) {
         assignDOMRect(
@@ -421,8 +426,6 @@ const ViewerMobile = Vue.extend({
     this.viewerElement = (this.$refs as any).viewer as HTMLElement;
     this.contentElement = (this.$refs as any).content as HTMLElement;
     this.wrapperElement = (this.$refs as any).wrapper as HTMLElement;
-
-    this.contentElement.addEventListener("click", this.onClick);
 
     let numTimeTries = 0;
     const setContentElementSize = () => {
@@ -452,11 +455,16 @@ const ViewerMobile = Vue.extend({
     this.interval = setInterval(this.refreshBCROfElements, 1000);
   },
   beforeDestroy() {
-    if (this.contentElement) {
-      this.contentElement.removeEventListener("click", this.onClick);
-    }
-
     clearInterval(this.interval);
+  },
+  updated() {
+    // Có thể content resize nên viewer phải resize theo
+    if (!this.wrapperElement || !this.contentElement) return;
+    const wrapperBCR = this.wrapperElement.getBoundingClientRect();
+    Object.assign(this.contentElement.style, {
+      height: wrapperBCR.height + "px",
+      width: wrapperBCR.width + "px",
+    });
   },
 });
 

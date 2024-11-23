@@ -68,19 +68,14 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
+import Vue, { nextTick } from "vue";
 import $ from "jquery";
 
 import { type ExtendedPerson } from "../../../../general/controller/person";
 import PersonCard from "./PersonCard.vue";
 import { Gender } from "../../../../general/model/Person";
 import { type FamilyCardConfig } from "../types";
-
-let currentNumber = 0;
-function getUniqueID() {
-  currentNumber++;
-  return "fm" + currentNumber;
-}
+import { getUniqueID } from "@/utils";
 
 /**
  * Do sử dụng person id để tính ref, nhưng có thể có 1 người vừa xuất hiện ở hàng cha mẹ, vừa xuất hiện ở hàng con.
@@ -92,7 +87,7 @@ const sufixForRefMappingForSpouseId = "_as_spouse";
 /**
  * Chiều rộng đường kẻ nối các card
  */
-const lineWidth = 8;
+const lineWidth = 4;
 
 export default Vue.extend({
   name: "FamilyCard",
@@ -144,6 +139,8 @@ export default Vue.extend({
       this.$emit("addPersonRelationShipDone", payload);
     },
     drawLines() {
+      // Thuật toán drawLines này hình như bị ảnh hưởng gì đó bởi viewer, ví dụ như trên viewer pc nếu translate của slot khác nhau sẽ
+      // làm cho việc vẽ bị lệch chẳng hạn. Hiện tại trên tab family tree sẽ dùng cách recreate viewer nên tạm chưa cần sửa, nếu có cơ hội hãy fix.
       if (
         (!this.drawSpouse || !this.person.spouseId) &&
         this.allChildren.length == 0

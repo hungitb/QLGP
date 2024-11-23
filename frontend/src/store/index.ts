@@ -9,6 +9,7 @@ Vue.use(Vuex);
 const SET_PEOPLE = "SET_PEOPLE";
 const SET_PERSON_MAPPING = "SET_PERSON_MAPPING";
 const SET_IS_LOADING_PEOPLE = "SET_IS_LOADING_PEOPLE";
+const SET_PERSON_STAND_FOR_USER = "SET_PERSON_STAND_FOR_USER";
 const CLEAR_ALL_STATE_DATA = "CLEAR_ALL_STATE_DATA";
 
 export const FETCH_PEOPLE = "FETCH_PEOPLE";
@@ -19,6 +20,7 @@ function getDefaultState() {
     isLoadingPeople: false,
     people: [] as Person[],
     personMapping: {} as Record<string, Person>,
+    personStandForUser: null as Person | null,
   };
 }
 
@@ -35,6 +37,9 @@ export default new Vuex.Store({
     [SET_PERSON_MAPPING](state, { personMapping }) {
       state.personMapping = personMapping;
     },
+    [SET_PERSON_STAND_FOR_USER](state, { personStandForUser }) {
+      state.personStandForUser = personStandForUser;
+    },
     [CLEAR_ALL_STATE_DATA](state) {
       Object.assign(state, getDefaultState());
     },
@@ -46,12 +51,18 @@ export default new Vuex.Store({
         const { data } = await personApi.getAllPeopleBaseInfo();
         if (data.people) {
           const personMapping: Record<string, Person> = {};
+          let personStandForUser = null;
+
           data.people.forEach((person) => {
             personMapping[person.id] = person;
+            if (person.isStandForUser) {
+              personStandForUser = person;
+            }
           });
 
           context.commit(SET_PEOPLE, { people: data.people });
           context.commit(SET_PERSON_MAPPING, { personMapping });
+          context.commit(SET_PERSON_STAND_FOR_USER, { personStandForUser });
         }
       } finally {
         context.commit(SET_IS_LOADING_PEOPLE, { isLoadingPeople: false });

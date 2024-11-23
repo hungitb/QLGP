@@ -44,3 +44,9 @@ export function convertToDateInputValue(
   }
   return [s, DateFormat.dmy];
 }
+
+let currentNumber = 0;
+export function getUniqueID() {
+  currentNumber++;
+  return "fm" + currentNumber;
+}

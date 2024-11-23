@@ -6,7 +6,7 @@
     color="primary"
     @click="$emit('click', $event)"
   >
-    <v-icon left dark> mdi-account-plus </v-icon>
+    <v-icon left dark v-if="icon"> {{ icon }} </v-icon>
     <slot></slot>
   </v-btn>
 </template>
@@ -14,5 +14,12 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 
-export default defineComponent({});
+export default defineComponent({
+  props: {
+    icon: {
+      type: String,
+      default: "mdi-account-plus",
+    },
+  },
+});
 </script>
