@@ -5,13 +5,33 @@ import { isStringPureInterger } from "./ValidationUtils";
 const lunarDateYearRangeSupported = [1802, 2198];
 
 // Xử lý trường hợp nếu 0 <= year <= 99 thì sẽ bị coi như là 1900 + year
-function createProperlyDateObject(year: number, monthIndex: number, day: number) {
-    const dateObj = new Date(year, monthIndex, day);
+function createProperlyDateObject(year: number, monthIndex?: number, day?: number) {
+    const dateObj = new Date(year, monthIndex || 0, day || 1);
     if (0 <= year && year <= 99) {
         dateObj.setFullYear(year);
     }
     
     return dateObj;
+}
+
+export function createProperlyDateObjectFromAnyMyDateFormat(date: string) {
+    const returValueIfDateInvalid = new Date();
+
+    if (date.endsWith("AL")) {
+        const normalDate = lunarDateToNormalDate(date);
+        if (!normalDate) return returValueIfDateInvalid;
+
+        date = normalDate;
+    }
+
+    const parts = date.split("/").map(p => parseInt(p));
+    if (parts.length == 1) {
+        return createProperlyDateObject(parts[0]);
+    }
+    else if (parts.length == 2) {
+        return createProperlyDateObject(parts[1], parts[0] - 1);
+    }
+    return createProperlyDateObject(parts[2], parts[1] - 1, parts[0]);
 }
 
 function isInvalidForm(s: string, { isMissingDay = false, isMissingMonth = false, strictYearPadding = true } = {}) {
@@ -188,7 +208,7 @@ export function transformDateString(date: string, {
     if (!showNormalDate) return lunarDate + " AL";
     if (!showLunarDate) return normalDate as string;
 
-    return `${normalDate} (${lunarDate} AL)`
+    return `${normalDate} (${lunarDate} AL)`;
 }
 
 export function compareTwoDateString(d1: string | null, d2: string | null, desc = false) {

@@ -43,9 +43,9 @@ function createDAO(
   }
 
   function createPromiseResolve(data?: any) {
-    const DELAY = 100;
+    const DELAY = 1000;
 
-    if (DELAY < 1) {
+    if (DELAY < 1 || process.env.NODE_ENV != "development") {
       return Promise.resolve(data);
     }
 
@@ -68,7 +68,13 @@ function createDAO(
     );
   };
 
-  const findAll = ({ where }: { where: Record<string, any> }) => {
+  const findAll = (param?: { where: Record<string, any> }) => {
+    if (!param) {
+      return makeCopy(rows);
+    }
+
+    const { where } = param;
+
     return createPromiseResolve(
       makeCopy(
         rows.filter((row) =>
@@ -213,7 +219,7 @@ function generateFakeData() {
     const year = randInt(1800, 2100);
 
     const birthday =
-      random() < 0.1
+      random() > 0.1
         ? (random() < 0.3
             ? [year]
             : random() < 0.5

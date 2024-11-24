@@ -1,6 +1,6 @@
 import { v4 as uuid } from "uuid";
 
-import { compareTwoDateString, normalDateToLunarDate } from "../utils/DateUtils";
+import { compareTwoDateString, createProperlyDateObjectFromAnyMyDateFormat, lunarDateToNormalDate, normalDateToLunarDate } from "../utils/DateUtils";
 import { isStringPureInterger } from "../utils/ValidationUtils";
 import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR } from "./utils";
 import { LifeStatus, Gender, type Person } from "../model/Person";
@@ -333,11 +333,129 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         return CommonResponse.OK;
     }
 
+    async function statistic(data: any, loggedInUser: User | null): Promise<CHR<{
+        status: {
+            [LifeStatus.ALIVE]: number,
+            [LifeStatus.DEAD]: number,
+            unknown: number
+        },
+        gender: {
+            [Gender.MALE]: number,
+            [Gender.FEMALE]: number,
+        },
+        agesOfLiving: { [age: string]: number },
+        agesOfDeceased: { [age: string]: number },
+        birthMonths: { [month: string]: number },
+        deathMonths: { [month: string]: number },
+        birthYears: { [month: string]: number },
+        deathYears: { [month: string]: number },
+    }>> {
+        if (!loggedInUser) return CommonResponse[401];
+
+        const status = {
+            [LifeStatus.ALIVE]: 0,
+            [LifeStatus.DEAD]: 0,
+            unknown: 0
+        };
+        const gender = {
+            [Gender.MALE]: 0,
+            [Gender.FEMALE]: 0,
+        }
+        const agesOfLiving: { [age: string]: number } = {};
+        const agesOfDeceased: { [age: string]: number } = {};
+        const birthMonths : { [month: string]: number } = {};
+        const deathMonths : { [month: string]: number } = {};
+        const birthYears : { [month: string]: number } = {};
+        const deathYears : { [month: string]: number } = {};
+
+        const people = await personDAO.findAll();
+        const tempDate = new Date();
+        const today = new Date(tempDate.getTime() + (tempDate.getTimezoneOffset()*60000) + 3600000*7); // Convert to UTC+7
+        const [nd, nm, ny] = [today.getDate(), today.getMonth() + 1, today.getFullYear()];
+
+        const increaseKeyValue = (obj: Record<string, number>, key: string | number) => {
+            if (!obj[key]) {
+                obj[key] = 1;
+            } else {
+                obj[key]++;
+            }
+        }
+
+        function extractNormalDayMonthYear(date: string): [day: number, month: number, year: number] {
+            if (date.endsWith("AL")) {
+                date = date.replace("AL", "");
+                const temp = lunarDateToNormalDate(date);
+                if (!temp) return [1, 1, 10e10];
+                date = temp;
+            }
+            const parts = date.split("/").map(p => parseInt(p));
+            if (parts.length == 1) {
+                return [1, 1, parts[0]];
+            }
+            else if (parts.length == 2) {
+                return [1, parts[0], parts[1]];
+            }
+            return [parts[0], parts[1], parts[2]];
+        }
+
+        const checkIfMissingMonth = (date: string) => date.split("/").length == 1;
+
+        people.forEach(person => {
+            status[person.status || "unknown"] += 1;
+            gender[person.gender] += 1;
+
+            if (person.status == LifeStatus.ALIVE) {
+                if (person.birthday) {
+                    const [d, m, y] = extractNormalDayMonthYear(person.birthday);
+                    let age = ny - y;
+                    if (nm > m || (nm == m && nd >= d)) {
+                        age += 1;
+                    }
+                    if (age < 0) age = 0;
+                    increaseKeyValue(agesOfLiving, age);
+                    increaseKeyValue(birthYears, y);
+                    if (!checkIfMissingMonth(person.birthday)) {
+                        increaseKeyValue(birthMonths, m);
+                    }
+                }
+            }
+            else if (person.status == LifeStatus.DEAD) {
+                if (person.deathday) {
+                    const [d, m, y] = extractNormalDayMonthYear(person.deathday);
+
+                    if (person.birthday) {
+                        const [bd, bm, by] = extractNormalDayMonthYear(person.birthday);
+                        let age = y - by;
+                        if (m > bm || (m == bm && d >= bd)) {
+                            age += 1;
+                        }
+                        if (age < 0) age = 0;
+                        increaseKeyValue(agesOfDeceased, age);
+                    }
+
+                    increaseKeyValue(deathYears, y);
+                    if (!checkIfMissingMonth(person.deathday)) {
+                        increaseKeyValue(deathMonths, m);
+                    }
+                }
+            }
+        });
+
+        return {
+            data: {
+                status, gender, agesOfLiving, agesOfDeceased,
+                birthMonths, birthYears, deathMonths, deathYears
+            },
+            status: 200,
+        };
+    }
+
     return {
         getAllPeopleBaseInfo,
         getFamilyTreeInfo,
         createPerson,
         deletePerson,
-        updatePerson
+        updatePerson,
+        statistic
     };
 }

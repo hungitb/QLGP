@@ -67,4 +67,14 @@ export const personApi = {
       await getLoggedInUserLocalStorage()
     );
   },
+  async statistic() {
+    if (useBackend) {
+      // to do
+    }
+
+    return await personController.statistic(
+      {},
+      await getLoggedInUserLocalStorage()
+    );
+  },
 };
