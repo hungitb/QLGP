@@ -47,13 +47,21 @@
           }}</span>
         </template>
 
-        <template
-          v-slot:item.birthday="{ value }"
-          v-if="!peopleTableInMobileLayout"
-        >
-          <span style="display: inline-block; text-align: end; width: 80px">{{
-            value
-          }}</span>
+        <template v-slot:item.birthday="{ item }">
+          <span
+            v-if="item.birthday"
+            :style="
+              peopleTableInMobileLayout
+                ? {}
+                : { display: 'inline-block', textAlign: 'end', width: '80px' }
+            "
+          >
+            {{
+              transformDateString(item.birthday, {
+                showLunarDate: false,
+              })
+            }}
+          </span>
         </template>
 
         <template v-slot:item.status_deathday="{ item }">
