@@ -27,7 +27,7 @@ export default function getAuthController(userDAO: IDAO<User>) {
             sessionToken: user.sessionToken,
             sessionExpiry: user.sessionExpiry
         }, {
-            where: { userId: user.userId }
+            where: { id: user.id }
         })
 
         return {
@@ -47,7 +47,7 @@ export default function getAuthController(userDAO: IDAO<User>) {
         }
 
         const newUser: User = {
-            userId: uuidv4(),
+            id: uuidv4(),
             username,
             password,
             sessionExpiry: null,
@@ -68,7 +68,7 @@ export default function getAuthController(userDAO: IDAO<User>) {
             sessionExpiry: null,
             sessionToken: null
         },
-        { where: { userId: loggedInUser.userId } })
+        { where: { id: loggedInUser.id } })
 
         return CommonResponse.OK;
     }

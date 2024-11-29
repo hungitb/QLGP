@@ -7,7 +7,7 @@
     :buttons="[{ text: confirmText, color: confirmColor, click }]"
     maxWidth="360px"
     :persistent="false"
-    :contentPadiingTop="false"
+    :contentPaddingTop="false"
     :isLoading="isLoading"
   >
     {{ info }}

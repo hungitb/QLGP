@@ -8,10 +8,6 @@
     :beforeClose="resetForm"
     :isLoading="isLoading"
   >
-    <template v-slot:activator="{ on, attrs }">
-      <slot name="activator" v-bind:on="on" v-bind:attrs="attrs"></slot>
-    </template>
-
     <v-form ref="form">
       <v-row>
         <v-col cols="12">
@@ -45,9 +41,9 @@
         <v-col cols="12">
           <DateInputGroup
             label="Ngày sinh"
-            v-model="birthdayDataObj"
+            v-model="birthdateDataObj"
             ref="di1"
-            :disabled="isConstant('birthday')"
+            :disabled="isConstant('birthdate')"
           />
         </v-col>
         <v-col cols="12">
@@ -62,8 +58,8 @@
         <v-col cols="12">
           <DateInputGroup
             label="Ngày mất"
-            v-model="deathdayDataObj"
-            :disabled="status != LifeStatus.DEAD || isConstant('deathday')"
+            v-model="deathdateDataObj"
+            :disabled="status != LifeStatus.DEAD || isConstant('deathdate')"
             ref="di2"
           />
         </v-col>
@@ -154,9 +150,12 @@ export default defineComponent({
       avartarSrc: null as string | null,
       callname: "",
       gender: Gender.MALE,
-      birthdayDataObj: ["", DateFormat.dmy] as [date: string, type: DateFormat],
+      birthdateDataObj: ["", DateFormat.dmy] as [
+        date: string,
+        type: DateFormat
+      ],
       status: "null" as LifeStatus | "null",
-      deathdayDataObj: ["", DateFormat.dmyAL] as [
+      deathdateDataObj: ["", DateFormat.dmyAL] as [
         date: string,
         type: DateFormat
       ],
@@ -197,7 +196,7 @@ export default defineComponent({
     },
     status(val) {
       if (val != LifeStatus.DEAD) {
-        this.deathdayDataObj = ["", DateFormat.dmyAL];
+        this.deathdateDataObj = ["", DateFormat.dmyAL];
       }
     },
     fatherId(v) {
@@ -228,13 +227,13 @@ export default defineComponent({
       if (person) {
         this.callname = person.callname;
         this.gender = person.gender;
-        this.birthdayDataObj = convertToDateInputValue(
-          person.birthday,
+        this.birthdateDataObj = convertToDateInputValue(
+          person.birthdate,
           DateFormat.dmy
         );
         this.status = person.status || "null";
-        this.deathdayDataObj = convertToDateInputValue(
-          person.deathday,
+        this.deathdateDataObj = convertToDateInputValue(
+          person.deathdate,
           DateFormat.dmyAL
         );
         this.fatherId = person.fatherId;
@@ -249,14 +248,14 @@ export default defineComponent({
         : null;
       this.callname = this.isConstant("callname") ? initData.callname : "";
       this.gender = this.isConstant("gender") ? initData.gender : Gender.MALE;
-      this.birthdayDataObj = this.isConstant("birthday")
-        ? convertToDateInputValue(initData.birthday, DateFormat.dmy)
+      this.birthdateDataObj = this.isConstant("birthdate")
+        ? convertToDateInputValue(initData.birthdate, DateFormat.dmy)
         : ["", DateFormat.dmy];
       this.status = this.isConstant("status")
         ? initData.status || "null"
         : "null";
-      this.deathdayDataObj = this.isConstant("deathday")
-        ? convertToDateInputValue(initData.deathday, DateFormat.dmyAL)
+      this.deathdateDataObj = this.isConstant("deathdate")
+        ? convertToDateInputValue(initData.deathdate, DateFormat.dmyAL)
         : ["", DateFormat.dmyAL];
       this.fatherId = this.isConstant("fatherId") ? initData.fatherId : null;
       this.motherId = this.isConstant("motherId") ? initData.motherId : null;
@@ -283,13 +282,15 @@ export default defineComponent({
         if (this.callname != this.person.callname)
           data.callname = this.callname;
         if (this.gender != this.person.gender) data.gender = this.gender;
-        if (handleDateInputValue(this.birthdayDataObj) != this.person.birthday)
-          data.birthday = handleDateInputValue(this.birthdayDataObj);
+        if (
+          handleDateInputValue(this.birthdateDataObj) != this.person.birthdate
+        )
+          data.birthdate = handleDateInputValue(this.birthdateDataObj);
         if (this.status == "null" && this.person.status) data.status = null;
         if (this.status && this.status != this.person.status)
           data.status = this.status as LifeStatus;
-        if (handleDateInputValue(this.deathdayDataObj) != this.person.gender)
-          data.deathday = handleDateInputValue(this.deathdayDataObj);
+        if (handleDateInputValue(this.deathdateDataObj) != this.person.gender)
+          data.deathdate = handleDateInputValue(this.deathdateDataObj);
         if (this.fatherId != this.person.fatherId)
           data.fatherId = this.fatherId;
         if (this.motherId != this.person.motherId)
@@ -305,9 +306,9 @@ export default defineComponent({
             avatarUrl: this.avartarSrc,
             callname: this.callname,
             gender: this.gender,
-            birthday: handleDateInputValue(this.birthdayDataObj),
+            birthdate: handleDateInputValue(this.birthdateDataObj),
             status: this.status == "null" ? null : (this.status as LifeStatus),
-            deathday: handleDateInputValue(this.deathdayDataObj),
+            deathdate: handleDateInputValue(this.deathdateDataObj),
             fatherId: this.fatherId,
             motherId: this.motherId,
             spouseId: this.spouseId,

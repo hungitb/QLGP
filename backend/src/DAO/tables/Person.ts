@@ -25,9 +25,9 @@ export default function getPersonTable (sequelize: Sequelize) {
             allowNull: false
         },
         avatarUrl: DataTypes.STRING(4096),
-        birthday: DataTypes.STRING,
+        birthdate: DataTypes.STRING,
         status: DataTypes.STRING,
-        deathday: DataTypes.STRING,
+        deathdate: DataTypes.STRING,
         spouseId: DataTypes.STRING,
         fatherId: DataTypes.STRING,
         motherId: DataTypes.STRING

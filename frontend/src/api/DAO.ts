@@ -4,10 +4,16 @@ import type { Person } from "../../../general/model/Person";
 import { Gender, LifeStatus } from "../../../general/model/Person";
 import type { FieldDef } from "../../../general/model/FieldDef";
 import type { FieldVal } from "../../../general/model/FieldVal";
+import {
+  EventTargetType,
+  EventType,
+  type EventSetting,
+} from "../../../general/model/EventSetting";
 
 const GENERATE_FAKE_DATA =
   process.env.NODE_ENV == "development" &&
   process.env.GENERATE_FAKE_DATA == "true";
+const DELAY = 1000;
 
 function createDAO(
   key: string,
@@ -43,8 +49,6 @@ function createDAO(
   }
 
   function createPromiseResolve(data?: any) {
-    const DELAY = 1000;
-
     if (DELAY < 1 || process.env.NODE_ENV != "development") {
       return Promise.resolve(data);
     }
@@ -142,7 +146,7 @@ function createDAO(
 function generateFakeData() {
   if (!GENERATE_FAKE_DATA) return [];
 
-  const NUM_PEOPLE = 10;
+  const NUM_PEOPLE = 100;
   const MALE_RATE = 0.6;
   const DEATH_RATE = 0.4;
 
@@ -188,7 +192,7 @@ function generateFakeData() {
   const fakseUserId = randomId();
   const fakeUsers: User[] = [
     {
-      userId: fakseUserId,
+      id: fakseUserId,
       username: "hungnv195",
       password: "hungnv195",
       sessionToken: "hungnv195",
@@ -203,22 +207,27 @@ function generateFakeData() {
       isStandForUser: true,
       callname: "Tôi",
       gender: Gender.MALE,
-      birthday: "9/9/2003",
+      birthdate: "9/9/2003",
       status: LifeStatus.ALIVE,
       avatarUrl: null,
-      deathday: null,
+      deathdate: null,
       spouseId: null,
       fatherId: null,
       motherId: null,
     },
   ];
 
+  // Sử dụng tháng này để làm phần sự kiện
+  const currMonth = new Date().getMonth() + 1;
+  const prevMonth = currMonth == 1 ? 12 : currMonth - 1;
+  const nextMonth = currMonth == 12 ? 1 : currMonth + 1;
+
   for (let i = 0; i < NUM_PEOPLE; i++) {
     const day = randInt(1, 28);
-    const month = randInt(1, 12);
+    const month = sampleOne([prevMonth, currMonth, nextMonth]);
     const year = randInt(1800, 2100);
 
-    const birthday =
+    const birthdate =
       random() > 0.1
         ? (random() < 0.3
             ? [year]
@@ -235,7 +244,7 @@ function generateFakeData() {
           : LifeStatus.ALIVE
         : null;
 
-    const deathday =
+    const deathdate =
       status == LifeStatus.DEAD
         ? random() < 0.1
           ? null
@@ -259,8 +268,8 @@ function generateFakeData() {
         sampleOne("ABCDEFGHIKLMNOPQRSTWZYJ".split("")),
       ].join(" "),
       gender,
-      birthday,
-      deathday,
+      birthdate,
+      deathdate,
       status,
       spouseId: null,
       fatherId: null,
@@ -309,17 +318,33 @@ function generateFakeData() {
     }
   }
 
-  console.log(fakePeople, fakeUsers);
+  const fakeEventSettings: EventSetting[] = [
+    {
+      userId: fakseUserId,
+      targetType: EventTargetType.ALL,
+      types: [EventType.BIRTHDAY, EventType.DEATHDAY].join(","),
+      specificPersonIds: "",
+      numGenerationsAbove: 0,
+      numGenerationsBelow: 0,
+      includePeopleEqualGeneration: true,
+    },
+  ];
 
-  return [fakeUsers, fakePeople];
+  return [
+    fakeUsers,
+    fakePeople,
+    [] as FieldDef[],
+    [] as FieldVal[],
+    fakeEventSettings,
+  ];
 }
 
-const [fakeUsers, fakePeople, fakeFieldDefs, fakeFieldVals] =
+const [fakeUsers, fakePeople, fakeFieldDefs, fakeFieldVals, fakeEventSettings] =
   generateFakeData();
 
 export const userDAO: IDAO<User> = createDAO(
   "QLGP.users",
-  "userId",
+  "id",
   fakeUsers
 ) as unknown as IDAO<User>;
 export const personDAO: IDAO<Person> = createDAO(
@@ -337,10 +362,16 @@ export const fieldValDAO: IDAO<FieldVal> = createDAO(
   "id",
   fakeFieldVals
 ) as unknown as IDAO<FieldVal>;
+export const eventSettingDAO: IDAO<EventSetting> = createDAO(
+  "QLGP.eventSettings",
+  "userId",
+  fakeEventSettings
+) as unknown as IDAO<EventSetting>;
 
 if (process.env.NODE_ENV == "development") {
   (window as any).userDAO = userDAO;
   (window as any).personDAO = personDAO;
   (window as any).fieldDefDAO = fieldDefDAO;
   (window as any).fieldValDAO = fieldValDAO;
+  (window as any).eventSettingDAO = eventSettingDAO;
 }

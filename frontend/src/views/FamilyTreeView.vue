@@ -124,7 +124,7 @@
               label="Ảnh đại diện"
             />
             <v-checkbox
-              v-model="settingVModel.show.birthday"
+              v-model="settingVModel.show.birthdate"
               hide-details
               label="Ngày sinh"
             />
@@ -218,7 +218,7 @@ export default Vue.extend({
           image: true,
           name: true,
           gender: true,
-          birthday: true,
+          birthdate: true,
           status: true,
         },
         layout: PersonCardLayout.MIN_HEIGHT,
@@ -386,11 +386,11 @@ export default Vue.extend({
           image: cf.show.image,
           name: cf.show.name,
           gender: cf.show.gender,
-          birthday: cf.show.birthday,
+          birthdate: cf.show.birthdate,
           status: cf.show.status,
         },
         layout: cf.layout,
-        horizontalDistance: cf.verticalDistance,
+        horizontalDistance: cf.horizontalDistance,
         verticalDistance: cf.verticalDistance,
       };
     },
@@ -409,11 +409,11 @@ export default Vue.extend({
           image: st.show.image,
           name: st.show.name,
           gender: st.show.gender,
-          birthday: st.show.birthday,
+          birthdate: st.show.birthdate,
           status: st.show.status,
         },
         layout: st.layout,
-        horizontalDistance: st.verticalDistance,
+        horizontalDistance: st.horizontalDistance,
         verticalDistance: st.verticalDistance,
       };
 

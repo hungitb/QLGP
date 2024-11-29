@@ -2,6 +2,10 @@
 import { getLunarDate } from "./amlich-hnd"
 import { isStringPureInterger } from "./ValidationUtils";
 
+type DateFormStoredInDatabase = string;
+type LunarDateInNormalForm = string;
+type CompleteNormalDate = string;
+
 const lunarDateYearRangeSupported = [1802, 2198];
 
 // Xử lý trường hợp nếu 0 <= year <= 99 thì sẽ bị coi như là 1900 + year
@@ -14,24 +18,21 @@ function createProperlyDateObject(year: number, monthIndex?: number, day?: numbe
     return dateObj;
 }
 
-export function createProperlyDateObjectFromAnyMyDateFormat(date: string) {
-    const returValueIfDateInvalid = new Date();
+export function todayDate(): CompleteNormalDate {
+    const tempDate = new Date();
+    const today = new Date(tempDate.getTime() + (tempDate.getTimezoneOffset()*60000) + 3600000*7); // Convert to UTC+7
+    const [d, m, y] = [today.getDate(), today.getMonth() + 1, today.getFullYear()];
+    return `${d}/${m}/${y}`;
+}
 
-    if (date.endsWith("AL")) {
-        const normalDate = lunarDateToNormalDate(date);
-        if (!normalDate) return returValueIfDateInvalid;
-
-        date = normalDate;
-    }
-
-    const parts = date.split("/").map(p => parseInt(p));
-    if (parts.length == 1) {
-        return createProperlyDateObject(parts[0]);
-    }
-    else if (parts.length == 2) {
-        return createProperlyDateObject(parts[1], parts[0] - 1);
-    }
-    return createProperlyDateObject(parts[2], parts[1] - 1, parts[0]);
+export function datePlusDay(normalDate: CompleteNormalDate, day: number) {
+    const [d, m, y] = normalDate.split("/").map(s => parseInt(s));
+    const dateObj = createProperlyDateObject(y, m - 1, d);
+    const resultDateObj = new Date(
+        dateObj.getTime() + day*48*60*60*1000
+    );
+    const [d2, m2, y2] = [resultDateObj.getDate(), resultDateObj.getMonth() + 1, resultDateObj.getFullYear()];
+    return `${d2}/${m2}/${y2}`;
 }
 
 function isInvalidForm(s: string, { isMissingDay = false, isMissingMonth = false, strictYearPadding = true } = {}) {
@@ -73,7 +74,7 @@ export function shortenDateString(date: string) {
     return date;
 }
 
-export function normalDateToLunarDate(nd: string) {
+export function normalDateToLunarDate(nd: CompleteNormalDate) {
     if (dateValidationMessage(nd)) {
         return null;
     }
@@ -84,7 +85,7 @@ export function normalDateToLunarDate(nd: string) {
     return `${day}/${month}/${year}`
 }
 
-export function lunarDateToNormalDate(ld: string, skipCheckingExistsLunarDate = false) {
+export function lunarDateToNormalDate(ld: LunarDateInNormalForm, skipCheckingExistsLunarDate = false) {
     // skipCheckingExistsLunarDate: Tránh gọi đệ quy vô hạn khi gọi dateValidationMessage
 
     if (dateValidationMessage(ld, { isLunarDate: true }, skipCheckingExistsLunarDate)) {
@@ -188,7 +189,7 @@ export function dateValidationMessage(date: string, { isLunarDate = false, isMis
     return null;
 }
 
-export function transformDateString(date: string, {
+export function transformDateString(date: DateFormStoredInDatabase, {
     showLunarDate = true,
     showNormalDate = true
 } = {}) {
@@ -211,7 +212,9 @@ export function transformDateString(date: string, {
     return `${normalDate} (${lunarDate} AL)`;
 }
 
-export function compareTwoDateString(d1: string | null, d2: string | null, desc = false) {
+export function compareTwoDateString(d1: DateFormStoredInDatabase | null, d2: DateFormStoredInDatabase | null, desc = false) {
+    // desc: Chỉ sử dụng để quyết định cho trường hợp có date bị null
+
     function dateInfo(d: string | null) {
         if (!d) {
             return {

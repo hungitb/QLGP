@@ -1,10 +1,8 @@
 
-interface User {
-    userId: string
+export interface User {
+    id: string
     username:  string
     password: string
     sessionToken: string | null
     sessionExpiry: number | null
 }
-
-export type { User }

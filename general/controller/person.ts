@@ -1,6 +1,6 @@
 import { v4 as uuid } from "uuid";
 
-import { compareTwoDateString, createProperlyDateObjectFromAnyMyDateFormat, lunarDateToNormalDate, normalDateToLunarDate } from "../utils/DateUtils";
+import { compareTwoDateString, lunarDateToNormalDate, normalDateToLunarDate, shortenDateString, todayDate } from "../utils/DateUtils";
 import { isStringPureInterger } from "../utils/ValidationUtils";
 import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR } from "./utils";
 import { LifeStatus, Gender, type Person } from "../model/Person";
@@ -67,7 +67,7 @@ export function filterPeople(people: Person[], search: string, searchFieldsAsStr
             let val = person[field as keyof Person];
             if (!val) return;
 
-            if (field == "deathday" && normalDateToLunarDate(val as string)) {
+            if (field == "deathdate" && normalDateToLunarDate(val as string)) {
                 val += " " + normalDateToLunarDate(val as string) as string;
             }
 
@@ -86,13 +86,13 @@ export default function getPersonController(personDAO: IDAO<Person>) {
     async function getAllPeopleBaseInfo(data: PaginateParams, loggedInUser: User | null): Promise<CHR<{ people: Person[]; total: number }>> {
         if (!loggedInUser) return CommonResponse[401];
 
-        let people = await personDAO.findAll({ where: { ownerUserId: loggedInUser.userId } });
+        let people = await personDAO.findAll({ where: { ownerUserId: loggedInUser.id } });
         if (data.search) {
             people = filterPeople(people, data.search, data.searchFields);
         }
         let compare: undefined | ((v1: any, v2: any, k1: Person, k2: Person) => number) = undefined;
 
-        if (data.sortBy == "status_deathday") {
+        if (data.sortBy == "status_deathdate") {
             data.sortBy = "status";
             const sortDesc = data.sortDesc == "true";
 
@@ -100,11 +100,11 @@ export default function getPersonController(personDAO: IDAO<Person>) {
                 if (v1 != v2) {
                     return v1 == LifeStatus.ALIVE ? -1 : 1;
                 }
-                return compareTwoDateString(k1.deathday, k2.deathday, sortDesc);
+                return compareTwoDateString(k1.deathdate, k2.deathdate, sortDesc);
             }
         }
 
-        if (data.sortBy == "birthday") {
+        if (data.sortBy == "birthdate") {
             const sortDesc = data.sortDesc == "true";
 
             compare = (v1, v2) => {
@@ -128,12 +128,12 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         const levelInt = parseInt(level);
         if (!loggedInUser || isNaN(levelInt)) return CommonResponse[401];
         if (!subjectId) {
-            const personStandForUser = await personDAO.findOne({ where: { ownerUserId: loggedInUser.userId, isStandForUser: true } });
+            const personStandForUser = await personDAO.findOne({ where: { ownerUserId: loggedInUser.id, isStandForUser: true } });
             if (!personStandForUser) return CommonResponse[400];
             subjectId = personStandForUser.id;
         }
 
-        const people = await personDAO.findAll({ where: { ownerUserId: loggedInUser.userId } });
+        const people = await personDAO.findAll({ where: { ownerUserId: loggedInUser.id } });
 
         const mapIdToPerson: Record<string, ExtendedPerson> = {};
         const childrenIdsOf: Record<string, string[]> = {};
@@ -228,9 +228,11 @@ export default function getPersonController(personDAO: IDAO<Person>) {
 
         const newPerson: Person = {
             id: uuid(),
-            ownerUserId: loggedInUser.userId,
+            ownerUserId: loggedInUser.id,
             isStandForUser: false,
             ...data.person,
+            birthdate: data.person.birthdate ? shortenDateString(data.person.birthdate) : null,
+            deathdate: data.person.deathdate ? shortenDateString(data.person.deathdate) : null,
         }
 
         await personDAO.create(newPerson);
@@ -269,7 +271,7 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         }
 
         const person = await personDAO.findByPk(id);
-        if (!person || person.ownerUserId != loggedInUser.userId || person.isStandForUser) {
+        if (!person || person.ownerUserId != loggedInUser.id || person.isStandForUser) {
             return CommonResponse[400];
         }
 
@@ -320,10 +322,10 @@ export default function getPersonController(personDAO: IDAO<Person>) {
             }
             else if (field == "status") {
                 if (value != LifeStatus.DEAD) {
-                    data.deathday = null;
+                    data.deathdate = null;
                 }
             }
-            else if (field == "deathday" && value) {
+            else if (field == "deathdate" && value) {
                 data.status = LifeStatus.DEAD;
             }
         }));
@@ -369,9 +371,7 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         const deathYears : { [month: string]: number } = {};
 
         const people = await personDAO.findAll();
-        const tempDate = new Date();
-        const today = new Date(tempDate.getTime() + (tempDate.getTimezoneOffset()*60000) + 3600000*7); // Convert to UTC+7
-        const [nd, nm, ny] = [today.getDate(), today.getMonth() + 1, today.getFullYear()];
+        const [nd, nm, ny] = todayDate().split("/").map(n => parseInt(n));
 
         const increaseKeyValue = (obj: Record<string, number>, key: string | number) => {
             if (!obj[key]) {
@@ -405,8 +405,8 @@ export default function getPersonController(personDAO: IDAO<Person>) {
             gender[person.gender] += 1;
 
             if (person.status == LifeStatus.ALIVE) {
-                if (person.birthday) {
-                    const [d, m, y] = extractNormalDayMonthYear(person.birthday);
+                if (person.birthdate) {
+                    const [d, m, y] = extractNormalDayMonthYear(person.birthdate);
                     let age = ny - y;
                     if (nm > m || (nm == m && nd >= d)) {
                         age += 1;
@@ -414,17 +414,17 @@ export default function getPersonController(personDAO: IDAO<Person>) {
                     if (age < 0) age = 0;
                     increaseKeyValue(agesOfLiving, age);
                     increaseKeyValue(birthYears, y);
-                    if (!checkIfMissingMonth(person.birthday)) {
+                    if (!checkIfMissingMonth(person.birthdate)) {
                         increaseKeyValue(birthMonths, m);
                     }
                 }
             }
             else if (person.status == LifeStatus.DEAD) {
-                if (person.deathday) {
-                    const [d, m, y] = extractNormalDayMonthYear(person.deathday);
+                if (person.deathdate) {
+                    const [d, m, y] = extractNormalDayMonthYear(person.deathdate);
 
-                    if (person.birthday) {
-                        const [bd, bm, by] = extractNormalDayMonthYear(person.birthday);
+                    if (person.birthdate) {
+                        const [bd, bm, by] = extractNormalDayMonthYear(person.birthdate);
                         let age = y - by;
                         if (m > bm || (m == bm && d >= bd)) {
                             age += 1;
@@ -434,7 +434,7 @@ export default function getPersonController(personDAO: IDAO<Person>) {
                     }
 
                     increaseKeyValue(deathYears, y);
-                    if (!checkIfMissingMonth(person.deathday)) {
+                    if (!checkIfMissingMonth(person.deathdate)) {
                         increaseKeyValue(deathMonths, m);
                     }
                 }

@@ -110,6 +110,8 @@ export async function generateSessionToken() {
 
 export const CommonResponse = {
     400: { data: { msg: CommonMessages.BAD_REQUEST }, status: 400 },
+    BAD_REQUEST: { data: { msg: CommonMessages.BAD_REQUEST }, status: 400 },
     401: { data: { msg: CommonMessages.UNAUTHORIZED }, status: 401 },
+    UNAUTHORIZED: { data: { msg: CommonMessages.UNAUTHORIZED }, status: 401 },
     OK: { data: { msg: CommonMessages.OK }, status: 200 }
 }

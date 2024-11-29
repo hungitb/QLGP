@@ -22,7 +22,7 @@ export type FamilyCardConfig = {
     image: boolean;
     name: boolean;
     gender: boolean;
-    birthday: boolean;
+    birthdate: boolean;
     status: boolean;
   };
   layout: PersonCardLayout;

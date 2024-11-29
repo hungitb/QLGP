@@ -4,7 +4,7 @@ import type { Sequelize } from "sequelize"
 
 export default function getUserTable (sequelize: Sequelize) {
     return sequelize.define('User', {
-        userId: {
+        id: {
             type: DataTypes.STRING,
             primaryKey: true
         },

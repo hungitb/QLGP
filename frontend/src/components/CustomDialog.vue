@@ -6,10 +6,6 @@
     scrollable
     @click.stop
   >
-    <template v-slot:activator="{ on, attrs }">
-      <slot name="activator" v-bind:on="on" v-bind:attrs="attrs"></slot>
-    </template>
-
     <v-card style="position: relative">
       <v-card-title>
         <!-- Mặc định do vuetify set word-break=break-all làm cho chữ bị gãy khi xuống dòng nên pahri set lại -->
@@ -18,8 +14,8 @@
         </span>
       </v-card-title>
       <v-divider v-if="divider"></v-divider>
-      <v-card-text ref="cardText">
-        <div :class="contentPadiingTop ? 'pt-5' : ''">
+      <v-card-text :class="noPadding ? 'pa-0' : ''" ref="cardText">
+        <div :class="contentPaddingTop && !noPadding ? 'pt-5' : ''">
           <slot></slot>
         </div>
       </v-card-text>
@@ -115,9 +111,14 @@ export default Vue.extend({
       type: Boolean,
       default: true,
     },
+    // Dùng cho setting event, dùng cái list padding hơi lạ nên mình phải có cái này
+    noPadding: {
+      type: Boolean,
+      default: false,
+    },
     // Do sử dụng thẻ v-card nên bình thường phần content sẽ không có padding top.
     // Thường sẽ set = false cho DialogConfirm
-    contentPadiingTop: {
+    contentPaddingTop: {
       type: Boolean,
       default: true,
     },

@@ -17,7 +17,7 @@ export async function getLoggedInUser(req: Request) {
     userDAO.update({
         sessionExpiry: user.sessionExpiry
     }, {
-        where: { userId: user.userId }
+        where: { id: user.id }
     })
 
     return user;

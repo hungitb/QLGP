@@ -17,8 +17,8 @@ interface Person {
     callname: string
     gender: Gender
     avatarUrl: string | null
-    birthday: string | null
-    deathday: string | null
+    birthdate: string | null
+    deathdate: string | null
     status: LifeStatus | null
     spouseId: string | null
     fatherId: string | null

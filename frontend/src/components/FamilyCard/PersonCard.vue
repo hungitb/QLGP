@@ -36,11 +36,13 @@
           <div v-if="config.show.gender">
             {{ person.gender == Gender.MALE ? "Nam" : "Nữ" }}
           </div>
-          <div v-if="config.show.birthday">
+          <div v-if="config.show.birthdate">
             Ngày sinh:
             {{
-              person.birthday
-                ? transformDateString(person.birthday, { showLunarDate: false })
+              person.birthdate
+                ? transformDateString(person.birthdate, {
+                    showLunarDate: false,
+                  })
                 : "Không rõ"
             }}
           </div>
@@ -52,10 +54,10 @@
             </template>
             <template v-if="person.status == LifeStatus.DEAD">
               Đã mất
-              <template v-if="person.deathday">
+              <template v-if="person.deathdate">
                 -
                 {{
-                  transformDateString(person.deathday, {
+                  transformDateString(person.deathdate, {
                     showNormalDate: false,
                   })
                 }}

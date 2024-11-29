@@ -39,7 +39,7 @@
         </template>
 
         <template
-          v-slot:header.birthday="{ header }"
+          v-slot:header.birthdate="{ header }"
           v-if="!peopleTableInMobileLayout"
         >
           <span style="display: inline-block; text-align: end; width: 80px">{{
@@ -47,9 +47,9 @@
           }}</span>
         </template>
 
-        <template v-slot:item.birthday="{ item }">
+        <template v-slot:item.birthdate="{ item }">
           <span
-            v-if="item.birthday"
+            v-if="item.birthdate"
             :style="
               peopleTableInMobileLayout
                 ? {}
@@ -57,24 +57,24 @@
             "
           >
             {{
-              transformDateString(item.birthday, {
+              transformDateString(item.birthdate, {
                 showLunarDate: false,
               })
             }}
           </span>
         </template>
 
-        <template v-slot:item.status_deathday="{ item }">
+        <template v-slot:item.status_deathdate="{ item }">
           <template v-if="item.status == LifeStatus.ALIVE">
             <span style="color: green">Còn sống</span>
           </template>
 
           <template v-else-if="item.status == LifeStatus.DEAD">
             <span style="color: red">Đã mất</span>
-            <template v-if="item.deathday">
+            <template v-if="item.deathdate">
               <span style="color: blue"> |</span>
               {{
-                transformDateString(item.deathday, {
+                transformDateString(item.deathdate, {
                   showNormalDate: !peopleTableInMobileLayout,
                   showLunarDate: !peopleTableInMobileLayout,
                 })
@@ -148,11 +148,11 @@ export default Vue.extend({
         },
         {
           text: "Ngày sinh",
-          value: "birthday",
+          value: "birthdate",
         },
         {
           text: "Tình trạng",
-          value: "status_deathday",
+          value: "status_deathdate",
         },
         { text: "", value: "actions", sortable: false },
       ],
@@ -186,18 +186,18 @@ export default Vue.extend({
         return a.toString().localeCompare(b.toString());
       };
 
-      const sortField = sortBy[0] == "status_deathday" ? "status" : sortBy[0];
+      const sortField = sortBy[0] == "status_deathdate" ? "status" : sortBy[0];
 
       if (sortField == "status") {
         compare = (v1, v2, k1, k2) => {
           if (v1 != v2) {
             return v1 == LifeStatus.ALIVE ? -1 : 1;
           }
-          return compareTwoDateString(k1.deathday, k2.deathday, sortDesc[0]);
+          return compareTwoDateString(k1.deathdate, k2.deathdate, sortDesc[0]);
         };
       }
 
-      if (sortField == "birthday") {
+      if (sortField == "birthdate") {
         compare = (v1, v2) => {
           return compareTwoDateString(v1, v2, sortDesc[0]);
         };
