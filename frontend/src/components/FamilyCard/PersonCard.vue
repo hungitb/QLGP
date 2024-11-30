@@ -48,11 +48,10 @@
           </div>
           <div v-if="config.show.status">
             Tình trạng:
-            <template v-if="!person.status">Không rõ</template>
             <template v-if="person.status == LifeStatus.ALIVE">
               Còn sống
             </template>
-            <template v-if="person.status == LifeStatus.DEAD">
+            <template v-else-if="person.status == LifeStatus.DEAD">
               Đã mất
               <template v-if="person.deathdate">
                 -
@@ -63,6 +62,7 @@
                 }}
               </template>
             </template>
+            <template v-else>Không rõ</template>
           </div>
         </div>
       </div>

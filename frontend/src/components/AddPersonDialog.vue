@@ -297,7 +297,7 @@ export default defineComponent({
         )
           data.birthdate = handleDateInputValue(this.birthdateDataObj);
         if (this.status == "null" && this.person.status) data.status = null;
-        if (this.status && this.status != this.person.status)
+        if (this.status != "null" && this.status != this.person.status)
           data.status = this.status as LifeStatus;
         if (handleDateInputValue(this.deathdateDataObj) != this.person.gender)
           data.deathdate = handleDateInputValue(this.deathdateDataObj);
@@ -307,6 +307,8 @@ export default defineComponent({
           data.motherId = this.motherId;
         if (this.spouseId != this.person.spouseId)
           data.spouseId = this.spouseId;
+
+        window.l(data);
 
         await personApi.updatePerson(data);
       } else {

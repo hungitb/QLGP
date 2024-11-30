@@ -1,4 +1,4 @@
-
+import path from "path";
 import dotenv from "dotenv";
 import express from "express";
 import morgan from "morgan";
@@ -13,10 +13,15 @@ import personRouter from "./routes/person";
 import eventRouter from "./routes/event";
 
 getDatabaseInstance().then(async () => {
+    const isDev = process.env.NODE_ENV == "development";
     const app = express();
     app.use(express.json({ limit: "50mb" }));
-    app.use(morgan(process.env.NODE_ENV == "development" ? "dev" : "combined"));
+    app.use(morgan(isDev ? "dev" : "combined"));
     app.use(cookiePaser());
+    if (!isDev) {
+        // Nếu sau này build thì sẽ copy vào folder public, dev thì không cần
+        app.use(express.static(path.resolve(__dirname, "public")));
+    }
     app.use((req, res, next) => {
         // Assign query parameters to body
         req.body = {

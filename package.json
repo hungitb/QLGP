@@ -1,0 +1,13 @@
+{
+  "name": "qlgp",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "NODE_ENV=production && node resources/scripts/build.js",
+    "build-win": "set NODE_ENV=production&& node resources/scripts/build.js",
+    "start": "node backend/dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
