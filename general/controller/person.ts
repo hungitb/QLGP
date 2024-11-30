@@ -121,6 +121,48 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         };
     }
 
+    async function getPersonDetailInfo({ id }: { id: string }, loggedInUser: User | null): Promise<CHR<{ person: Person & {
+        personIdsOnlySameFather: string[],
+        personIdsOnlySameMother: string[],
+        personIdsSameBothFatherAndMother: string[],
+        childIds: string[]
+    } }>> {
+        if (!loggedInUser) return CommonResponse.UNAUTHORIZED;
+
+        const person = await personDAO.findOne({ where: { id, ownerUserId: loggedInUser.id } });
+        if (!person) return CommonResponse.BAD_REQUEST;
+
+        const [peopleHasSameFather, peopleHasSameMother, children] = await Promise.all([
+            person.fatherId ? personDAO.findAll({ where: { fatherId: person.fatherId } }) : Promise.resolve([]),
+            person.motherId ? personDAO.findAll({ where: { motherId: person.motherId } }) : Promise.resolve([]),
+            person.gender == Gender.MALE ?
+                personDAO.findAll({ where: { fatherId: person.id } }) :
+                personDAO.findAll({ where: { motherId: person.id } })
+        ]);
+
+        const personIdsSameFather = peopleHasSameFather.map(p => p.id).filter(id => id != person.id);
+        const personIdsSameMother = peopleHasSameMother.map(p => p.id).filter(id => id != person.id);
+        const setPersonIdsSameFather = new Set(personIdsSameFather);
+        const setPersonIdsSameMother = new Set(personIdsSameMother);
+
+        const personIdsOnlySameFather = personIdsSameFather.filter(id => !setPersonIdsSameMother.has(id));
+        const personIdsOnlySameMother = personIdsSameMother.filter(id => !setPersonIdsSameFather.has(id));
+        const personIdsSameBothFatherAndMother = personIdsSameFather.filter(id => setPersonIdsSameMother.has(id));
+        
+        return {
+            data: {
+                person: {
+                    ...person,
+                    personIdsOnlySameFather,
+                    personIdsOnlySameMother,
+                    personIdsSameBothFatherAndMother,
+                    childIds: children.map(p => p.id)
+                }
+            },
+            status: 200
+        }
+    }
+
     async function getFamilyTreeInfo({ subjectId, level }: { subjectId?: string, level: string }, loggedInUser: User | null): Promise<CHR<{
         ancestor: ExtendedPerson,
         subjectId: string,
@@ -452,6 +494,7 @@ export default function getPersonController(personDAO: IDAO<Person>) {
 
     return {
         getAllPeopleBaseInfo,
+        getPersonDetailInfo,
         getFamilyTreeInfo,
         createPerson,
         deletePerson,

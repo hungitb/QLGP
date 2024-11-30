@@ -7,13 +7,13 @@
     @click.stop
   >
     <v-card style="position: relative">
-      <v-card-title>
+      <v-card-title v-if="header">
         <!-- Mặc định do vuetify set word-break=break-all làm cho chữ bị gãy khi xuống dòng nên pahri set lại -->
         <span class="text-h5" style="word-break: initial">
           <slot name="header">{{ header }}</slot>
         </span>
       </v-card-title>
-      <v-divider v-if="divider"></v-divider>
+      <v-divider v-if="divider && header"></v-divider>
       <v-card-text :class="noPadding ? 'pa-0' : ''" ref="cardText">
         <div :class="contentPaddingTop && !noPadding ? 'pt-5' : ''">
           <slot></slot>
@@ -140,11 +140,16 @@ export default Vue.extend({
     value(newValue) {
       if (!newValue) {
         setTimeout(() => {
-          if ((this as any).$refs.cardText) {
-            (this as any).$refs.cardText.scrollTop = 0;
-          }
+          this.scrollTop();
           (this as any).beforeClose?.();
         }, 300);
+      }
+    },
+  },
+  methods: {
+    scrollTop() {
+      if ((this as any).$refs.cardText) {
+        (this as any).$refs.cardText.scrollTop = 0;
       }
     },
   },

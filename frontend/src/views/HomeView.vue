@@ -27,6 +27,7 @@
         :page.sync="page"
         item-key="id"
         class="elevation-1"
+        @click:row="showDialogPersonDetailInfo"
       >
         <template v-slot:item.avatarUrl="{ item, isMobile }">
           <div :class="!isMobile ? 'pa-2' : 'pt-2'">
@@ -84,7 +85,11 @@
         </template>
 
         <template v-slot:item.actions="{ item }">
-          <v-icon small class="mr-2" @click.stop="editPerson(item)">
+          <v-icon
+            small
+            :class="peopleTableInMobileLayout ? 'mr-10' : 'mr-4'"
+            @click.stop="editPerson(item)"
+          >
             mdi-pencil
           </v-icon>
 
@@ -119,6 +124,7 @@ import {
   showDialogAddOrCreatePerson,
   showDialogConfirm,
 } from "./Utilities.vue";
+import { showDialogPersonDetailInfo } from "@/components/utilities/UtilDialogPersonDetailInfo.vue";
 
 export default Vue.extend({
   components: {
@@ -245,6 +251,9 @@ export default Vue.extend({
       showDialogAddOrCreatePerson({
         person,
       });
+    },
+    showDialogPersonDetailInfo(person: Person) {
+      showDialogPersonDetailInfo({ personId: person.id });
     },
   },
 });

@@ -61,6 +61,7 @@
 
     <!-- Import Utilities so that it is useable -->
     <Utilities />
+    <UtilDialogPersonDetailInfo />
   </v-app>
 </template>
 
@@ -73,11 +74,13 @@ import FullViewLoading from "@/components/FullViewLoading.vue";
 import { mapActions } from "vuex";
 import { CLEAR_STORE, FETCH_PEOPLE } from "@/store";
 import Utilities from "./Utilities.vue";
+import UtilDialogPersonDetailInfo from "@/components/utilities/UtilDialogPersonDetailInfo.vue";
 
 export default Vue.extend({
   components: {
     FullViewLoading,
     Utilities,
+    UtilDialogPersonDetailInfo,
   },
   data: () => ({
     isLoading: false,

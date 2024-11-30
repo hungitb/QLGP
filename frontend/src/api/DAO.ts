@@ -13,7 +13,7 @@ import {
 const GENERATE_FAKE_DATA =
   process.env.NODE_ENV == "development" &&
   process.env.GENERATE_FAKE_DATA == "true";
-const DELAY = 1000;
+const DELAY = 0;
 
 function createDAO(
   key: string,
@@ -146,7 +146,7 @@ function createDAO(
 function generateFakeData() {
   if (!GENERATE_FAKE_DATA) return [];
 
-  const NUM_PEOPLE = 100;
+  const NUM_PEOPLE = 10;
   const MALE_RATE = 0.6;
   const DEATH_RATE = 0.4;
 

@@ -24,6 +24,15 @@ export const personApi = {
       await getLoggedInUserLocalStorage()
     );
   },
+  async getPersonDetailInfo(data: { id: string }) {
+    if (useBackend) {
+      // to do
+    }
+    return await personController.getPersonDetailInfo(
+      stringifyValuesOfObject(data) as { id: string },
+      await getLoggedInUserLocalStorage()
+    );
+  },
   async getFamilyTreeInfo(data: { subjectId?: string; level: number }) {
     if (useBackend) {
       // to do

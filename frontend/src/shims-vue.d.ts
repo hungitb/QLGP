@@ -5,4 +5,5 @@ declare module "*.vue" {
   export function showDialogAddOrCreatePerson(data: any): void;
   export function showDialogConfirm(data: any): void;
   export function showDialogAddPersonWithSpecificRole(data: any): void;
+  export function showDialogPersonDetailInfo(data: any): void;
 }

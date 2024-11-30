@@ -109,6 +109,7 @@ import { showDialogAddPersonWithSpecificRole } from "@/views/Utilities.vue";
 import { checkIfIsMobile } from "@/utils";
 import CustomPersonAvatar from "../CustomPersonAvatar.vue";
 import { transformDateString } from "../../../../general/utils/DateUtils";
+import { showDialogPersonDetailInfo } from "../utilities/UtilDialogPersonDetailInfo.vue";
 
 export default Vue.extend({
   components: {
@@ -178,7 +179,7 @@ export default Vue.extend({
       this.viewPersonDetail();
     },
     viewPersonDetail() {
-      alert(JSON.stringify(this.person));
+      showDialogPersonDetailInfo({ personId: this.person.id });
     },
   },
 });
