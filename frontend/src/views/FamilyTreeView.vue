@@ -192,7 +192,7 @@ import Viewer from "@/components/Viewer.vue";
 import FamilyCard from "@/components/FamilyCard/index";
 import FullViewLoading from "@/components/FullViewLoading.vue";
 import { personApi } from "@/api/person";
-import { ExtendedPerson } from "../../../general/controller/person";
+import { ExtendedPerson } from "../../../backend/src/controller/person";
 import { PersonCardLayout, type FamilyCardConfig } from "@/components/types";
 import { mapActions } from "vuex";
 import { FETCH_PEOPLE } from "@/store";

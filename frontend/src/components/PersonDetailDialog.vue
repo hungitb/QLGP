@@ -87,8 +87,8 @@ import { defineComponent } from "vue";
 import CustomDialog from "./CustomDialog.vue";
 import { personApi } from "@/api/person";
 import CustomPersonAvatar from "./CustomPersonAvatar.vue";
-import { Person, Gender, LifeStatus } from "../../../general/model/Person";
-import { transformDateString } from "../../../general/utils/DateUtils";
+import { Person, Gender, LifeStatus } from "../../../backend/src/model/Person";
+import { transformDateString } from "../../../backend/src/utils/DateUtils";
 
 export default defineComponent({
   components: {

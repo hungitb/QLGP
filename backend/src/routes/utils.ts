@@ -2,8 +2,8 @@
 import type { Request, Response, NextFunction } from "express";
 
 import { userDAO } from "../DAO/database";
-import {  type ControllerHandlerResult as CHR } from "../../../general/controller/utils";
-import { User } from "../../../general/model/User";
+import {  type ControllerHandlerResult as CHR } from "../controller/utils";
+import { User } from "../model/User";
 
 export async function getLoggedInUser(req: Request) {
     const sessionToken = req.cookies?.sessionToken;

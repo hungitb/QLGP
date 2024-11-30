@@ -1,7 +1,7 @@
 import { type AxiosResponse } from "axios";
 
 import { userDAO } from "./DAO";
-import { type ControllerHandlerResult as CHR } from "../../../general/controller/utils";
+import { type ControllerHandlerResult as CHR } from "../../../backend/src/controller/utils";
 
 export const sessionTokenKeyStoreLoggedInUserInLocalStorage =
   "QLGP.sessionToken";

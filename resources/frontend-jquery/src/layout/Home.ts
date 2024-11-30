@@ -3,7 +3,7 @@ import $Node from "../utils/JqueryNode"
 import $Button from "../component/Button"
 import showModal from "../utils/showModal"
 
-import getAuthController from "../../../general/controller/auth"
+import getAuthController from "../../../backend/src/controller/auth"
 
 export default function $Home() {
     let text = "Nguyen Van Hung"

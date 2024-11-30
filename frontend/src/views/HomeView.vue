@@ -110,20 +110,18 @@
 <script lang="ts">
 import Vue from "vue";
 
-import { Gender, LifeStatus, Person } from "../../../general/model/Person";
+import { Gender, LifeStatus, Person } from "../../../backend/src/model/Person";
 import {
   compareTwoDateString,
   transformDateString,
-} from "../../../general/utils/DateUtils";
+} from "../../../backend/src/utils/DateUtils";
 import CustomPersonAvatar from "@/components/CustomPersonAvatar.vue";
-import { filterPeople } from "../../../general/controller/person";
+import { filterPeople } from "../../../backend/src/controller/person";
 import { personApi } from "@/api/person";
 import { mapActions } from "vuex";
 import { FETCH_PEOPLE } from "@/store";
-import {
-  showDialogAddOrCreatePerson,
-  showDialogConfirm,
-} from "./Utilities.vue";
+import { showDialogConfirm } from "@/components/utilities/ShowDialogConfirm.vue";
+import { showDialogAddOrCreatePerson } from "@/components/utilities/ShowDialogAddOrCreatePerson.vue";
 import { showDialogPersonDetailInfo } from "@/components/utilities/UtilDialogPersonDetailInfo.vue";
 
 export default Vue.extend({

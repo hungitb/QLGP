@@ -1,7 +1,7 @@
 
 import { DataTypes } from "sequelize"
 import type { Sequelize } from "sequelize"
-import { FieldDef } from "../../../../general/model/FieldDef"
+import { FieldDef } from "../../model/FieldDef"
 import { SequlizeTableDefineColumns } from "./utils"
 
 export default function getFieldDefTable (sequelize: Sequelize) {

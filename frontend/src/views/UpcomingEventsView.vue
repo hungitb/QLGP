@@ -290,12 +290,12 @@ import {
   EventSetting,
   EventTargetType,
   EventType,
-} from "../../../general/model/EventSetting";
-import { Person } from "../../../general/model/Person";
+} from "../../../backend/src/model/EventSetting";
+import { Person } from "../../../backend/src/model/Person";
 import {
   normalDateToLunarDate,
   transformDateString,
-} from "../../../general/utils/DateUtils";
+} from "../../../backend/src/utils/DateUtils";
 import CustomDialog from "@/components/CustomDialog.vue";
 import PersonInputGroup from "@/components/input/PersonInputGroup.vue";
 

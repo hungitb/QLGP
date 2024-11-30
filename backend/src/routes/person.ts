@@ -3,7 +3,7 @@ import { Router } from "express";
 
 import { personDAO } from "../DAO/database";
 import { wrapHandlerAdvance } from "./utils";
-import getPersonController from "../../../general/controller/person";
+import getPersonController from "../controller/person";
 
 const router = Router();
 const personController = getPersonController(personDAO);

@@ -70,7 +70,7 @@ ChartJS.register(
 
 import { personApi } from "@/api/person";
 import FullViewLoading from "@/components/FullViewLoading.vue";
-import { Gender, LifeStatus } from "../../../general/model/Person";
+import { Gender, LifeStatus } from "../../../backend/src/model/Person";
 
 function getSampleData({
   arrayBackgroundColor = false,

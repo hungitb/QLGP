@@ -101,7 +101,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { LifeStatus, Gender, Person } from "../../../general/model/Person";
+import { LifeStatus, Gender, Person } from "../../../backend/src/model/Person";
 import CustomDialog from "./CustomDialog.vue";
 import { type CustomDialogButtonProp, DateFormat } from "./types";
 import DateInputGroup from "./input/DateInputGroup.vue";
@@ -115,7 +115,7 @@ import {
   handleDateInputValue,
   resizeImageSrc,
 } from "@/utils";
-import { CreatePersonParams } from "../../../general/controller/person";
+import { CreatePersonParams } from "../../../backend/src/controller/person";
 
 export default defineComponent({
   components: {

@@ -45,7 +45,7 @@ import Vue from "vue";
 import type { PropType } from "vue";
 
 import { DateFormat } from "../types";
-import { dateValidationMessage } from "../../../../general/utils/DateUtils";
+import { dateValidationMessage } from "../../../../backend/src/utils/DateUtils";
 
 export default Vue.extend({
   inject: ["form"],

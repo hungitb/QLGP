@@ -5,7 +5,7 @@ import {
   sessionTokenKeyStoreLoggedInUserInLocalStorage,
   getLoggedInUserLocalStorage,
 } from "./utils";
-import getAuthController from "../../../general/controller/auth";
+import getAuthController from "../../../backend/src/controller/auth";
 import { userDAO, personDAO, eventSettingDAO } from "./DAO";
 
 const authController = getAuthController(userDAO, personDAO, eventSettingDAO);

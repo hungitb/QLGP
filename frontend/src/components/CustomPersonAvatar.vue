@@ -35,7 +35,7 @@
 <script lang="ts">
 import Vue, { PropType } from "vue";
 
-import { Gender } from "../../../general/model/Person";
+import { Gender } from "../../../backend/src/model/Person";
 
 export default Vue.extend({
   props: {

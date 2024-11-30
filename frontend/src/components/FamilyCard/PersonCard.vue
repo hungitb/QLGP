@@ -104,13 +104,17 @@
 import Vue from "vue";
 
 import PersonCardButton from "./PersonCardButton.vue";
-import { type ExtendedPerson } from "../../../../general/controller/person";
-import { Gender, LifeStatus, Person } from "../../../../general/model/Person";
+import { type ExtendedPerson } from "../../../../backend/src/controller/person";
+import {
+  Gender,
+  LifeStatus,
+  Person,
+} from "../../../../backend/src/model/Person";
 import { FamilyCardConfig, PersonCardLayout } from "../types";
-import { showDialogAddPersonWithSpecificRole } from "@/views/Utilities.vue";
+import { showDialogAddPersonWithSpecificRole } from "../utilities/ShowDialogAddPersonWithSpecificRole.vue";
 import { checkIfIsMobile } from "@/utils";
 import CustomPersonAvatar from "../CustomPersonAvatar.vue";
-import { transformDateString } from "../../../../general/utils/DateUtils";
+import { transformDateString } from "../../../../backend/src/utils/DateUtils";
 import { showDialogPersonDetailInfo } from "../utilities/UtilDialogPersonDetailInfo.vue";
 
 export default Vue.extend({

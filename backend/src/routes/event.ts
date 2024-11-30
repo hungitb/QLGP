@@ -3,7 +3,7 @@ import { Router } from "express";
 
 import { personDAO, eventSettingDAO } from "../DAO/database";
 import { wrapHandlerAdvance } from "./utils";
-import getEventController from "../../../general/controller/event";
+import getEventController from "../controller/event";
 
 const router = Router();
 const eventController = getEventController(eventSettingDAO, personDAO);

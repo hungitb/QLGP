@@ -60,7 +60,9 @@
     />
 
     <!-- Import Utilities so that it is useable -->
-    <Utilities />
+    <ShowDialogAddOrCreatePerson />
+    <ShowDialogAddPersonWithSpecificRole />
+    <ShowDialogConfirm />
     <UtilDialogPersonDetailInfo />
   </v-app>
 </template>
@@ -73,13 +75,17 @@ import { authApi } from "@/api/auth";
 import FullViewLoading from "@/components/FullViewLoading.vue";
 import { mapActions } from "vuex";
 import { CLEAR_STORE, FETCH_PEOPLE } from "@/store";
-import Utilities from "./Utilities.vue";
+import ShowDialogAddOrCreatePerson from "@/components/utilities/ShowDialogAddOrCreatePerson.vue";
+import ShowDialogAddPersonWithSpecificRole from "@/components/utilities/ShowDialogAddPersonWithSpecificRole.vue";
+import ShowDialogConfirm from "@/components/utilities/ShowDialogConfirm.vue";
 import UtilDialogPersonDetailInfo from "@/components/utilities/UtilDialogPersonDetailInfo.vue";
 
 export default Vue.extend({
   components: {
     FullViewLoading,
-    Utilities,
+    ShowDialogAddOrCreatePerson,
+    ShowDialogAddPersonWithSpecificRole,
+    ShowDialogConfirm,
     UtilDialogPersonDetailInfo,
   },
   data: () => ({

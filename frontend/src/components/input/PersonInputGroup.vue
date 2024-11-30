@@ -44,7 +44,7 @@
 import Vue from "vue";
 
 import CustomPersonAvatar from "../CustomPersonAvatar.vue";
-import { Gender, Person } from "../../../../general/model/Person";
+import { Gender, Person } from "../../../../backend/src/model/Person";
 
 export default Vue.extend({
   components: {

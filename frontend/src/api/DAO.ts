@@ -1,14 +1,14 @@
-import type { IDAO } from "../../../general/model/IDAO";
-import type { User } from "../../../general/model/User";
-import type { Person } from "../../../general/model/Person";
-import { Gender, LifeStatus } from "../../../general/model/Person";
-import type { FieldDef } from "../../../general/model/FieldDef";
-import type { FieldVal } from "../../../general/model/FieldVal";
+import type { IDAO } from "../../../backend/src/model/IDAO";
+import type { User } from "../../../backend/src/model/User";
+import type { Person } from "../../../backend/src/model/Person";
+import { Gender, LifeStatus } from "../../../backend/src/model/Person";
+import type { FieldDef } from "../../../backend/src/model/FieldDef";
+import type { FieldVal } from "../../../backend/src/model/FieldVal";
 import {
   EventTargetType,
   EventType,
   type EventSetting,
-} from "../../../general/model/EventSetting";
+} from "../../../backend/src/model/EventSetting";
 
 const GENERATE_FAKE_DATA =
   process.env.NODE_ENV == "development" &&

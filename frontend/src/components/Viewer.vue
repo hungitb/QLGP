@@ -137,7 +137,7 @@ const ViewerPC = Vue.extend({
       this.render();
     },
     isClickEvent() {
-      const delta = 1;
+      const delta = 10;
       return (
         Math.abs(
           this.state.firstPanningStart.clientX - this.state.panningEnd.clientX

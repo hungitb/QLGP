@@ -1,7 +1,7 @@
 import Vue from "vue";
 import Vuex from "vuex";
 
-import { Person } from "../../../general/model/Person";
+import { Person } from "../../../backend/src/model/Person";
 import { personApi } from "@/api/person";
 
 Vue.use(Vuex);

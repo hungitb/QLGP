@@ -5,9 +5,9 @@ import {
   getLoggedInUserLocalStorage,
   stringifyValuesOfObject,
 } from "./utils";
-import getEventController from "../../../general/controller/event";
+import getEventController from "../../../backend/src/controller/event";
 import { eventSettingDAO, personDAO } from "./DAO";
-import { EventSetting } from "../../../general/model/EventSetting";
+import { EventSetting } from "../../../backend/src/model/EventSetting";
 
 const eventController = getEventController(eventSettingDAO, personDAO);
 

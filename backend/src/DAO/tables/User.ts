@@ -2,7 +2,7 @@
 import { DataTypes } from "sequelize"
 import type { Sequelize } from "sequelize"
 import { SequlizeTableDefineColumns } from "./utils"
-import { User } from "../../../../general/model/User"
+import { User } from "../../model/User"
 
 export default function getUserTable (sequelize: Sequelize) {
     return sequelize.define('User', {

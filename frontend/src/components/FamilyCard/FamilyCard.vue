@@ -71,9 +71,9 @@
 import Vue, { nextTick } from "vue";
 import $ from "jquery";
 
-import { type ExtendedPerson } from "../../../../general/controller/person";
+import { type ExtendedPerson } from "../../../../backend/src/controller/person";
 import PersonCard from "./PersonCard.vue";
-import { Gender } from "../../../../general/model/Person";
+import { Gender } from "../../../../backend/src/model/Person";
 import { type FamilyCardConfig } from "../types";
 import { getUniqueID } from "@/utils";
 

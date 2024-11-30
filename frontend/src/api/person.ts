@@ -7,10 +7,10 @@ import {
 } from "./utils";
 import getPersonController, {
   CreatePersonParams,
-} from "../../../general/controller/person";
-import type { Person } from "../../../general/model/Person";
+} from "../../../backend/src/controller/person";
+import type { Person } from "../../../backend/src/model/Person";
 import { personDAO } from "./DAO";
-import { PaginateParams } from "../../../general/controller/utils";
+import { PaginateParams } from "../../../backend/src/controller/utils";
 
 const personController = getPersonController(personDAO);
 

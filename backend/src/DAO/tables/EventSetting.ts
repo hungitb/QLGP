@@ -2,7 +2,7 @@
 import { DataTypes } from "sequelize"
 import type { Sequelize } from "sequelize"
 import { SequlizeTableDefineColumns } from "./utils"
-import { EventSetting } from "../../../../general/model/EventSetting"
+import { EventSetting } from "../../model/EventSetting"
 
 export default function getEventSettingTable (sequelize: Sequelize) {
     return sequelize.define('EventSetting', {

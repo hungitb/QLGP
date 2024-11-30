@@ -3,7 +3,7 @@ import { Router } from "express";
 
 import { personDAO, userDAO, eventSettingDAO } from "../DAO/database";
 import { getLoggedInUser, wrapHandlerSimple } from "./utils";
-import getAuthController from "../../../general/controller/auth";
+import getAuthController from "../controller/auth";
 
 const router = Router();
 const authController = getAuthController(userDAO, personDAO, eventSettingDAO);
