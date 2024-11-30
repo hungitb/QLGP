@@ -184,7 +184,7 @@ function generateFakeData() {
       }
       indices.add(index);
     }
-    const result = [];
+    const result = [] as K[];
     for (const index of indices) result.push(arr[index]);
     return result;
   }

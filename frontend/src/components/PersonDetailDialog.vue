@@ -58,6 +58,7 @@
                     <v-list-item-avatar>
                       <CustomPersonAvatar
                         :person="$store.state.personMapping[id]"
+                        textSize="5"
                       />
                     </v-list-item-avatar>
 

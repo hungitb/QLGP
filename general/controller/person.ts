@@ -167,11 +167,12 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         ancestor: ExtendedPerson,
         subjectId: string,
     }>> {
+        if (!loggedInUser) return CommonResponse.UNAUTHORIZED;
         const levelInt = parseInt(level);
-        if (!loggedInUser || isNaN(levelInt)) return CommonResponse[401];
+        if (isNaN(levelInt)) return CommonResponse.BAD_REQUEST;
         if (!subjectId) {
             const personStandForUser = await personDAO.findOne({ where: { ownerUserId: loggedInUser.id, isStandForUser: true } });
-            if (!personStandForUser) return CommonResponse[400];
+            if (!personStandForUser) return CommonResponse.UNAUTHORIZED;
             subjectId = personStandForUser.id;
         }
 
@@ -231,6 +232,9 @@ export default function getPersonController(personDAO: IDAO<Person>) {
             else path.add(person.id);
 
             if (person.gender == Gender.MALE || levelInt > 2) {
+                if (!childrenIdsOf[person.id]) {
+                    console.log(childrenIdsOf, person, person.id, childrenIdsOf);
+                }
                 childrenIdsOf[person.id].forEach(childId => {
                     if (!path) {
                         return; // By pass typescript error
@@ -266,38 +270,49 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         if (!loggedInUser) {
             return CommonResponse[400];
         }
-        // to do: Check params
+        // to do: Check params, check trùng, tồn tại,...
 
         const newPerson: Person = {
+            ...data.person,
             id: uuid(),
             ownerUserId: loggedInUser.id,
             isStandForUser: false,
-            ...data.person,
             birthdate: data.person.birthdate ? shortenDateString(data.person.birthdate) : null,
             deathdate: data.person.deathdate ? shortenDateString(data.person.deathdate) : null,
         }
 
         await personDAO.create(newPerson);
 
+        const promises: Promise<any>[] = [];
+
         if (data.role) {
             const { roleName, roleWithTargetPersonId } = data.role;
             if (roleName == "father") {
-                await personDAO.update({ fatherId: newPerson.id }, { where: { id: roleWithTargetPersonId } });
+                promises.push(
+                    personDAO.update({ fatherId: newPerson.id }, { where: { id: roleWithTargetPersonId } })
+                );
             }
             else if (roleName == "mother") {
-                await personDAO.update({ motherId: newPerson.id }, { where: { id: roleWithTargetPersonId } });
+                promises.push(
+                    personDAO.update({ motherId: newPerson.id }, { where: { id: roleWithTargetPersonId } })
+                );
             }
         }
 
         // Đảm bảo 1 người chỉ có 1 bạn đời
         if (newPerson.spouseId) {
             const spouse = await personDAO.findByPk(newPerson.spouseId);
-            if (spouse && spouse.spouseId) {
-                await personDAO.update({ spouseId: null }, { where: { id: spouse.spouseId } });
+            if (spouse) {
+                promises.push(personDAO.update({ spouseId: newPerson.id }, { where: { id: spouse.id } }));
+                if (spouse.spouseId) {
+                    promises.push(personDAO.update({ spouseId: null }, { where: { id: spouse.spouseId } }));
+                }
             }
         }
 
         // to do: Create FieldVal with for all people FieldDef
+
+        await Promise.all(promises);
 
         return {
             data: {

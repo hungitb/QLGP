@@ -1,6 +1,8 @@
 
 import { DataTypes } from "sequelize"
 import type { Sequelize } from "sequelize"
+import { FieldDef } from "../../../../general/model/FieldDef"
+import { SequlizeTableDefineColumns } from "./utils"
 
 export default function getFieldDefTable (sequelize: Sequelize) {
     return sequelize.define('FieldDef', {
@@ -32,7 +34,7 @@ export default function getFieldDefTable (sequelize: Sequelize) {
             type: DataTypes.BOOLEAN,
             allowNull: false
         }
-    },
+    } as SequlizeTableDefineColumns<FieldDef>,
     {
         tableName: 'field_defs'
     })

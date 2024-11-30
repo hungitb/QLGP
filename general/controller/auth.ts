@@ -4,8 +4,10 @@ import { CommonMessages, AuthMessages, generateSessionToken, CommonResponse } fr
 import type { ControllerHandlerResult as CHR } from "./utils";
 import type { User } from "../model/User";
 import type { IDAO } from "../model/IDAO";
+import { Gender, Person } from "../model/Person";
+import { EventSetting, EventTargetType, EventType } from "../model/EventSetting";
 
-export default function getAuthController(userDAO: IDAO<User>) {
+export default function getAuthController(userDAO: IDAO<User>, personDAO: IDAO<Person>, eventSettingDAO: IDAO<EventSetting>) {
     async function login({ username, password }: { username: string, password: string }, loggedInUser: User | null): Promise<CHR<{ msg: string, sessionToken: string }>> {
         const user = await userDAO.findOne({ where: { username } })
         if (!user) return {
@@ -44,7 +46,7 @@ export default function getAuthController(userDAO: IDAO<User>) {
         if (user) return {
             data: { msg: AuthMessages.USERNAME_ALREADY_EXISTS },
             status: 409
-        }
+        };
 
         const newUser: User = {
             id: uuidv4(),
@@ -52,9 +54,31 @@ export default function getAuthController(userDAO: IDAO<User>) {
             password,
             sessionExpiry: null,
             sessionToken: null
+        };
+
+        const newPerson: Partial<Person> = {
+            id: uuidv4(),
+            ownerUserId: newUser.id,
+            isStandForUser: true,
+            callname: "Tôi",
+            gender: Gender.MALE
+        };
+
+        const newEventSetting: EventSetting = {
+            userId: newUser.id,
+            targetType: EventTargetType.ALL,
+            types: [EventType.BIRTHDAY, EventType.DEATHDAY].join(","),
+            specificPersonIds: "",
+            numGenerationsAbove: 3,
+            numGenerationsBelow: 3,
+            includePeopleEqualGeneration: true
         }
 
-        await userDAO.create(newUser);
+        await Promise.all([
+            userDAO.create(newUser),
+            personDAO.create(newPerson as Person),
+            eventSettingDAO.create(newEventSetting)
+        ]);
 
         return CommonResponse.OK;
     }

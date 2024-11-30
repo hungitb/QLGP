@@ -69,7 +69,7 @@
             male
             one
             v-model="fatherId"
-            :exceptionIds="person ? [person.id] : []"
+            :exceptionIds="exceptionIdsOfPersonIput"
             :disabled="isConstant('fatherId')"
           />
         </v-col>
@@ -79,7 +79,7 @@
             female
             one
             v-model="motherId"
-            :exceptionIds="person ? [person.id] : []"
+            :exceptionIds="exceptionIdsOfPersonIput"
             :disabled="isConstant('motherId')"
           />
         </v-col>
@@ -88,7 +88,7 @@
             label="Bạn đời"
             one
             v-model="spouseId"
-            :exceptionIds="person ? [person.id] : []"
+            :exceptionIds="exceptionIdsOfPersonIput"
             :disabled="isConstant('spouseId')"
           />
         </v-col>
@@ -110,7 +110,11 @@ import AvatarInput from "./input/AvatarInput.vue";
 import { personApi } from "@/api/person";
 import { mapActions } from "vuex";
 import { FETCH_PEOPLE } from "@/store";
-import { convertToDateInputValue, handleDateInputValue } from "@/utils";
+import {
+  convertToDateInputValue,
+  handleDateInputValue,
+  resizeImageSrc,
+} from "@/utils";
 import { CreatePersonParams } from "../../../general/controller/person";
 
 export default defineComponent({
@@ -186,6 +190,12 @@ export default defineComponent({
         (this as any).$emit("input", newValue);
       },
     } as unknown as () => boolean,
+    exceptionIdsOfPersonIput() {
+      const ids: string[] = [];
+      if (this.person) ids.push(this.person.id);
+      if (this.role) ids.push(this.role.roleWithTargetPersonId);
+      return ids;
+    },
   },
   watch: {
     person() {
@@ -303,7 +313,9 @@ export default defineComponent({
         // Add person
         const { data } = await personApi.createPerson({
           person: {
-            avatarUrl: this.avartarSrc,
+            avatarUrl: this.avartarSrc
+              ? await resizeImageSrc(this.avartarSrc)
+              : null,
             callname: this.callname,
             gender: this.gender,
             birthdate: handleDateInputValue(this.birthdateDataObj),

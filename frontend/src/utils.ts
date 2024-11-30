@@ -50,3 +50,39 @@ export function getUniqueID() {
   currentNumber++;
   return "fm" + currentNumber;
 }
+
+export function resizeImageSrc(imageSrc: string): Promise<string> {
+  const LIMIT = process.env.QLGP_USE_BACKEND == "true" ? 5_000_000 : 100_000;
+
+  return new Promise((resolve) => {
+    if (imageSrc.length < LIMIT) {
+      resolve(imageSrc);
+      return;
+    }
+
+    const imgElem = new Image();
+    imgElem.src = imageSrc;
+
+    imgElem.onload = () => {
+      start(imgElem.height, imgElem.width);
+    };
+
+    function start(height: number, width: number, coff = 0.9) {
+      const canvas = document.createElement("canvas");
+      const raito = (coff * imageSrc.length) / LIMIT;
+
+      canvas.width = width / Math.sqrt(raito);
+      canvas.height = height / Math.sqrt(raito);
+
+      const context2D = canvas.getContext("2d");
+      if (!context2D) {
+        return resolve("");
+      }
+
+      context2D.drawImage(imgElem, 0, 0, canvas.width, canvas.height);
+      const result = canvas.toDataURL("image/jpeg");
+      if (result.length < LIMIT) resolve(result);
+      else start(height, width, coff + 0.05);
+    }
+  });
+}

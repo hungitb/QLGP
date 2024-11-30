@@ -265,7 +265,6 @@ export default Vue.extend({
   watch: {
     interval(val, oldVal) {
       if (oldVal) {
-        window.l(oldVal);
         clearInterval(oldVal);
       }
     },

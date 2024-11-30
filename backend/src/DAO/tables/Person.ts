@@ -1,6 +1,8 @@
 
 import { DataTypes } from "sequelize"
 import type { Sequelize } from "sequelize"
+import { SequlizeTableDefineColumns } from "./utils"
+import { Person } from "../../../../general/model/Person"
 
 export default function getPersonTable (sequelize: Sequelize) {
     return sequelize.define('Person', {
@@ -24,14 +26,14 @@ export default function getPersonTable (sequelize: Sequelize) {
             type: DataTypes.STRING,
             allowNull: false
         },
-        avatarUrl: DataTypes.STRING(4096),
+        avatarUrl: DataTypes.TEXT("medium"),
         birthdate: DataTypes.STRING,
         status: DataTypes.STRING,
         deathdate: DataTypes.STRING,
         spouseId: DataTypes.STRING,
         fatherId: DataTypes.STRING,
         motherId: DataTypes.STRING
-    },
+    } as SequlizeTableDefineColumns<Person>,
     {
         tableName: 'people'
     })

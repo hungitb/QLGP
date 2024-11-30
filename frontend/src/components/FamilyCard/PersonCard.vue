@@ -85,6 +85,7 @@
       "
     >
       <Btn v-if="!person.fatherId" @click="addPerson('father')">Bố</Btn>
+      <v-spacer />
       <Btn v-if="!person.motherId" @click="addPerson('mother')">Mẹ</Btn>
     </div>
 
@@ -93,6 +94,7 @@
       v-if="(showControl || showingMobileOverlay) && !viewOnly"
     >
       <Btn @click="addPerson('child')">Con</Btn>
+      <v-spacer />
       <Btn v-if="!person.spouseId" @click="addPerson('spouse')">Bạn đời</Btn>
     </div>
   </div>
@@ -216,7 +218,6 @@ export default Vue.extend({
     right: 0;
     z-index: 2;
     display: flex;
-    justify-content: space-between;
     padding-top: 8px;
     padding-bottom: 8px;
 

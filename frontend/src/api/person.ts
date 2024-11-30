@@ -1,6 +1,7 @@
 import api from "./api";
 import {
   useBackend,
+  wrapAxiosCall,
   getLoggedInUserLocalStorage,
   stringifyValuesOfObject,
 } from "./utils";
@@ -16,7 +17,7 @@ const personController = getPersonController(personDAO);
 export const personApi = {
   async getAllPeopleBaseInfo(data: PaginateParams = {}) {
     if (useBackend) {
-      // to do
+      return wrapAxiosCall(() => api.get("/person/all", { params: data }));
     }
 
     return await personController.getAllPeopleBaseInfo(
@@ -26,7 +27,7 @@ export const personApi = {
   },
   async getPersonDetailInfo(data: { id: string }) {
     if (useBackend) {
-      // to do
+      return wrapAxiosCall(() => api.get("/person/detail", { params: data }));
     }
     return await personController.getPersonDetailInfo(
       stringifyValuesOfObject(data) as { id: string },
@@ -35,7 +36,7 @@ export const personApi = {
   },
   async getFamilyTreeInfo(data: { subjectId?: string; level: number }) {
     if (useBackend) {
-      // to do
+      return wrapAxiosCall(() => api.get("/person/tree", { params: data }));
     }
 
     return await personController.getFamilyTreeInfo(
@@ -48,7 +49,7 @@ export const personApi = {
   },
   async createPerson(data: CreatePersonParams) {
     if (useBackend) {
-      // to do
+      return wrapAxiosCall(() => api.post("/person", data));
     }
 
     return await personController.createPerson(
@@ -58,7 +59,7 @@ export const personApi = {
   },
   async deletePerson(data: { id: string }) {
     if (useBackend) {
-      // to do
+      return wrapAxiosCall(() => api.delete("/person", { params: data }));
     }
 
     return await personController.deletePerson(
@@ -68,7 +69,7 @@ export const personApi = {
   },
   async updatePerson(data: Partial<Person> & { id: string }) {
     if (useBackend) {
-      // to do
+      return wrapAxiosCall(() => api.patch("/person", data));
     }
 
     return await personController.updatePerson(
@@ -78,7 +79,7 @@ export const personApi = {
   },
   async statistic() {
     if (useBackend) {
-      // to do
+      return wrapAxiosCall(() => api.get("/person/statistic"));
     }
 
     return await personController.statistic(

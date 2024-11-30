@@ -6,9 +6,9 @@ import {
   getLoggedInUserLocalStorage,
 } from "./utils";
 import getAuthController from "../../../general/controller/auth";
-import { userDAO } from "./DAO";
+import { userDAO, personDAO, eventSettingDAO } from "./DAO";
 
-const authController = getAuthController(userDAO);
+const authController = getAuthController(userDAO, personDAO, eventSettingDAO);
 
 export const authApi = {
   getLoggedInUser: async () => {

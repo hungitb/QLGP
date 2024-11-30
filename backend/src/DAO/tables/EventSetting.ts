@@ -1,22 +1,20 @@
 
 import { DataTypes } from "sequelize"
 import type { Sequelize } from "sequelize"
+import { SequlizeTableDefineColumns } from "./utils"
+import { EventSetting } from "../../../../general/model/EventSetting"
 
 export default function getEventSettingTable (sequelize: Sequelize) {
     return sequelize.define('EventSetting', {
-        id: {
-            type: DataTypes.STRING,
-            primaryKey: true
-        },
         userId: {
             type: DataTypes.STRING,
-            allowNull: false
+            primaryKey: true
         },
         targetType: {
             type: DataTypes.STRING,
             allowNull: false
         },
-        type: {
+        types: {
             type: DataTypes.STRING,
             allowNull: false
         },
@@ -36,7 +34,7 @@ export default function getEventSettingTable (sequelize: Sequelize) {
             type: DataTypes.BOOLEAN,
             allowNull: false
         }
-    },
+    } as SequlizeTableDefineColumns<EventSetting>,
     {
         tableName: 'event_settings'
     })

@@ -2,7 +2,8 @@
 import type { Request, Response, NextFunction } from "express";
 
 import { userDAO } from "../DAO/database";
-import type { User } from "../../../general/model/User";
+import {  type ControllerHandlerResult as CHR } from "../../../general/controller/utils";
+import { User } from "../../../general/model/User";
 
 export async function getLoggedInUser(req: Request) {
     const sessionToken = req.cookies?.sessionToken;
@@ -23,8 +24,18 @@ export async function getLoggedInUser(req: Request) {
     return user;
 }
 
-export function wrapHandler(fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) {
+export function wrapHandlerSimple(fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) {
     return (req: Request, res: Response, next: NextFunction) => {
         fn(req, res, next).catch(next);
     }
+}
+
+export function wrapHandlerAdvance<T extends {
+    [method: string]: (data: any, loggedInUser: User | null) => Promise<CHR<any>>
+}, K extends keyof T>(controller: T, method: K) {
+    return wrapHandlerSimple(async (req, res) => {
+        const user = await getLoggedInUser(req);
+        const { data, status } = await controller[method](req.body, user);
+        res.status(status).json(data);
+    });
 }

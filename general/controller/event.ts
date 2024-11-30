@@ -87,7 +87,7 @@ export function filterPeople(people: Person[], eventSetting: EventSetting) {
 
 export default function getEventController(eventSettingDAO: IDAO<EventSetting>, personDAO: IDAO<Person>) {
     async function getEvents({ startDate, endDate }: { startDate?: string, endDate?: string }, loggedInUser: User | null): Promise<CHR<{ events: Event[], eventSetting: EventSetting }>> {
-        if (!loggedInUser) return CommonResponse[401];
+        if (!loggedInUser) return CommonResponse.UNAUTHORIZED;
 
         if (!startDate) {
             startDate = todayDate();

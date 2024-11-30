@@ -7,13 +7,13 @@
     @click.stop
   >
     <v-card style="position: relative">
-      <v-card-title v-if="header">
+      <v-card-title v-if="header || $slots.header">
         <!-- Mặc định do vuetify set word-break=break-all làm cho chữ bị gãy khi xuống dòng nên pahri set lại -->
         <span class="text-h5" style="word-break: initial">
           <slot name="header">{{ header }}</slot>
         </span>
       </v-card-title>
-      <v-divider v-if="divider && header"></v-divider>
+      <v-divider v-if="divider && (header || $slots.header)"></v-divider>
       <v-card-text :class="noPadding ? 'pa-0' : ''" ref="cardText">
         <div :class="contentPaddingTop && !noPadding ? 'pt-5' : ''">
           <slot></slot>

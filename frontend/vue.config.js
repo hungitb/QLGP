@@ -1,6 +1,6 @@
 require("dotenv").config({ path: ["../.env", "../default.env"] });
 const { defineConfig } = require("@vue/cli-service");
-const { EnvironmentPlugin, DefinePlugin } = require("webpack");
+const { EnvironmentPlugin } = require("webpack");
 module.exports = defineConfig({
   transpileDependencies: ["vuetify"],
   configureWebpack: {
