@@ -10,9 +10,14 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
+      const pathname = window.location.pathname;
       // Check cho chắc thôi, có thể sẽ không xảy ra
-      if (window.location.pathname != "/auth/login") {
-        window.location.href = "/auth/login?next=" + window.location.pathname;
+      if (pathname != "/auth/login") {
+        if (pathname == "/") {
+          window.location.href = "/auth/login";
+        } else {
+          window.location.href = "/auth/login?next=" + pathname;
+        }
       }
       return;
     }

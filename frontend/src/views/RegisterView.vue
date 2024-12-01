@@ -15,6 +15,8 @@
             v-model="username"
             :rules="rules"
             label="Tên đăng nhập"
+            name="username"
+            autocomplete="username"
             hint="Độ dài từ 6 đến 12, chỉ bao gồm a-z, A-Z, và 0-9"
             required
             outlined
@@ -28,6 +30,8 @@
             v-model="password"
             :rules="rules"
             label="Mật khẩu"
+            name="password"
+            autocomplete="new-password"
             hint="Độ dài từ 6 đến 12, chỉ bao gồm a-z, A-Z, và 0-9"
             :type="showPassword ? 'text' : 'password'"
             :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
@@ -43,6 +47,8 @@
             v-model="password2"
             :rules="[...rules, testForPassword2]"
             label="Nhập lại mật khẩu"
+            name="confirm-password"
+            autocomplete="new-password"
             :type="showPassword2 ? 'text' : 'password'"
             :append-icon="showPassword2 ? 'mdi-eye' : 'mdi-eye-off'"
             @click:append="showPassword2 = !showPassword2"
@@ -93,14 +99,15 @@ import Vue from "vue";
 
 import { authApi } from "@/api/auth";
 
+const isDev = process.env.NODE_ENV == "development";
 export default Vue.extend({
   data: () => ({
     showPassword: false,
     showPassword2: false,
     valid: false,
-    username: "hungnv195",
-    password: "hungnv195",
-    password2: "hungnv195",
+    username: isDev ? "hungnv195" : "",
+    password: isDev ? "hungnv195" : "",
+    password2: isDev ? "hungnv195" : "",
     rules: [
       (v: string) => !!v || "Không được để trống",
       (v: string) =>

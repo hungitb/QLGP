@@ -115,6 +115,8 @@ export default Vue.extend({
     },
     async logout() {
       this.isLoading = true;
+      localStorage.removeItem("QLGP.username");
+      localStorage.removeItem("QLGP.password");
       await authApi.logout();
       this[CLEAR_STORE]();
       this.$router.push("/auth/login");
@@ -122,7 +124,11 @@ export default Vue.extend({
     async checkUser() {
       const { data, status } = await authApi.getLoggedInUser();
       if (status > 299 || !data.user) {
-        this.$router.push("/auth/login?next=" + window.location.pathname);
+        if (window.location.pathname == "/") {
+          this.$router.push("/auth/login");
+        } else {
+          this.$router.push("/auth/login?next=" + window.location.pathname);
+        }
         return false;
       }
       return true;

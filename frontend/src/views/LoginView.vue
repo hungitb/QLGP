@@ -15,6 +15,8 @@
             v-model="username"
             :rules="rules"
             label="Tên đăng nhập"
+            name="username"
+            autocomplete="username"
             hint="Độ dài từ 6 đến 12, chỉ bao gồm a-z, A-Z, và 0-9"
             required
             outlined
@@ -28,6 +30,8 @@
             v-model="password"
             :rules="rules"
             label="Mật khẩu"
+            name="password"
+            autocomplete="current-password"
             hint="Độ dài từ 6 đến 12, chỉ bao gồm a-z, A-Z, và 0-9"
             :type="showPassword ? 'text' : 'password'"
             :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
@@ -36,6 +40,14 @@
             @input="clearLoginErrorMessage"
             :readonly="isLoadingLogin"
           ></v-text-field>
+        </v-col>
+
+        <v-col cols="12" class="py-0">
+          <v-checkbox
+            v-model="rememberMe"
+            label="Nhớ thông tin đăng nhập (Không bảo mật)"
+            class="mt-0"
+          ></v-checkbox>
         </v-col>
       </v-row>
     </v-form>
@@ -74,12 +86,17 @@ import Vue from "vue";
 
 import { authApi } from "@/api/auth";
 
+const isDev = process.env.NODE_ENV == "development";
 export default Vue.extend({
   data: () => ({
     showPassword: false,
     valid: false,
-    username: "hungnv195",
-    password: "hungnv195",
+    username: isDev ? "hungnv195" : localStorage.getItem("QLGP.username") || "",
+    password: isDev ? "hungnv195" : localStorage.getItem("QLGP.password") || "",
+    rememberMe: !!(
+      localStorage.getItem("QLGP.username") &&
+      localStorage.getItem("QLGP.password")
+    ),
     rules: [
       (v: string) => !!v || "Không được để trống",
       (v: string) =>
@@ -115,6 +132,14 @@ export default Vue.extend({
       if (status > 299) {
         this.loginErrorMessage = data.msg || "";
         return;
+      }
+
+      if (this.rememberMe) {
+        localStorage.setItem("QLGP.username", this.username);
+        localStorage.setItem("QLGP.password", this.password);
+      } else {
+        localStorage.removeItem("QLGP.username");
+        localStorage.removeItem("QLGP.password");
       }
 
       const search = window.location.search;
