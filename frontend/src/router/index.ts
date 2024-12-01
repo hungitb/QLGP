@@ -10,6 +10,7 @@ import HomeView from "@/views/HomeView.vue";
 import FamilyTreeView from "@/views/FamilyTreeView.vue";
 import StatisticView from "@/views/StatisticView.vue";
 import UpcomingEventsView from "@/views/UpcomingEventsView.vue";
+import NotFoundView from "@/views/NotFoundView.vue";
 
 Vue.use(VueRouter);
 
@@ -55,6 +56,11 @@ const routes: Array<RouteConfig> = [
         component: UpcomingEventsView,
       },
     ],
+  },
+  {
+    path: "*",
+    name: "not_found",
+    component: NotFoundView,
   },
 ];
 

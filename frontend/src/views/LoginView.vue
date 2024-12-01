@@ -117,7 +117,10 @@ export default Vue.extend({
         return;
       }
 
-      this.$router.push("/");
+      const search = window.location.search;
+      const params = new URLSearchParams(search);
+
+      this.$router.push(params.get("next") || "/");
     },
   },
 });

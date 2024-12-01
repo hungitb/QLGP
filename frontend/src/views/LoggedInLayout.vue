@@ -91,6 +91,7 @@ export default Vue.extend({
   data: () => ({
     isLoading: false,
     isLoadingUser: true,
+    interval: null as number | null,
     drawer: null as boolean | null,
     items: [
       { title: "Trang chủ", icon: "house-door-fill", link: "/" },
@@ -118,21 +119,38 @@ export default Vue.extend({
       this[CLEAR_STORE]();
       this.$router.push("/auth/login");
     },
+    async checkUser() {
+      const { data, status } = await authApi.getLoggedInUser();
+      if (status > 299 || !data.user) {
+        this.$router.push("/auth/login?next=" + window.location.pathname);
+        return false;
+      }
+      return true;
+    },
   },
   watch: {
     $route: "updateSelectedItemFromRoute",
   },
   async mounted() {
-    const { data, status } = await authApi.getLoggedInUser();
-    if (status > 299 || !data.user) {
-      this.$router.push("/auth/login");
-      return;
+    // Mặc dù nếu không ok thì đã push route nhưng, route chưa kịp load thì code vẫn chạy tới
+    // đoạn FETCH_PEOPLE và sẽ nhận 404 (api sẽ tự chuyển sang page /login với next là page hiện tại nhưng
+    // page hiện tại khi nhận 404 lại là login nên thành ra page login xong lại chuyển đến page login).
+    // Nên cần phải có check ok đoạn này.
+    const ok = await this.checkUser();
+    if (ok) {
+      this.interval = setInterval(() => {
+        this.checkUser();
+      }, 30_000);
+      this.isLoadingUser = false;
+      this.updateSelectedItemFromRoute(this.$route);
+
+      this[FETCH_PEOPLE]();
     }
-
-    this.isLoadingUser = false;
-    this.updateSelectedItemFromRoute(this.$route);
-
-    this[FETCH_PEOPLE]();
+  },
+  beforeDestroy() {
+    if (this.interval) {
+      clearInterval(this.interval);
+    }
   },
 });
 </script>
