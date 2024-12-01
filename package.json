@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
+    "dev:fe": "node resources/scripts/subpackage.js fe serve",
+    "lint:fe": "node resources/scripts/subpackage.js fe lint",
+    "dev:be": "node resources/scripts/subpackage.js be dev",
+    
     "build": "node resources/scripts/build.js",
     "build:fe": "node resources/scripts/build.js fe",
     "build:be": "node resources/scripts/build.js be",
@@ -10,5 +14,8 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  }
 }

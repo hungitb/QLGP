@@ -1,10 +1,9 @@
-const { runCommand, copyDirSync, deleteDirSync } = require("./utils");
+const { runCommand: _runCommand, copyDirSync, deleteDirSync, backendDir, frontendDir } = require("./utils");
 const path = require("path");
 
-const backendDir = path.resolve(__dirname, "..", "..", "backend");
-const frontendDir = path.resolve(__dirname, "..", "..", "frontend");
-
 async function build() {
+    const runCommand = (...args) => _runCommand({ cmd: args, env: { NODE_ENV: "production" } });
+    
     const buildMode = ["fe", "be"].includes(process.argv[2]) ? process.argv[2] : "all";
 
     if (buildMode == "be" || buildMode == "all") {

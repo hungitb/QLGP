@@ -2,7 +2,10 @@ const { spawn } = require("child_process");
 const os = require("os");
 const path = require("path");
 const fs = require("fs");
+require("dotenv").config({ path: ["./.env", "./default.env"] });
 
+const backendDir = path.resolve(__dirname, "..", "..", "backend");
+const frontendDir = path.resolve(__dirname, "..", "..", "frontend");
 const isWindows = os.platform() === "win32";
 
 function arrayToString(arr) {
@@ -10,7 +13,8 @@ function arrayToString(arr) {
     return `[${arr.map(a => `"${a}"`).join(", ")}]`
 }
 
-function runCommand(command, ...args) {
+function runCommand({ cmd, env = {} }) {
+    const [command, ...args] = cmd;
     console.log(`RUN: ${command} ${arrayToString(args)}`);
 
     const executable = isWindows ? "cmd" : command;
@@ -21,7 +25,7 @@ function runCommand(command, ...args) {
             stdio: "inherit",
             env: {
                 ...process.env,
-                NODE_ENV: "production",
+                ...env
             }
         });
 
@@ -78,6 +82,8 @@ function deleteDirSync(dirPath) {
 }
 
 module.exports = {
+    backendDir,
+    frontendDir,
     isWindows,
     runCommand,
     copyDirSync,
