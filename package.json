@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "NODE_ENV=production && node resources/scripts/build.js",
-    "build-win": "set NODE_ENV=production&& node resources/scripts/build.js",
+    "build": "node resources/scripts/build.js",
+    "build:fe": "node resources/scripts/build.js fe",
+    "build:be": "node resources/scripts/build.js be",
     "start": "node backend/dist/index.js"
   },
   "keywords": [],

@@ -308,8 +308,6 @@ export default defineComponent({
         if (this.spouseId != this.person.spouseId)
           data.spouseId = this.spouseId;
 
-        window.l(data);
-
         await personApi.updatePerson(data);
       } else {
         // Add person

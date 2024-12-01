@@ -18,10 +18,6 @@ getDatabaseInstance().then(async () => {
     app.use(express.json({ limit: "50mb" }));
     app.use(morgan(isDev ? "dev" : "combined"));
     app.use(cookiePaser());
-    if (!isDev) {
-        // Nếu sau này build thì sẽ copy vào folder public, dev thì không cần
-        app.use(express.static(path.resolve(__dirname, "public")));
-    }
     app.use((req, res, next) => {
         // Assign query parameters to body
         req.body = {
@@ -43,6 +39,15 @@ getDatabaseInstance().then(async () => {
             msg: "Internal Server Error"
         });
     });
+
+    if (!isDev) {
+        // Nếu sau này build thì sẽ copy vào folder public, dev thì không cần
+        const staticDir = path.resolve(__dirname, "public");
+        app.use(express.static(staticDir));
+        app.get("*", (req, res) => {
+            res.sendFile(path.join(staticDir, "index.html"));
+        });
+    }
 
     const port = parseInt(process.env.QLGP_BACKEND_PORT || "4800");
     app.listen(port, () => {
