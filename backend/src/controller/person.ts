@@ -271,6 +271,7 @@ export default function getPersonController(personDAO: IDAO<Person>) {
             return CommonResponse[400];
         }
         // to do: Check params, check trùng, tồn tại,...
+        // Check xem nếu có bố, mẹ thì giới tính bố, mẹ có phải nam hay nữ không
 
         const newPerson: Person = {
             ...data.person,
@@ -281,22 +282,24 @@ export default function getPersonController(personDAO: IDAO<Person>) {
             deathdate: data.person.deathdate ? shortenDateString(data.person.deathdate) : null,
         }
 
-        await personDAO.create(newPerson);
-
         const promises: Promise<any>[] = [];
 
         if (data.role) {
             const { roleName, roleWithTargetPersonId } = data.role;
             if (roleName == "father") {
+                newPerson.gender = Gender.MALE; // Đảm bảo giới tính đúng
                 promises.push(
                     personDAO.update({ fatherId: newPerson.id }, { where: { id: roleWithTargetPersonId } })
                 );
             }
             else if (roleName == "mother") {
+                newPerson.gender = Gender.FEMALE; // Đảm bảo giới tính đúng
                 promises.push(
                     personDAO.update({ motherId: newPerson.id }, { where: { id: roleWithTargetPersonId } })
                 );
             }
+            // Check nếu role là child thì gán id bố và mẹ lại bằng roleWithTargetPersonId
+            // Hiện tại code vẫn OK vì dựa vào giá trị từ frontend trả về
         }
 
         // Đảm bảo 1 người chỉ có 1 bạn đời
@@ -312,6 +315,7 @@ export default function getPersonController(personDAO: IDAO<Person>) {
 
         // to do: Create FieldVal with for all people FieldDef
 
+        await personDAO.create(newPerson);
         await Promise.all(promises);
 
         return {

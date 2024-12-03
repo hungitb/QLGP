@@ -30,7 +30,11 @@
         :skipPeopleHasRelationshipWith="editedPerson"
       />
       <div class="mb-1">Hoặc</div>
-      <v-btn color="success" @click="clickAddPerson" :disabled="pickedPersonId">
+      <v-btn
+        color="success"
+        @click="clickAddPerson"
+        :disabled="!!pickedPersonId"
+      >
         Tạo người mới
       </v-btn>
     </CustomDialog>
@@ -111,7 +115,9 @@ export default defineComponent({
       };
       this.savePickedPerson = async () => {
         if (!this.pickedPersonId) {
-          showSnackbar({ msg: "Bạn chưa chọn đối tượng nào cả" });
+          showSnackbar({
+            msg: `Bạn chưa chọn ${this.props.roleText} cho ${this.editedPerson?.callname}`,
+          });
           return;
         }
 

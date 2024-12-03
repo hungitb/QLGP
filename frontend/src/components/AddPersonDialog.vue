@@ -69,7 +69,7 @@
             male
             one
             v-model="fatherId"
-            :exceptionIds="exceptionIdsOfPersonIput"
+            :exceptionIds="exceptionIdsOfPersonInput('father')"
             :disabled="isConstant('fatherId')"
           />
         </v-col>
@@ -79,7 +79,7 @@
             female
             one
             v-model="motherId"
-            :exceptionIds="exceptionIdsOfPersonIput"
+            :exceptionIds="exceptionIdsOfPersonInput('mother')"
             :disabled="isConstant('motherId')"
           />
         </v-col>
@@ -88,7 +88,7 @@
             label="Bạn đời"
             one
             v-model="spouseId"
-            :exceptionIds="exceptionIdsOfPersonIput"
+            :exceptionIds="exceptionIdsOfPersonInput('spouse')"
             :disabled="isConstant('spouseId')"
           />
         </v-col>
@@ -191,12 +191,6 @@ export default defineComponent({
         (this as any).$emit("input", newValue);
       },
     } as unknown as () => boolean,
-    exceptionIdsOfPersonIput() {
-      const ids: string[] = [];
-      if (this.person) ids.push(this.person.id);
-      if (this.role) ids.push(this.role.roleWithTargetPersonId);
-      return ids;
-    },
   },
   watch: {
     person() {
@@ -233,6 +227,29 @@ export default defineComponent({
     ...mapActions({
       [FETCH_PEOPLE]: FETCH_PEOPLE,
     }),
+    exceptionIdsOfPersonInput(type: string) {
+      const ids: string[] = [];
+      if (this.person) ids.push(this.person.id);
+      if (this.role) {
+        const role = this.role.roleName;
+        const id = this.role.roleWithTargetPersonId;
+        const addForTypes = (...types: string[]) => {
+          types.forEach((allowedType) => {
+            if (allowedType == type && !ids.includes(id)) ids.push(id);
+          });
+        };
+        if (role == "child") {
+          if (this.$store.state.personMapping[id].gender == Gender.MALE) {
+            addForTypes("mother", "spouse");
+          } else {
+            addForTypes("father", "spouse");
+          }
+        } else if (role == "spouse") {
+          addForTypes("mother", "father");
+        }
+      }
+      return ids;
+    },
     loadPersonProp() {
       const person = this.person;
       if (person) {
