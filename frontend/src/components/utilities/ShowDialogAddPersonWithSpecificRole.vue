@@ -23,16 +23,16 @@
       <div class="mb-2">Chọn một người</div>
       <PersonInputGroup
         one
-        ref="inputPersonDialogAddPersonWithSpecificRole"
-        required
         v-model="pickedPersonId"
         :label="props['roleText'] || ''"
         :male="props['role'] == 'father'"
-        :mother="props['role'] == 'mother'"
+        :female="props['role'] == 'mother'"
         :skipPeopleHasRelationshipWith="editedPerson"
       />
       <div class="mb-1">Hoặc</div>
-      <v-btn color="success" @click="clickAddPerson"> Tạo người mới </v-btn>
+      <v-btn color="success" @click="clickAddPerson" :disabled="pickedPersonId">
+        Tạo người mới
+      </v-btn>
     </CustomDialog>
   </div>
 </template>
@@ -45,6 +45,7 @@ import { showDialogAddOrCreatePerson } from "./ShowDialogAddOrCreatePerson.vue";
 import CustomDialog from "@/components/CustomDialog.vue";
 import PersonInputGroup from "@/components/input/PersonInputGroup.vue";
 import { personApi } from "@/api/person";
+import { showSnackbar } from "./ShowSnackbar.vue";
 
 type ShowDialogAddPersonWithSpecificRoleParams = {
   person: Person;
@@ -87,9 +88,6 @@ export default defineComponent({
         this.savePickedPerson = null;
         this.clickAddPerson = () => 1;
         this.isLoading = false;
-        (
-          this.$refs.inputPersonDialogAddPersonWithSpecificRole as any
-        ).resetValidation();
       }
     },
   },
@@ -112,10 +110,10 @@ export default defineComponent({
         roleText: roleMapping[roleOfPersonWillAdd],
       };
       this.savePickedPerson = async () => {
-        const valid = (
-          this.$refs.inputPersonDialogAddPersonWithSpecificRole as any
-        ).validate();
-        if (!valid || !this.pickedPersonId) return;
+        if (!this.pickedPersonId) {
+          showSnackbar({ msg: "Bạn chưa chọn đối tượng nào cả" });
+          return;
+        }
 
         this.isLoading = true;
         if (roleOfPersonWillAdd == "child") {
@@ -144,6 +142,14 @@ export default defineComponent({
               : {}),
           });
         }
+
+        showSnackbar({
+          msg: `Thêm ${roleMapping[roleOfPersonWillAdd]} cho ${
+            person.callname
+          } thành công (thêm ${
+            this.$store.state.personMapping[this.pickedPersonId].callname
+          })`,
+        });
 
         if (onAddedOrCreated) {
           onAddedOrCreated(this.pickedPersonId);

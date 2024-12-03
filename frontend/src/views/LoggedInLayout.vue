@@ -63,6 +63,7 @@
     <ShowDialogAddOrCreatePerson />
     <ShowDialogAddPersonWithSpecificRole />
     <ShowDialogConfirm />
+    <ShowSnackbar />
     <UtilDialogPersonDetailInfo />
   </v-app>
 </template>
@@ -78,6 +79,7 @@ import { CLEAR_STORE, FETCH_PEOPLE } from "@/store";
 import ShowDialogAddOrCreatePerson from "@/components/utilities/ShowDialogAddOrCreatePerson.vue";
 import ShowDialogAddPersonWithSpecificRole from "@/components/utilities/ShowDialogAddPersonWithSpecificRole.vue";
 import ShowDialogConfirm from "@/components/utilities/ShowDialogConfirm.vue";
+import ShowSnackbar from "@/components/utilities/ShowSnackbar.vue";
 import UtilDialogPersonDetailInfo from "@/components/utilities/UtilDialogPersonDetailInfo.vue";
 
 export default Vue.extend({
@@ -86,6 +88,7 @@ export default Vue.extend({
     ShowDialogAddOrCreatePerson,
     ShowDialogAddPersonWithSpecificRole,
     ShowDialogConfirm,
+    ShowSnackbar,
     UtilDialogPersonDetailInfo,
   },
   data: () => ({

@@ -116,6 +116,7 @@ import {
   resizeImageSrc,
 } from "@/utils";
 import { CreatePersonParams } from "../../../backend/src/controller/person";
+import { showSnackbar } from "./utilities/ShowSnackbar.vue";
 
 export default defineComponent({
   components: {
@@ -278,7 +279,12 @@ export default defineComponent({
     },
     async save() {
       const valid = (this.$refs?.form as any)?.validate?.();
-      if (!valid) return;
+      if (!valid) {
+        if (this.callname == "") {
+          showSnackbar({ msg: "Không được để trống Tên gọi" });
+        }
+        return;
+      }
 
       this.isLoading = true;
 
@@ -309,6 +315,9 @@ export default defineComponent({
           data.spouseId = this.spouseId;
 
         await personApi.updatePerson(data);
+        showSnackbar({
+          msg: `Cập nhật thông tin ${this.callname} thành công`,
+        });
       } else {
         // Add person
         const { data } = await personApi.createPerson({
@@ -334,6 +343,24 @@ export default defineComponent({
         });
 
         addedOrCreatedPersonId = data.createdPersonId;
+        if (this.role) {
+          const roleMapping: Record<string, string> = {
+            spouse: "Bạn đời",
+            child: "Con",
+            father: "Bố",
+            mother: "Mẹ",
+          };
+          showSnackbar({
+            msg: `Thêm ${roleMapping[this.role.roleName]} cho ${
+              this.$store.state.personMapping[this.role.roleWithTargetPersonId]
+                .callname
+            } thành công (thêm ${this.callname})`,
+          });
+        } else {
+          showSnackbar({
+            msg: `Thêm người thân ${this.callname} thành công`,
+          });
+        }
       }
 
       this.isLoading = false;
@@ -355,5 +382,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style lang="sass"></style>

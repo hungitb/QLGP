@@ -6,4 +6,5 @@ declare module "*.vue" {
   export function showDialogConfirm(data: any): void;
   export function showDialogAddPersonWithSpecificRole(data: any): void;
   export function showDialogPersonDetailInfo(data: any): void;
+  export function showSnackbar(data: any): void;
 }

@@ -169,7 +169,7 @@ const ViewerPC = Vue.extend({
         return Promise.resolve();
       }
 
-      if (!speed || (deltaX < 1 && deltaY < 1)) {
+      if (!speed || (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1)) {
         this.moveRelative(deltaX, deltaY);
         return Promise.resolve();
       }
@@ -365,7 +365,7 @@ const ViewerMobile = Vue.extend({
         elementBCR.y -
         elementBCR.height / 2;
 
-      if (!speed || (deltaX < 1 && deltaY < 1)) {
+      if (!speed || (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1)) {
         this.viewerElement.scrollLeft -= deltaX;
         this.viewerElement.scrollTop -= deltaY;
         return;

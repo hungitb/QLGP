@@ -1,8 +1,8 @@
 <template>
   <v-container>
     <div>
-      <div class="py-2">
-        <v-btn @click="showDialogAddOrCreatePerson">
+      <div class="pt-2 pb-4">
+        <v-btn @click="showDialogAddOrCreatePerson" outlined color="primary">
           <v-icon left>mdi-account-plus</v-icon> Thêm người thân
         </v-btn>
       </div>
@@ -16,6 +16,8 @@
           append-icon="mdi-magnify"
           label="Tìm kiếm"
           single-line
+          outlined
+          dense
           hide-details
         ></v-text-field>
       </v-card-title>
@@ -86,7 +88,7 @@
 
         <template v-slot:item.actions="{ item }">
           <v-icon
-            small
+            dense
             :class="peopleTableInMobileLayout ? 'mr-10' : 'mr-4'"
             @click.stop="editPerson(item)"
           >
@@ -96,7 +98,7 @@
           <v-icon
             v-if="!item.isStandForUser"
             color="error"
-            small
+            dense
             @click.stop="deletePerson(item)"
           >
             mdi-delete
@@ -123,6 +125,7 @@ import { FETCH_PEOPLE } from "@/store";
 import { showDialogConfirm } from "@/components/utilities/ShowDialogConfirm.vue";
 import { showDialogAddOrCreatePerson } from "@/components/utilities/ShowDialogAddOrCreatePerson.vue";
 import { showDialogPersonDetailInfo } from "@/components/utilities/UtilDialogPersonDetailInfo.vue";
+import { showSnackbar } from "@/components/utilities/ShowSnackbar.vue";
 
 export default Vue.extend({
   components: {
@@ -236,6 +239,7 @@ export default Vue.extend({
         await personApi.deletePerson({ id: person.id }).then(() => {
           this[FETCH_PEOPLE]();
         });
+        showSnackbar({ msg: `Xóa ${person.callname} thành công` });
       };
       showDialogConfirm({
         onConfirmed,

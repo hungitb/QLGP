@@ -298,6 +298,7 @@ import {
 } from "../../../backend/src/utils/DateUtils";
 import CustomDialog from "@/components/CustomDialog.vue";
 import PersonInputGroup from "@/components/input/PersonInputGroup.vue";
+import { showSnackbar } from "@/components/utilities/ShowSnackbar.vue";
 
 const allEventTypes = [
   {
@@ -522,6 +523,7 @@ export default defineComponent({
 
       this.isDialogSettingLoading = true;
       await eventApi.updateEventSetting(eventSetting);
+      showSnackbar({ msg: "Lưu cài đặt sự kiện thành công" });
       this.isDialogSettingLoading = false;
 
       this.dialogSetting = false;
