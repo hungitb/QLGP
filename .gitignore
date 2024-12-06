@@ -3,6 +3,7 @@ node_modules
 package-lock.json
 dist
 .env
+qlgp.exe
 backend/data
 
 ## Frontend

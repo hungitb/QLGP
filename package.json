@@ -6,10 +6,12 @@
     "dev:fe": "node resources/scripts/subpackage.js fe serve",
     "lint:fe": "node resources/scripts/subpackage.js fe lint",
     "dev:be": "node resources/scripts/subpackage.js be dev",
-    
+    "install:fe": "node resources/scripts/subpackage.js fe install",
+    "install:be": "node resources/scripts/subpackage.js be install",
     "build": "node resources/scripts/build.js",
     "build:fe": "node resources/scripts/build.js fe",
     "build:be": "node resources/scripts/build.js be",
+    "pkg": "pkg . --output qlgp.exe && node resources/scripts/post-pkg.js",
     "start": "node backend/dist/index.js"
   },
   "keywords": [],
@@ -17,5 +19,11 @@
   "license": "ISC",
   "dependencies": {
     "dotenv": "^16.4.5"
+  },
+  "bin": "resources/scripts/pkg-index.js",
+  "pkg": {
+    "targets": [
+      "node16-win-x64"
+    ]
   }
 }

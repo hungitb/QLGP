@@ -57,7 +57,9 @@ export async function getDatabaseInstance() {
         await sequelize.authenticate();
         await sequelize.sync();
 
-        console.log('Connection has been established successfully.');
+        if (process.env.QLGP_BACKEND_NO_API_LOG != "true") {
+            console.log('Connection has been established successfully.');
+        }
         connectionChecked = true;
     }
 

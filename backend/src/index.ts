@@ -12,11 +12,17 @@ import authRouter from "./routes/auth";
 import personRouter from "./routes/person";
 import eventRouter from "./routes/event";
 
+if (process.env.QLGP_BACKEND_NO_API_LOG == "true") {
+    process.stdout.write("Đang khởi động ứng dụng, chờ một tí...");
+}
+
 getDatabaseInstance().then(async () => {
     const isDev = process.env.NODE_ENV == "development";
     const app = express();
     app.use(express.json({ limit: "50mb" }));
-    app.use(morgan(isDev ? "dev" : "combined"));
+    if (process.env.QLGP_BACKEND_NO_API_LOG != "true") {
+        app.use(morgan(isDev ? "dev" : "combined"));
+    }
     app.use(cookiePaser());
     app.use((req, res, next) => {
         // Assign query parameters to body
@@ -51,6 +57,12 @@ getDatabaseInstance().then(async () => {
 
     const port = parseInt(process.env.QLGP_BACKEND_PORT || "4800");
     app.listen(port, () => {
-        console.log(`Express running → PORT ${port}`);
+        process.stdout.clearLine(0);
+        process.stdout.cursorTo(0);
+        if (process.env.QLGP_BACKEND_NO_API_LOG == "true") {
+            process.stdout.write(`Khởi tạo ứng dụng thành công! Truy cập trình duyệt tại đường link http://localhost:${port}`);
+        } else {
+            console.log(`Express running → PORT ${port}`);
+        }
     })
 })

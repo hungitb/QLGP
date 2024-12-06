@@ -13,9 +13,11 @@ function arrayToString(arr) {
     return `[${arr.map(a => `"${a}"`).join(", ")}]`
 }
 
-function runCommand({ cmd, env = {} }) {
+function runCommand({ cmd, env = {}, printExecutedCommand = true }) {
     const [command, ...args] = cmd;
-    console.log(`RUN: ${command} ${arrayToString(args)}`);
+    if (printExecutedCommand) {
+        console.log(`RUN: ${command} ${arrayToString(args)}`);
+    }
 
     const executable = isWindows ? "cmd" : command;
     const commandArgs = isWindows ? ["/c", command, ...args] : args;
@@ -36,6 +38,21 @@ function runCommand({ cmd, env = {} }) {
             }
             resolve();
         });
+    })
+}
+
+// For Backend use
+function runProdCommand({ cmd, env = {}, printExecutedCommand = true }) {
+    return runCommand({
+        cmd,
+        printExecutedCommand,
+        env: {
+            ...env,
+            NODE_ENV: "production",
+            GENERATE_FAKE_DATA: "false",
+            QLGP_USE_BACKEND: "true",
+            QLGP_REQUIRE_LOGIN: "true"
+        }
     })
 }
 
@@ -86,6 +103,7 @@ module.exports = {
     frontendDir,
     isWindows,
     runCommand,
+    runProdCommand,
     copyDirSync,
     deleteDirSync
 }
