@@ -32,7 +32,7 @@
       <template v-slot:append>
         <div class="pa-4">
           <v-btn block color="primary" @click="logout">
-            Logout
+            Đăng xuất
             <v-icon right>mdi-logout</v-icon>
           </v-btn>
         </div>

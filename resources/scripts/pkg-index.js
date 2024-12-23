@@ -18,6 +18,7 @@ runProdCommand({
     cmd: ["node", index],
     printExecutedCommand: false,
     env: {
-        QLGP_BACKEND_NO_API_LOG: "true"
+        QLGP_FOR_PERSONAL_USE: "true",
+        QLGP_SQLITE_DATA_DIR: path.resolve("app-data")
     }
 });

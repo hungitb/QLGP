@@ -1,10 +1,19 @@
 import { v4 as uuid } from "uuid";
 
-import { compareTwoDateString, datePlusDay, dateValidationMessage, lunarDateToNormalDate, normalDateToLunarDate, todayDate } from "../utils/DateUtils";
+import {
+    compareTwoDateString,
+    datePlusDay,
+    dateValidationMessage,
+    lunarDateToNormalDate,
+    normalDateToLunarDate,
+    todayDate,
+    normalDatePlusOneMonth,
+    normalDateMinusDay
+} from "../utils/DateUtils";
 import { isStringPureInterger } from "../utils/ValidationUtils";
 import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR } from "./utils";
 import { LifeStatus, Gender, type Person } from "../model/Person";
-import { EventTargetType, EventType, type EventSetting } from "../model/EventSetting";
+import { allEventTypes, EventTargetType, EventType, type EventSetting } from "../model/EventSetting";
 import type { User } from "../model/User";
 import type { IDAO } from "../model/IDAO";
 
@@ -93,7 +102,7 @@ export default function getEventController(eventSettingDAO: IDAO<EventSetting>, 
             startDate = todayDate();
         }
         if (!endDate) {
-            endDate = datePlusDay(startDate, 600);
+            endDate = datePlusDay(startDate, 366);
         }
 
         const eventSetting = await eventSettingDAO.findByPk(loggedInUser.id);
@@ -128,7 +137,7 @@ export default function getEventController(eventSettingDAO: IDAO<EventSetting>, 
                 
                 const [d, m, y] = birthdate.split("/").map(s => parseInt(s));
 
-                if (eventTypes.has(EventType.BIRTHDAY) && person.status != LifeStatus.DEAD) {
+                if (eventTypes.has(EventType.BIRTHDAY)) {
                     // Math.max(sy, y + 1): Tránh sinh nhật và ngày sinh cùng xuất hiện
                     for (let year = Math.max(sy, y + 1); year <= ey; year++) {
                         let explain: string | undefined = undefined;
@@ -140,7 +149,7 @@ export default function getEventController(eventSettingDAO: IDAO<EventSetting>, 
                             explain = `Sinh nhật bị lùi 1 ngày do năm ${year} không có ngày 29/2`;
                         }
 
-                        if (isInTimeRange(date)) {
+                        if (isInTimeRange(date) && (person.status != LifeStatus.DEAD || (!person.deathdate) || compareTwoDateString(date, person.deathdate) <= 0)) {
                             events.push({
                                 type: EventType.BIRTHDAY,
                                 normalDate: date,
@@ -150,6 +159,24 @@ export default function getEventController(eventSettingDAO: IDAO<EventSetting>, 
                         }
                     }
                 }
+
+                // if (eventTypes.has(EventType.LE_CUNG_THOI_NOI_LICH_DUONG)) {
+                //     const temp = normalDatePlusOneMonth(birthdate);
+                //     // Chưa có nam lùi 1 nữ lùi 2
+                //     if (temp[0]) {
+                //         if (isInTimeRange(temp[0])) {
+                //             const [d, m, y] = birthdate.split("/").map(s => parseInt(s));
+                //             const [d2, m2, y2] = m == 12 ? [d, 1, y + 1] : [d, m + 1, y]; // For explain purpose (if has)
+
+                //             events.push({
+                //                 type: EventType.LE_CUNG_THOI_NOI_LICH_DUONG,
+                //                 normalDate: temp[0],
+                //                 personId: person.id,
+                //                 explain: temp[1] ? `Đã bị lùi ${temp[1]} ngày do không tồn tại ngày ${d2}/${m2}/${y2} trong lịch dương` : undefined
+                //             });
+                //         }
+                //     }
+                // }
             }
             if (person.deathdate && isCompleteDate(person.deathdate)) {
                 const deathdate = person.deathdate.endsWith("AL") ? lunarDateToNormalDate(person.deathdate.replace("AL", "")) as string : person.deathdate;
@@ -158,6 +185,30 @@ export default function getEventController(eventSettingDAO: IDAO<EventSetting>, 
                     events.push({
                         type: EventType.DEATHDATE,
                         normalDate: deathdate,
+                        personId: person.id
+                    });
+                }
+
+                if (isInTimeRange(datePlusDay(deathdate, 7))) {
+                    events.push({
+                        type: EventType.GIO_7_NGAY,
+                        normalDate: datePlusDay(deathdate, 7),
+                        personId: person.id
+                    });
+                }
+
+                if (isInTimeRange(datePlusDay(deathdate, 49))) {
+                    events.push({
+                        type: EventType.GIO_49_NGAY,
+                        normalDate: datePlusDay(deathdate, 49),
+                        personId: person.id
+                    });
+                }
+
+                if (isInTimeRange(datePlusDay(deathdate, 100))) {
+                    events.push({
+                        type: EventType.GIO_100_NGAY,
+                        normalDate: datePlusDay(deathdate, 100),
                         personId: person.id
                     });
                 }
@@ -219,7 +270,7 @@ export default function getEventController(eventSettingDAO: IDAO<EventSetting>, 
         return {
             data: { events, eventSetting },
             status: 200,
-        }
+        };
     }
 
     async function updateEventSetting(data: Partial<EventSetting>, loggedInUser: User | null): Promise<CHR<{ msg: string }>> {
@@ -229,7 +280,7 @@ export default function getEventController(eventSettingDAO: IDAO<EventSetting>, 
             const typesArray = data.types.split(",");
             typesArray.sort();
             data.types = typesArray.filter(type => {
-                return [EventType.BIRTHDAY, EventType.DEATHDAY].includes(type as any);
+                return allEventTypes.map(et => et.value).includes(type as any);
             }).join(",");
         }
         if (data.numGenerationsAbove) {

@@ -179,7 +179,9 @@
                     <v-list-item-content>
                       <v-list-item-title>{{ event.text }}</v-list-item-title>
                       <v-list-item-subtitle>
-                        {{ event.desc }}
+                        <span style="line-height: 24px">
+                          {{ event.desc }}
+                        </span>
                       </v-list-item-subtitle>
                     </v-list-item-content>
                   </template>
@@ -290,6 +292,7 @@ import {
   EventSetting,
   EventTargetType,
   EventType,
+  allEventTypes,
 } from "../../../backend/src/model/EventSetting";
 import { Person } from "../../../backend/src/model/Person";
 import {
@@ -299,19 +302,6 @@ import {
 import CustomDialog from "@/components/CustomDialog.vue";
 import PersonInputGroup from "@/components/input/PersonInputGroup.vue";
 import { showSnackbar } from "@/components/utilities/ShowSnackbar.vue";
-
-const allEventTypes = [
-  {
-    text: "Sinh nhật",
-    value: EventType.BIRTHDAY,
-    desc: "Sinh nhật, sự kiện này diễn ra một năm một lần",
-  },
-  {
-    text: "Ngày giỗ",
-    value: EventType.DEATHDAY,
-    desc: "Ngày giỗ, sự kiện này diễn ra một năm một lần",
-  },
-];
 
 export default defineComponent({
   components: {
@@ -399,9 +389,11 @@ export default defineComponent({
       const today = new Date();
       const typeMapping = {
         [EventType.BIRTHDATE]: "Ngày sinh",
-        [EventType.BIRTHDAY]: "Sinh nhật",
         [EventType.DEATHDATE]: "Ngày mất",
-        [EventType.DEATHDAY]: "Ngày giỗ",
+        ...allEventTypes.reduce((result, { text, value }) => {
+          result[value] = text;
+          return result;
+        }, {}),
       };
 
       const items: any[] = [];

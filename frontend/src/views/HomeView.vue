@@ -19,6 +19,7 @@
           outlined
           dense
           hide-details
+          tabindex="-1"
         ></v-text-field>
       </v-card-title>
       <v-data-table

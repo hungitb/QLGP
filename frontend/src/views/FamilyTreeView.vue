@@ -15,6 +15,9 @@
         :config="config"
         :viewer="viewer"
         @addPersonRelationShipDone="handlePersonAddRelationship"
+        :style="{
+          paddingBottom: config.verticalDistance + 'px',
+        }"
       />
     </Viewer>
     <FullViewLoading :floating="false" v-else />

@@ -1,3 +1,8 @@
+
+if (process.env.QLGP_FOR_PERSONAL_USE == "true") {
+    process.stdout.write("Đang khởi động ứng dụng, chờ một tí...");
+}
+
 import path from "path";
 import dotenv from "dotenv";
 import express from "express";
@@ -12,15 +17,11 @@ import authRouter from "./routes/auth";
 import personRouter from "./routes/person";
 import eventRouter from "./routes/event";
 
-if (process.env.QLGP_BACKEND_NO_API_LOG == "true") {
-    process.stdout.write("Đang khởi động ứng dụng, chờ một tí...");
-}
-
 getDatabaseInstance().then(async () => {
     const isDev = process.env.NODE_ENV == "development";
     const app = express();
     app.use(express.json({ limit: "50mb" }));
-    if (process.env.QLGP_BACKEND_NO_API_LOG != "true") {
+    if (process.env.QLGP_FOR_PERSONAL_USE != "true") {
         app.use(morgan(isDev ? "dev" : "combined"));
     }
     app.use(cookiePaser());
@@ -59,7 +60,7 @@ getDatabaseInstance().then(async () => {
     app.listen(port, () => {
         process.stdout.clearLine(0);
         process.stdout.cursorTo(0);
-        if (process.env.QLGP_BACKEND_NO_API_LOG == "true") {
+        if (process.env.QLGP_FOR_PERSONAL_USE == "true") {
             process.stdout.write(`Khởi tạo ứng dụng thành công! Truy cập trình duyệt tại đường link http://localhost:${port}`);
         } else {
             console.log(`Express running → PORT ${port}`);

@@ -17,9 +17,11 @@ import type { EventSetting } from "../model/EventSetting";
 
 const sequelize = new Sequelize({
     dialect: 'sqlite',
-    storage: path.resolve(__dirname, "..", "..", "data", "database.sqlite"),
+    storage: process.env.QLGP_SQLITE_DATA_DIR ?
+        path.resolve(process.env.QLGP_SQLITE_DATA_DIR, "database.sqlite") :
+        path.resolve(__dirname, "..", "..", "..", "app-data", "database.sqlite"),
     logging: false,
-})
+});
 
 function getDAO<K>(table: any): IDAO<K> {
     // Data lấy từ db chưa phải định dạng chuẩn nên cần biến đổi
@@ -57,7 +59,7 @@ export async function getDatabaseInstance() {
         await sequelize.authenticate();
         await sequelize.sync();
 
-        if (process.env.QLGP_BACKEND_NO_API_LOG != "true") {
+        if (process.env.QLGP_FOR_PERSONAL_USE != "true") {
             console.log('Connection has been established successfully.');
         }
         connectionChecked = true;

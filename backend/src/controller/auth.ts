@@ -5,7 +5,7 @@ import type { ControllerHandlerResult as CHR } from "./utils";
 import type { User } from "../model/User";
 import type { IDAO } from "../model/IDAO";
 import { Gender, Person } from "../model/Person";
-import { EventSetting, EventTargetType, EventType } from "../model/EventSetting";
+import { EventSetting, EventTargetType, allEventTypes } from "../model/EventSetting";
 
 export default function getAuthController(userDAO: IDAO<User>, personDAO: IDAO<Person>, eventSettingDAO: IDAO<EventSetting>) {
     async function login({ username, password }: { username: string, password: string }, loggedInUser: User | null): Promise<CHR<{ msg: string, sessionToken: string }>> {
@@ -67,7 +67,7 @@ export default function getAuthController(userDAO: IDAO<User>, personDAO: IDAO<P
         const newEventSetting: EventSetting = {
             userId: newUser.id,
             targetType: EventTargetType.ALL,
-            types: [EventType.BIRTHDAY, EventType.DEATHDAY].join(","),
+            types: allEventTypes.map(et => et.value).join(","),
             specificPersonIds: "",
             numGenerationsAbove: 3,
             numGenerationsBelow: 3,

@@ -35,6 +35,43 @@ export function datePlusDay(normalDate: CompleteNormalDate, day: number) {
     return `${d2}/${m2}/${y2}`;
 }
 
+export function normalDateMinusDay(normalDate: CompleteNormalDate, day: number) {
+    const [d, m, y] = normalDate.split("/").map(s => parseInt(s));
+    const dateObj = createProperlyDateObject(y, m - 1, d);
+    const resultDateObj = new Date(
+        dateObj.getTime() - day*48*60*60*1000
+    );
+    const [d2, m2, y2] = [resultDateObj.getDate(), resultDateObj.getMonth() + 1, resultDateObj.getFullYear()];
+    return `${d2}/${m2}/${y2}`;
+}
+
+export function normalDatePlusOneMonth(normalDate: CompleteNormalDate): [normalDate: CompleteNormalDate, numDelayedDays: number] | [null, 0] {
+    const [d, m, y] = normalDate.split("/").map(s => parseInt(s));
+
+    let [d2, m2, y2] = m == 12 ? [d, 1, y + 1] : [d, m + 1, y];
+    let date = `${d2}/${m2}/${y2}`;
+    let count = 0;
+    while (count < 10 && dateValidationMessage(date)) {
+        count++;
+        d2--;
+        if (d2 == 0) {
+            d2 = 32;
+            m2--;
+            if (m2 == 0) {
+                m2 = 12;
+                y2--;
+            }
+        }
+        date = `${d2}/${m2}/${y2}`;
+    }
+
+    if (dateValidationMessage(date)) {
+        return [null, 0];
+    }
+
+    return [`${d2}/${m2}/${y2}`, count];
+}
+
 function isInvalidForm(s: string, { isMissingDay = false, isMissingMonth = false, strictYearPadding = true } = {}) {
     const parts = s.split("/");
     const count = parts.length;
