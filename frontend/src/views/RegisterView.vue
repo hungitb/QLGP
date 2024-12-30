@@ -105,9 +105,9 @@ export default Vue.extend({
     showPassword: false,
     showPassword2: false,
     valid: false,
-    username: isDev ? "hungnv195" : "",
-    password: isDev ? "hungnv195" : "",
-    password2: isDev ? "hungnv195" : "",
+    username: isDev ? "qlgp1234" : "",
+    password: isDev ? "qlgp1234" : "",
+    password2: isDev ? "qlgp1234" : "",
     rules: [
       (v: string) => !!v || "Không được để trống",
       (v: string) =>

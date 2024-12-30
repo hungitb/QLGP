@@ -64,6 +64,7 @@
     <ShowDialogAddPersonWithSpecificRole />
     <ShowDialogConfirm />
     <ShowSnackbar />
+    <ShowImage />
     <UtilDialogPersonDetailInfo />
   </v-app>
 </template>
@@ -80,6 +81,7 @@ import ShowDialogAddOrCreatePerson from "@/components/utilities/ShowDialogAddOrC
 import ShowDialogAddPersonWithSpecificRole from "@/components/utilities/ShowDialogAddPersonWithSpecificRole.vue";
 import ShowDialogConfirm from "@/components/utilities/ShowDialogConfirm.vue";
 import ShowSnackbar from "@/components/utilities/ShowSnackbar.vue";
+import ShowImage from "@/components/utilities/ShowImage.vue";
 import UtilDialogPersonDetailInfo from "@/components/utilities/UtilDialogPersonDetailInfo.vue";
 
 export default Vue.extend({
@@ -89,6 +91,7 @@ export default Vue.extend({
     ShowDialogAddPersonWithSpecificRole,
     ShowDialogConfirm,
     ShowSnackbar,
+    ShowImage,
     UtilDialogPersonDetailInfo,
   },
   data: () => ({
@@ -118,8 +121,6 @@ export default Vue.extend({
     },
     async logout() {
       this.isLoading = true;
-      localStorage.removeItem("QLGP.username");
-      localStorage.removeItem("QLGP.password");
       await authApi.logout();
       this[CLEAR_STORE]();
       this.$router.push("/auth/login");

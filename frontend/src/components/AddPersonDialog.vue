@@ -1,7 +1,9 @@
 <template>
   <CustomDialog
     v-model="dialog"
-    header="Thêm người thân"
+    :header="
+      person ? 'Cập nhật thông tin ' + person.callname : 'Thêm người thân'
+    "
     buttonText
     :buttons="buttons"
     maxWidth="600px"
@@ -159,7 +161,7 @@ export default defineComponent({
         date: string,
         type: DateFormat
       ],
-      status: "null" as LifeStatus | "null",
+      status: LifeStatus.ALIVE as LifeStatus | "null",
       deathdateDataObj: ["", DateFormat.dmyAL] as [
         date: string,
         type: DateFormat
@@ -281,7 +283,7 @@ export default defineComponent({
         : ["", DateFormat.dmy];
       this.status = this.isConstant("status")
         ? initData.status || "null"
-        : "null";
+        : LifeStatus.ALIVE;
       this.deathdateDataObj = this.isConstant("deathdate")
         ? convertToDateInputValue(initData.deathdate, DateFormat.dmyAL)
         : ["", DateFormat.dmyAL];

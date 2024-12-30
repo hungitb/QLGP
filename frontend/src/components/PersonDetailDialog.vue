@@ -3,7 +3,12 @@
     <template v-if="person">
       <v-row>
         <v-col cols="12" sm="3" class="d-flex justify-center">
-          <CustomPersonAvatar :person="person" size="100" textSize="2" />
+          <CustomPersonAvatar
+            :person="person"
+            size="100"
+            textSize="2"
+            viewable
+          />
         </v-col>
         <v-col cols="12" sm="9">
           <div class="text-h5">{{ person.callname }}</div>

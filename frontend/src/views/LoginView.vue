@@ -88,25 +88,31 @@ import { authApi } from "@/api/auth";
 
 const isDev = process.env.NODE_ENV == "development";
 export default Vue.extend({
-  data: () => ({
-    showPassword: false,
-    valid: false,
-    username: isDev ? "hungnv195" : localStorage.getItem("QLGP.username") || "",
-    password: isDev ? "hungnv195" : localStorage.getItem("QLGP.password") || "",
-    rememberMe: !!(
-      localStorage.getItem("QLGP.username") &&
-      localStorage.getItem("QLGP.password")
-    ),
-    rules: [
-      (v: string) => !!v || "Không được để trống",
-      (v: string) =>
-        (6 <= v.length && v.length <= 12) || "Độ dài phải từ 6 đến 12 ký tự",
-      (v: string) =>
-        /^[a-zA-Z0-9]+$/.test(v) || "Chỉ được chứa a-z, A-Z và 0-9",
-    ],
-    loginErrorMessage: "",
-    isLoadingLogin: false,
-  }),
+  data() {
+    return {
+      showPassword: false,
+      valid: false,
+      username: isDev
+        ? "qlgp1234"
+        : localStorage.getItem("QLGP.username") || "",
+      password: isDev
+        ? "qlgp1234"
+        : localStorage.getItem("QLGP.password") || "",
+      rememberMe: !!(
+        localStorage.getItem("QLGP.username") &&
+        localStorage.getItem("QLGP.password")
+      ),
+      rules: [
+        (v: string) => !!v || "Không được để trống",
+        (v: string) =>
+          (6 <= v.length && v.length <= 12) || "Độ dài phải từ 6 đến 12 ký tự",
+        (v: string) =>
+          /^[a-zA-Z0-9]+$/.test(v) || "Chỉ được chứa a-z, A-Z và 0-9",
+      ],
+      loginErrorMessage: "",
+      isLoadingLogin: false,
+    };
+  },
   methods: {
     clearLoginErrorMessage() {
       this.loginErrorMessage = "";

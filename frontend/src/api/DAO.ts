@@ -193,9 +193,9 @@ function generateFakeData() {
   const fakeUsers: User[] = [
     {
       id: fakseUserId,
-      username: "hungnv195",
-      password: "hungnv195",
-      sessionToken: "hungnv195",
+      username: "qlgp1234",
+      password: "qlgp1234",
+      sessionToken: "qlgp1234",
       sessionExpiry: null,
     },
   ];

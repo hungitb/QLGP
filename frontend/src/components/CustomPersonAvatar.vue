@@ -9,6 +9,8 @@
       v-if="person.avatarUrl"
       :src="person.avatarUrl"
       :alt="person.callname"
+      @click="handleClick"
+      :style="viewable ? { cursor: 'pointer' } : {}"
     />
 
     <span
@@ -19,7 +21,7 @@
           : `white--text`
       "
     >
-      {{ person.callname.trim().split(" ").at(-1).charAt(0).toUpperCase() }}
+      {{ firstCharacterOfName }}
     </span>
 
     <v-icon dark v-else large>
@@ -33,11 +35,12 @@
 </template>
 
 <script lang="ts">
-import Vue, { PropType } from "vue";
+import { PropType, defineComponent } from "vue";
 
+import { showImage } from "../components/utilities/ShowImage.vue";
 import { Gender } from "../../../backend/src/model/Person";
 
-export default Vue.extend({
+export default defineComponent({
   props: {
     person: {
       type: Object as () => {
@@ -63,11 +66,31 @@ export default Vue.extend({
       type: Boolean as PropType<boolean | undefined>,
       default: undefined,
     },
+    viewable: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
       Gender,
     };
+  },
+  computed: {
+    firstCharacterOfName() {
+      const lastname = (this as any).person.callname.trim().split(" ").at(-1);
+      if (!lastname) return "";
+      return lastname.charAt(0).toUpperCase();
+    },
+  },
+  methods: {
+    handleClick(e: any) {
+      if (!this.viewable) return;
+      e.preventDefault();
+      if (this.person.avatarUrl) {
+        showImage({ src: this.person.avatarUrl });
+      }
+    },
   },
 });
 </script>

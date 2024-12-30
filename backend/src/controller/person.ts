@@ -459,7 +459,7 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         const birthYears : { [month: string]: number } = {};
         const deathYears : { [month: string]: number } = {};
 
-        const people = await personDAO.findAll();
+        const people = await personDAO.findAll({ where: { ownerUserId: loggedInUser.id } });
         const [nd, nm, ny] = todayDate().split("/").map(n => parseInt(n));
 
         const increaseKeyValue = (obj: Record<string, number>, key: string | number) => {
@@ -493,22 +493,24 @@ export default function getPersonController(personDAO: IDAO<Person>) {
             status[person.status || "unknown"] += 1;
             gender[person.gender] += 1;
 
-            if (person.status == LifeStatus.ALIVE) {
-                if (person.birthdate) {
-                    const [d, m, y] = extractNormalDayMonthYear(person.birthdate);
-                    let age = ny - y;
-                    if (nm > m || (nm == m && nd >= d)) {
-                        age += 1;
-                    }
-                    if (age < 0) age = 0;
+            if (person.birthdate) {
+                const [d, m, y] = extractNormalDayMonthYear(person.birthdate);
+                let age = ny - y;
+                if (nm > m || (nm == m && nd >= d)) {
+                    age += 1;
+                }
+                if (age < 0) age = 0;
+                increaseKeyValue(birthYears, y);
+
+                if (person.status == LifeStatus.ALIVE) {
                     increaseKeyValue(agesOfLiving, age);
-                    increaseKeyValue(birthYears, y);
                     if (!checkIfMissingMonth(person.birthdate)) {
                         increaseKeyValue(birthMonths, m);
                     }
                 }
             }
-            else if (person.status == LifeStatus.DEAD) {
+
+            if (person.status == LifeStatus.DEAD) {
                 if (person.deathdate) {
                     const [d, m, y] = extractNormalDayMonthYear(person.deathdate);
 
