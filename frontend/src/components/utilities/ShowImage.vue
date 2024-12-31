@@ -1,6 +1,6 @@
 <template>
   <v-dialog v-model="dialog" fullscreen>
-    <div id="image-dialog-wrapper">
+    <div id="image-dialog-wrapper" class="d-flex align-center justify-center">
       <v-img :src="src" contain max-width="100%" max-height="100%"></v-img>
     </div>
 

@@ -2,11 +2,15 @@
   <v-container :style="isLoading ? { height: '100%' } : {}">
     <FullViewLoading :floating="false" v-if="isLoading" />
     <v-row v-else>
-      <v-col cols="6">
-        <Bar :data="dataGender" :options="chartGenderOptions" />
-      </v-col>
-      <v-col cols="6">
-        <Doughnut :data="dataStatus" :options="chartStatusOptions" />
+      <v-col>
+        <v-row style="min-height: 300px">
+          <v-col cols="5">
+            <Bar :data="dataGender" :options="chartGenderOptions" />
+          </v-col>
+          <v-col cols="7">
+            <Bar :data="dataStatus" :options="chartStatusOptions" />
+          </v-col>
+        </v-row>
       </v-col>
       <v-col cols="12">
         <Bar
@@ -119,6 +123,9 @@ function getOptions({
           bottom: 10,
         },
       },
+      legend: {
+        display: false, // Hide legend labels
+      },
     },
     ...(scale
       ? {
@@ -151,6 +158,7 @@ function getOptions({
                   return value == Math.round(value) ? value : ""; // Chỉ hiển thị giá trị nguyên, ẩn thập phân
                 },
               },
+              suggestedMax: 0,
               ...(yTitle
                 ? {
                     title: {
@@ -164,6 +172,23 @@ function getOptions({
         }
       : {}),
   };
+}
+
+function assignMaxYValue(data: any, option: any) {
+  if (option.scales.y) {
+    const v = data.datasets.reduce((r: any, ds: any) => {
+      if (
+        Array.isArray(ds.data) &&
+        ds.data.every((i: any) => typeof i == "number")
+      ) {
+        return Math.max(r, ...ds.data);
+      }
+      return 10e10;
+    }, -1);
+    if (v != 10e10) {
+      option.scales.y.suggestedMax = v + 1;
+    }
+  }
 }
 
 function getMaxKey(obj: Record<string, any> | null | undefined, min: number) {
@@ -187,7 +212,7 @@ function getArray(start: number, end: number) {
 export default defineComponent({
   components: {
     FullViewLoading,
-    Doughnut,
+    // Doughnut,
     Bar,
     // LineChart: Line,
   },
@@ -197,7 +222,7 @@ export default defineComponent({
       dataGender: getSampleData(),
       chartGenderOptions: getOptions({ title: "Giới tính" }),
       dataStatus: getSampleData(),
-      chartStatusOptions: getOptions({ title: "Trạng thái", scale: false }),
+      chartStatusOptions: getOptions({ title: "Trạng thái" }),
       dataAgesOfLiving: getSampleData(),
       chartAgesOfLivingOptions: getOptions({
         title: "Tuổi của những người còn sống",
@@ -220,7 +245,7 @@ export default defineComponent({
       labels: ["Nam", "Nữ"],
       datasets: [
         {
-          label: "Số người",
+          label: "",
           data: [Gender.MALE, Gender.FEMALE].map((k) => {
             if (!data.gender) return 0;
             return data.gender[k as Gender.MALE | Gender.FEMALE];
@@ -229,22 +254,24 @@ export default defineComponent({
         },
       ],
     };
+    assignMaxYValue(this.dataGender, this.chartGenderOptions);
 
     this.dataStatus = {
-      labels: ["Đã mất", "Còn sống", "Không rõ"],
+      labels: ["Còn sống", "Đã mất", "Không rõ"],
       datasets: [
         {
-          label: "",
-          data: [LifeStatus.DEAD, LifeStatus.ALIVE, "unknown"].map((k) => {
+          label: "Số người",
+          data: [LifeStatus.ALIVE, LifeStatus.DEAD, "unknown"].map((k) => {
             if (!data.status) return 0;
             return data.status[
               k as LifeStatus.ALIVE | LifeStatus.DEAD | "unknown"
             ];
           }),
-          backgroundColor: ["rgb(255, 99, 132)", "lightgreen", "darkgray"],
+          backgroundColor: ["lightgreen", "rgb(255, 99, 132)", "darkgray"],
         },
       ],
     };
+    assignMaxYValue(this.dataStatus, this.chartStatusOptions);
 
     const arrayAgesOfLiving = getArray(0, getMaxKey(data.agesOfLiving, 80));
     this.dataAgesOfLiving = {
@@ -260,6 +287,7 @@ export default defineComponent({
         },
       ],
     };
+    assignMaxYValue(this.dataAgesOfLiving, this.chartAgesOfLivingOptions);
 
     const arrayAgesOfDeceased = getArray(0, getMaxKey(data.agesOfDeceased, 80));
     this.dataAgesOfDeceased = {
@@ -279,6 +307,7 @@ export default defineComponent({
         },
       ],
     };
+    assignMaxYValue(this.dataAgesOfDeceased, this.chartAgesOfDeceasedOptions);
 
     const arrayBirthYears = getArray(
       getMinKey(data.birthYears, new Date().getFullYear() - 70),
@@ -297,6 +326,7 @@ export default defineComponent({
         },
       ],
     };
+    assignMaxYValue(this.dataBirthYears, this.chartBirthYearsOptions);
 
     const arrayDeathYears = getArray(
       getMinKey(data.deathYears, new Date().getFullYear() - 70),
@@ -315,6 +345,7 @@ export default defineComponent({
         },
       ],
     };
+    assignMaxYValue(this.dataDeathYears, this.chartDeathYearsOptions);
   },
 });
 </script>
