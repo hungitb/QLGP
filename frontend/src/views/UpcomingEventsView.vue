@@ -547,8 +547,9 @@ export default defineComponent({
           | "specific"
           | "closeRelationship";
 
-        this.eventTargetPersonIds =
-          this.eventSetting.specificPersonIds.split(",");
+        this.eventTargetPersonIds = this.eventSetting.specificPersonIds
+          ? this.eventSetting.specificPersonIds.split(",")
+          : [];
         this.peopleCloseRelationshipType =
           this.eventSetting.targetType ==
           EventTargetType.PEOPLE_IN_FAMILY_TREE_LEVEL_THREE

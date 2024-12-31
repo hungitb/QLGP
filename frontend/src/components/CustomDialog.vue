@@ -14,7 +14,11 @@
         </span>
       </v-card-title>
       <v-divider v-if="divider && (header || $slots.header)"></v-divider>
-      <v-card-text :class="noPadding ? 'pa-0' : ''" ref="cardText">
+      <v-card-text
+        :class="noPadding ? 'pa-0' : ''"
+        ref="cardText"
+        :style="bodyCardTextStyle"
+      >
         <div :class="contentPaddingTop && !noPadding ? 'pt-5' : ''">
           <slot></slot>
         </div>
@@ -99,6 +103,12 @@ export default Vue.extend({
     maxWidth: {
       type: String,
     },
+    bodyMaxHeight: {
+      type: String,
+    },
+    bodyHeight: {
+      type: String,
+    },
     beforeClose: {
       type: Function,
       required: false,
@@ -135,12 +145,18 @@ export default Vue.extend({
         (this as any).$emit("input", newValue);
       },
     } as unknown as () => boolean,
+    bodyCardTextStyle() {
+      return {
+        ...(this.bodyMaxHeight ? { maxHeight: this.bodyMaxHeight } : {}),
+        ...(this.bodyHeight ? { height: this.bodyHeight } : {}),
+      };
+    },
   },
   watch: {
     value(newValue) {
       if (!newValue) {
         setTimeout(() => {
-          this.scrollTop();
+          (this as any).scrollTop();
           (this as any).beforeClose?.();
         }, 300);
       }
