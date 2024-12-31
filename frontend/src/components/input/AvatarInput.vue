@@ -6,6 +6,7 @@
       class="mr-4"
       :person="computedPerson"
       textSize="4"
+      viewable
     />
     <div class="d-flex flex flex-column justify-space-between">
       Ảnh đại diện
@@ -39,11 +40,11 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
+import { defineComponent } from "vue";
 
 import CustomPersonAvatar from "../CustomPersonAvatar.vue";
 
-export default Vue.extend({
+export default defineComponent({
   components: {
     CustomPersonAvatar,
   },

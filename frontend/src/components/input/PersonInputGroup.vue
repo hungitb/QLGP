@@ -292,7 +292,10 @@ export default defineComponent({
   },
   watch: {
     dialogChoosePerson(v) {
-      if (!v) (this as any).dialogChoosePersonSelectedIds = this.value as any;
+      if (!v) {
+        (this as any).dialogChoosePersonSelectedIds = this.value as any;
+        this.searchPerson = "";
+      }
     },
     value(v) {
       this.dialogChoosePersonSelectedIds = copy(v);

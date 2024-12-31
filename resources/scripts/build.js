@@ -2,7 +2,15 @@ const { runProdCommand, copyDirSync, deleteDirSync, backendDir, frontendDir } = 
 const path = require("path");
 
 async function build() {
-    const buildMode = ["fe", "be"].includes(process.argv[2]) ? process.argv[2] : "all";
+    const buildMode = ["fe", "be", "static"].includes(process.argv[2]) ? process.argv[2] : "all";
+
+    if (buildMode == "static") {
+        await runProdCommand({
+            cmd: ["npm", "--prefix=" + frontendDir, "run", "build"],
+            useBackend: false
+        });
+        return
+    }
 
     if (buildMode == "be" || buildMode == "all") {
         await runProdCommand({ cmd: ["npm", "--prefix=" + backendDir, "run", "build"] });
@@ -22,4 +30,4 @@ async function build() {
 build().catch(err => {
     console.log(err);
     process.exit(1);
-})
+});

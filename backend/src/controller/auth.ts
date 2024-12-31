@@ -4,7 +4,7 @@ import { CommonMessages, AuthMessages, generateSessionToken, CommonResponse } fr
 import type { ControllerHandlerResult as CHR } from "./utils";
 import type { User } from "../model/User";
 import type { IDAO } from "../model/IDAO";
-import { Gender, Person } from "../model/Person";
+import { Gender, LifeStatus, Person } from "../model/Person";
 import { EventSetting, EventTargetType, allEventTypes } from "../model/EventSetting";
 
 export default function getAuthController(userDAO: IDAO<User>, personDAO: IDAO<Person>, eventSettingDAO: IDAO<EventSetting>) {
@@ -61,7 +61,8 @@ export default function getAuthController(userDAO: IDAO<User>, personDAO: IDAO<P
             ownerUserId: newUser.id,
             isStandForUser: true,
             callname: "Tôi",
-            gender: Gender.MALE
+            gender: Gender.MALE,
+            status: LifeStatus.ALIVE
         };
 
         const newEventSetting: EventSetting = {

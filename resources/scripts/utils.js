@@ -42,7 +42,7 @@ function runCommand({ cmd, env = {}, printExecutedCommand = true }) {
 }
 
 // For Backend use
-function runProdCommand({ cmd, env = {}, printExecutedCommand = true }) {
+function runProdCommand({ cmd, env = {}, printExecutedCommand = true, useBackend = true }) {
     return runCommand({
         cmd,
         printExecutedCommand,
@@ -50,10 +50,10 @@ function runProdCommand({ cmd, env = {}, printExecutedCommand = true }) {
             ...env,
             NODE_ENV: "production",
             GENERATE_FAKE_DATA: "false",
-            QLGP_USE_BACKEND: "true",
+            QLGP_USE_BACKEND: useBackend ? "true" : "false",
             QLGP_REQUIRE_LOGIN: "true"
         }
-    })
+    });
 }
 
 function copyDirSync(src, dest) {
