@@ -14,6 +14,7 @@ export function checkIfIsMobile() {
       isMobile = true;
   })(navigator.userAgent || navigator.vendor || (window as any).opera);
 
+  isMobile = true;
   return isMobile;
 }
 

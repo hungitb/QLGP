@@ -44,7 +44,7 @@
         <v-col cols="12">
           <v-card :loading="isLoadingDetailInfo">
             <v-card-title style="word-break: initial">
-              Thông tin những người liên quan
+              Người liên quan
             </v-card-title>
             <v-card-subtitle
               v-if="!isLoadingDetailInfo && groups.length == 0"

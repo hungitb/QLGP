@@ -55,6 +55,7 @@
         validate-on-blur
         chips
         :disabled="disabled"
+        @click="dialogChoosePerson = true"
       >
         <template v-slot:selection="{ selected, attrs, item }">
           <v-chip
@@ -68,8 +69,16 @@
           </v-chip>
         </template>
 
-        <template v-slot:append-outer>
-          <v-btn outlined text @click.stop="dialogChoosePerson = true">
+        <template v-slot:append>
+          <v-btn
+            v-if="isMobile"
+            outlined
+            icon
+            @click.stop="dialogChoosePerson = true"
+          >
+            <v-icon>mdi-chevron-down</v-icon>
+          </v-btn>
+          <v-btn v-else outlined text @click.stop="dialogChoosePerson = true">
             Chọn
           </v-btn>
         </template>
@@ -123,7 +132,7 @@
             :key="person.id"
           >
             <v-list-item-avatar>
-              <CustomPersonAvatar :person="person" />
+              <CustomPersonAvatar :person="person" viewable />
             </v-list-item-avatar>
 
             <v-list-item-content>
