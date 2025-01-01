@@ -112,11 +112,7 @@ import AvatarInput from "./input/AvatarInput.vue";
 import { personApi } from "@/api/person";
 import { mapActions } from "vuex";
 import { FETCH_PEOPLE } from "@/store";
-import {
-  convertToDateInputValue,
-  handleDateInputValue,
-  resizeImageSrc,
-} from "@/utils";
+import { convertToDateInputValue, handleDateInputValue } from "@/utils";
 import { CreatePersonParams } from "../../../backend/src/controller/person";
 import { showSnackbar } from "./utilities/ShowSnackbar.vue";
 
@@ -257,6 +253,7 @@ export default defineComponent({
       if (person) {
         this.callname = person.callname;
         this.gender = person.gender;
+        this.avartarSrc = person.avatarUrl;
         this.birthdateDataObj = convertToDateInputValue(
           person.birthdate,
           DateFormat.dmy
@@ -341,9 +338,7 @@ export default defineComponent({
         // Add person
         const { data } = await personApi.createPerson({
           person: {
-            avatarUrl: this.avartarSrc
-              ? await resizeImageSrc(this.avartarSrc)
-              : null,
+            avatarUrl: this.avartarSrc || null,
             callname: this.callname,
             gender: this.gender,
             birthdate: handleDateInputValue(this.birthdateDataObj),

@@ -2,7 +2,7 @@
   <v-app>
     <v-navigation-drawer v-model="drawer" app>
       <div class="px-12 py-2">
-        <v-img :src="require('@/assets/logo.png')" alt="Logo" />
+        <v-img :src="require('@/assets/logo.png')" alt="Logo" eager />
       </div>
 
       <v-divider></v-divider>

@@ -43,6 +43,7 @@
 import { defineComponent } from "vue";
 
 import CustomPersonAvatar from "../CustomPersonAvatar.vue";
+import { resizeImageSrc } from "@/utils";
 
 export default defineComponent({
   components: {
@@ -65,7 +66,8 @@ export default defineComponent({
       get() {
         return (this as any).value;
       },
-      set(value) {
+      async set(value) {
+        if (value) value = await resizeImageSrc(value);
         (this as any).$emit("input", value);
       },
     },
