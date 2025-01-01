@@ -9,12 +9,12 @@ import getPersonController, {
   CreatePersonParams,
 } from "../../../backend/src/controller/person";
 import type { Person } from "../../../backend/src/model/Person";
-import { personDAO } from "./DAO";
+import { personDAO, wrapApi } from "./DAO";
 import { PaginateParams } from "../../../backend/src/controller/utils";
 
 const personController = getPersonController(personDAO);
 
-export const personApi = {
+export const personApi = wrapApi({
   async getAllPeopleBaseInfo(data: PaginateParams = {}) {
     if (useBackend) {
       return wrapAxiosCall(() => api.get("/person/all", { params: data }));
@@ -87,4 +87,4 @@ export const personApi = {
       await getLoggedInUserLocalStorage()
     );
   },
-};
+});

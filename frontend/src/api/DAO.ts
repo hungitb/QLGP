@@ -12,25 +12,171 @@ import {
 
 const GENERATE_FAKE_DATA =
   process.env.NODE_ENV == "development" &&
-  process.env.GENERATE_FAKE_DATA == "true";
+  process.env.GENERATE_FAKE_DATA == "true" &&
+  false;
 const DELAY = 0;
 
-function createDAO(
-  key: string,
-  pkName: string,
-  initialRows: { [key: string]: any }[] = []
-) {
-  let rows: { [key: string]: any }[] = GENERATE_FAKE_DATA
-    ? initialRows
-    : loadFromLocalStorage();
+type Dict = { [key: string]: any };
+type AllTableTypes = [User[], Person[], FieldDef[], FieldVal[], EventSetting[]];
+type Storage = {
+  startOperations: () => Promise<void>;
+  endOperations: () => Promise<void>;
+  getItem: (key: string) => Promise<Dict[]>;
+  setItem: (key: string, value: Dict[]) => Promise<void>;
+};
 
-  function loadFromLocalStorage() {
-    return JSON.parse(localStorage.getItem(key) || "[]");
+const storage: Storage = (() => {
+  const { getItem: _getItem, setItem: _setItem } = (() => {
+    const getItemLocalStorage = (key: string) =>
+      JSON.parse(localStorage.getItem(key) || "[]");
+    const setItemLocalStorage = (key: string, value: Dict[]) =>
+      localStorage.setItem(key, JSON.stringify(value));
+
+    if (!window.indexedDB) {
+      return {
+        getItem: (key: string) =>
+          Promise.resolve(getItemLocalStorage(key) as Dict[]),
+        setItem: (key: string, value: Dict[]) =>
+          Promise.resolve(setItemLocalStorage(key, value)),
+      };
+    }
+
+    const dbName = "QLGP";
+    const storeName = "KeyValueStore";
+
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(dbName, 1);
+
+        request.onupgradeneeded = (event) => {
+          const db = (event.target as any).result;
+          if (!db.objectStoreNames.contains(storeName)) {
+            db.createObjectStore(storeName, { keyPath: "key" });
+          }
+        };
+
+        request.onsuccess = (event) => resolve((event.target as any).result);
+        request.onerror = (event) => reject((event.target as any).error);
+      });
+    }
+
+    function setItemIndexedDb(key: string, value: Dict[]) {
+      return new Promise<void>((resolve, reject) => {
+        openDB()
+          .then((db) => {
+            const transaction = (db as any).transaction(storeName, "readwrite");
+            const store = transaction.objectStore(storeName);
+
+            const request = store.put({ key, value });
+            request.onsuccess = () => resolve();
+            request.onerror = (event: any) => reject(event.target.error);
+          })
+          .catch((err) => reject(err));
+      });
+    }
+
+    function getItemIndexedDb(key: string): Promise<Dict[]> {
+      return new Promise((resolve, reject) => {
+        openDB()
+          .then((db) => {
+            const transaction = (db as any).transaction(storeName, "readonly");
+            const store = transaction.objectStore(storeName);
+
+            const request = store.get(key);
+            request.onsuccess = (event: any) =>
+              resolve(event.target.result?.value || []);
+            request.onerror = (event: any) => reject(event.target.error);
+          })
+          .catch((err) => reject(err));
+      });
+    }
+
+    function setItem(key: string, value: Dict[]) {
+      setItemLocalStorage(key, value);
+      try {
+        return setItemIndexedDb(key, value);
+      } catch {
+        return Promise.resolve();
+      }
+    }
+
+    function getItem(key: string): Promise<Dict[]> {
+      try {
+        return getItemIndexedDb(key);
+      } catch {
+        return Promise.resolve(getItemLocalStorage(key));
+      }
+    }
+
+    return { getItem, setItem };
+  })();
+
+  let isInOperationsChain = false;
+  let tempValue: Record<string, Dict[]> = {};
+
+  return {
+    startOperations: async () => {
+      isInOperationsChain = true;
+    },
+    endOperations: async () => {
+      Object.entries(tempValue).forEach(([key, value]) => {
+        _setItem(key, value);
+      });
+      tempValue = {};
+      isInOperationsChain = false;
+    },
+    getItem: (key) => {
+      if (isInOperationsChain && tempValue[key] !== undefined) {
+        return Promise.resolve(tempValue[key]);
+      }
+      return _getItem(key);
+    },
+    setItem: (key, value) => {
+      if (isInOperationsChain) {
+        tempValue[key] = value;
+        return Promise.resolve();
+      }
+      return _setItem(key, value);
+    },
+  };
+})();
+
+export function wrapApi<K extends { [f: string]: (...params: any[]) => any }>(
+  api: K
+): K {
+  Object.entries(api).forEach(([name, f]) => {
+    (api as any)[name] = (...params: any[]) => {
+      storage.startOperations();
+      const result = f(...params);
+      if (result instanceof Promise) {
+        return new Promise((resolve, reject) => {
+          result
+            .then((r) => resolve(r))
+            .catch((err) => reject(err))
+            .finally(() => storage.endOperations());
+        });
+      }
+      storage.endOperations();
+      return result;
+    };
+  });
+  return api;
+}
+
+function createDAO(key: string, pkName: string, initialRows: Promise<Dict[]>) {
+  let rows: Dict[] = [];
+
+  let initDone = false;
+  async function init() {
+    if (initDone) return;
+    rows = await initialRows;
+    initDone = true;
+    return;
   }
 
-  function save() {
+  async function save() {
     if (GENERATE_FAKE_DATA) return;
-    localStorage.setItem(key, JSON.stringify(rows));
+    await storage.setItem(key, rows);
   }
 
   function makeCopy(x: any): any {
@@ -58,13 +204,15 @@ function createDAO(
     });
   }
 
-  const findByPk = (pk: string) => {
+  const findByPk = async (pk: string) => {
+    await init();
     return createPromiseResolve(
       makeCopy(rows.find((row) => row[pkName] == pk))
     );
   };
 
-  const findOne = ({ where }: { where: Record<string, any> }) => {
+  const findOne = async ({ where }: { where: Record<string, any> }) => {
+    await init();
     return createPromiseResolve(
       makeCopy(
         rows.find((row) => Object.entries(where).every(([k, v]) => row[k] == v))
@@ -72,7 +220,8 @@ function createDAO(
     );
   };
 
-  const findAll = (param?: { where: Record<string, any> }) => {
+  const findAll = async (param?: { where: Record<string, any> }) => {
+    await init();
     if (!param) {
       return makeCopy(rows);
     }
@@ -88,20 +237,23 @@ function createDAO(
     );
   };
 
-  const count = ({ where }: { where: Record<string, any> }) => {
+  const count = async ({ where }: { where: Record<string, any> }) => {
+    await init();
     return createPromiseResolve(
       rows.filter((row) => Object.entries(where).every(([k, v]) => row[k] == v))
         .length
     );
   };
 
-  const create = (obj: Record<string, any>) => {
+  const create = async (obj: Record<string, any>) => {
+    await init();
     rows.push(obj);
-    save();
-    return createPromiseResolve();
+    await save();
+    return await createPromiseResolve();
   };
 
-  const destroy = ({ where }: { where: Record<string, any> }) => {
+  const destroy = async ({ where }: { where: Record<string, any> }) => {
+    await init();
     const toDeleteIndices = new Set();
     rows.forEach((row, index) => {
       if (Object.entries(where).every(([k, v]) => row[k] == v)) {
@@ -110,14 +262,15 @@ function createDAO(
     });
 
     rows = rows.filter((row, index) => !toDeleteIndices.has(index));
-    save();
-    return createPromiseResolve();
+    await save();
+    return await createPromiseResolve();
   };
 
-  const update = (
+  const update = async (
     data: Record<string, any>,
     { where }: { where: Record<string, any> }
   ) => {
+    await init();
     rows.forEach((row) => {
       if (Object.entries(where).every(([k, v]) => row[k] == v)) {
         Object.entries(data).forEach(([k, v]) => {
@@ -125,8 +278,8 @@ function createDAO(
         });
       }
     });
-    save();
-    return createPromiseResolve();
+    await save();
+    return await createPromiseResolve();
   };
 
   return {
@@ -137,15 +290,13 @@ function createDAO(
     create,
     destroy,
     update,
-    refesh() {
-      rows = loadFromLocalStorage();
+    async refesh() {
+      rows = await storage.getItem(key);
     },
   };
 }
 
-function generateFakeData() {
-  if (!GENERATE_FAKE_DATA) return [];
-
+function generateFakeData(): AllTableTypes {
   const NUM_PEOPLE = 10;
   const MALE_RATE = 0.6;
   const DEATH_RATE = 0.4;
@@ -339,33 +490,70 @@ function generateFakeData() {
   ];
 }
 
-const [fakeUsers, fakePeople, fakeFieldDefs, fakeFieldVals, fakeEventSettings] =
-  generateFakeData();
+function getData(): Promise<Dict[]>[] {
+  if (GENERATE_FAKE_DATA)
+    return generateFakeData().map((d) => Promise.resolve(d));
+
+  const dataVersion = 1;
+
+  const tableNames = [
+    "users",
+    "people",
+    "fieldDefs",
+    "fieldVals",
+    "eventSettings",
+  ];
+
+  let _cache: Dict[][] | null = null;
+  async function getDataFromStorage() {
+    if (_cache) return _cache;
+
+    const tableDatas = (await Promise.all(
+      tableNames.map((name) => storage.getItem(`QLGP.${name}`))
+    )) as AllTableTypes;
+
+    const [users, people, fieldDefs, fieldVals, eventSettings] = tableDatas;
+    await storage.setItem("QLGP.metadata", [{ dataVersion }]);
+
+    _cache = [users, people, fieldDefs, fieldVals, eventSettings];
+    return _cache;
+  }
+  getDataFromStorage();
+
+  return tableNames.map(
+    (_, idx) =>
+      new Promise((resolve) =>
+        getDataFromStorage().then((data) => resolve(data[idx]))
+      )
+  );
+}
+
+const [users, people, fieldDefs, fieldVals, eventSettings] = getData();
 
 export const userDAO: IDAO<User> = createDAO(
   "QLGP.users",
   "id",
-  fakeUsers
+  users
 ) as unknown as IDAO<User>;
 export const personDAO: IDAO<Person> = createDAO(
   "QLGP.people",
   "id",
-  fakePeople
+  people
 ) as unknown as IDAO<Person>;
 export const fieldDefDAO: IDAO<FieldDef> = createDAO(
   "QLGP.fieldDefs",
   "id",
-  fakeFieldDefs
+  fieldDefs
 ) as unknown as IDAO<FieldDef>;
 export const fieldValDAO: IDAO<FieldVal> = createDAO(
   "QLGP.fieldVals",
   "id",
-  fakeFieldVals
+  fieldVals
 ) as unknown as IDAO<FieldVal>;
 export const eventSettingDAO: IDAO<EventSetting> = createDAO(
   "QLGP.eventSettings",
   "userId",
-  fakeEventSettings
+  eventSettings
 ) as unknown as IDAO<EventSetting>;
 
 if (process.env.NODE_ENV == "development") {

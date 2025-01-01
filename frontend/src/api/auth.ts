@@ -6,11 +6,11 @@ import {
   getLoggedInUserLocalStorage,
 } from "./utils";
 import getAuthController from "../../../backend/src/controller/auth";
-import { userDAO, personDAO, eventSettingDAO } from "./DAO";
+import { userDAO, personDAO, eventSettingDAO, wrapApi } from "./DAO";
 
 const authController = getAuthController(userDAO, personDAO, eventSettingDAO);
 
-export const authApi = {
+export const authApi = wrapApi({
   getLoggedInUser: async () => {
     if (useBackend) {
       return await wrapAxiosCall(() => api.get("/auth/me"));
@@ -53,4 +53,4 @@ export const authApi = {
     localStorage.removeItem(sessionTokenKeyStoreLoggedInUserInLocalStorage);
     return await authController.logout({}, null);
   },
-};
+});

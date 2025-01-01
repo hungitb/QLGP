@@ -6,12 +6,12 @@ import {
   stringifyValuesOfObject,
 } from "./utils";
 import getEventController from "../../../backend/src/controller/event";
-import { eventSettingDAO, personDAO } from "./DAO";
+import { eventSettingDAO, personDAO, wrapApi } from "./DAO";
 import { EventSetting } from "../../../backend/src/model/EventSetting";
 
 const eventController = getEventController(eventSettingDAO, personDAO);
 
-export const eventApi = {
+export const eventApi = wrapApi({
   async getEvents(data: { startDate?: string; endDate?: string } = {}) {
     if (useBackend) {
       return await wrapAxiosCall(() => api.get("/event/all", { params: data }));
@@ -32,4 +32,4 @@ export const eventApi = {
       await getLoggedInUserLocalStorage()
     );
   },
-};
+});
