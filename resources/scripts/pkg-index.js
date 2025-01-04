@@ -5,6 +5,7 @@ const { runProdCommand } = require("./utils");
 const candidates = [
     ["index.js"],
     ["dist", "index.js"],
+    ["dist", "full", "index.js"],
     ["backend", "dist", "index.js"]
 ];
 

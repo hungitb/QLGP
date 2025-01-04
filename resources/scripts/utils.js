@@ -79,23 +79,35 @@ function copyDirSync(src, dest) {
     });
 }
 
-function deleteDirSync(dirPath) {
+function _clearDirSync(dirPath, { exceptions = [], removeRootDir = false } = {}) {
     if (fs.existsSync(dirPath)) {
         const entries = fs.readdirSync(dirPath);
+        const setExceptions = new Set(exceptions);
 
         for (const entry of entries) {
+            if (setExceptions.has(entry)) {
+                continue;
+            }
             const entryPath = path.join(dirPath, entry);
             if (fs.lstatSync(entryPath).isDirectory()) {
-                deleteDirSync(entryPath);
+                _clearDirSync(entryPath, { removeRootDir: true });
             } else {
                 fs.unlinkSync(entryPath);
             }
         }
-        // Remove the now-empty directory
-        fs.rmdirSync(dirPath);
-    } else {
-        throw new Error(`Directory "${dirPath}" does not exist.`);
+
+        if (removeRootDir) {
+            fs.rmdirSync(dirPath);
+        }
     }
+}
+
+function clearDirSync(dirPath, { exceptions = [] } = {}) {
+    _clearDirSync(dirPath, { exceptions });
+}
+
+function deleteDirSync(dirPath) {
+    _clearDirSync(dirPath, { removeRootDir: true });
 }
 
 module.exports = {
@@ -105,5 +117,6 @@ module.exports = {
     runCommand,
     runProdCommand,
     copyDirSync,
+    clearDirSync,
     deleteDirSync
 }

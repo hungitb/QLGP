@@ -144,6 +144,9 @@ const storage: Storage = (() => {
 export function wrapApi<K extends { [f: string]: (...params: any[]) => any }>(
   api: K
 ): K {
+  if (process.env.QLGP_USE_BACKEND == "true") {
+    return api;
+  }
   Object.entries(api).forEach(([name, f]) => {
     (api as any)[name] = (...params: any[]) => {
       storage.startOperations();
