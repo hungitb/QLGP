@@ -167,7 +167,7 @@
               >
                 <v-list-item
                   class="px-6"
-                  v-for="event in allEventTypes"
+                  v-for="event in allEventTypes.filter((et) => !et.default)"
                   :key="event.value"
                   :value="event.value"
                 >
@@ -387,14 +387,10 @@ export default defineComponent({
 
       let lastDate: string | null = null;
       const today = new Date();
-      const typeMapping = {
-        [EventType.BIRTHDATE]: "Ngày sinh",
-        [EventType.DEATHDATE]: "Ngày mất",
-        ...allEventTypes.reduce((result, { text, value }) => {
-          result[value] = text;
-          return result;
-        }, {}),
-      };
+      const typeMapping = allEventTypes.reduce((result, { text, value }) => {
+        result[value] = text;
+        return result;
+      }, {});
 
       const items: any[] = [];
       data.events.forEach(

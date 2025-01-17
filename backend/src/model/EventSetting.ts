@@ -20,7 +20,20 @@ export enum EventType {
     LE_CUNG_THOI_NOI_LICH_DUONG = "LE_CUNG_THOI_NOI_LICH_DUONG"
 }
 
+// Event default sẽ luôn mặc định là có và không thể sửa
 export const allEventTypes = [
+  {
+    text: "Ngày sinh",
+    value: EventType.BIRTHDATE,
+    desc: "Ngày sinh",
+    default: true,
+  },
+  {
+    text: "Ngày mất",
+    value: EventType.DEATHDATE,
+    desc: "Ngày mất",
+    default: true,
+  },
   {
     text: "Sinh nhật",
     value: EventType.BIRTHDAY,

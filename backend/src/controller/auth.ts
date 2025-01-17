@@ -68,7 +68,7 @@ export default function getAuthController(userDAO: IDAO<User>, personDAO: IDAO<P
         const newEventSetting: EventSetting = {
             userId: newUser.id,
             targetType: EventTargetType.ALL,
-            types: allEventTypes.map(et => et.value).join(","),
+            types: allEventTypes.filter(et => !et.default).map(et => et.value).join(","),
             specificPersonIds: "",
             numGenerationsAbove: 3,
             numGenerationsBelow: 3,

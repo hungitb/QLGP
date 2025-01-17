@@ -1,112 +1,249 @@
 <template>
   <v-container>
-    <div>
-      <div class="pt-2 pb-4">
-        <v-btn @click="showDialogAddOrCreatePerson" outlined color="primary">
-          <v-icon left>mdi-account-plus</v-icon> Thêm người thân
-        </v-btn>
-      </div>
-    </div>
-    <v-card>
-      <v-card-title>
-        Danh sách người thân
-        <v-spacer></v-spacer>
-        <v-text-field
-          v-model="search"
-          append-icon="mdi-magnify"
-          label="Tìm kiếm"
-          single-line
-          outlined
-          dense
-          hide-details
-          tabindex="-1"
-        ></v-text-field>
-      </v-card-title>
-      <v-data-table
-        :headers="headers"
-        :items="peopleList"
-        :loading="$store.state.isLoadingPeople"
-        :custom-sort="sortPeople"
-        :page.sync="page"
-        item-key="id"
-        class="elevation-1"
-        @click:row="showDialogPersonDetailInfo"
-      >
-        <template v-slot:item.avatarUrl="{ item, isMobile }">
-          <div :class="!isMobile ? 'pa-2' : 'pt-2'">
-            <CustomPersonAvatar size="40" :person="item" textSize="5" />
-          </div>
-        </template>
+    <v-row class="pt-3">
+      <v-col cols="12" lg="9">
+        <v-row>
+          <v-col cols="12">
+            <v-row>
+              <v-col cols="12" sm="6">
+                <v-card>
+                  <v-card-text>
+                    <div class="d-flex">
+                      <div class="d-flex flex-column justify-space-between">
+                        <div>Số lượng nam</div>
+                        <div class="text-h6">
+                          <v-skeleton-loader
+                            v-if="$store.state.isLoadingPeople"
+                            type="text"
+                            width="40"
+                          ></v-skeleton-loader>
+                          <template v-else>
+                            {{
+                              $store.state.people.filter(
+                                (p) => p.gender == Gender.MALE
+                              ).length
+                            }}
+                          </template>
+                        </div>
+                      </div>
+                      <v-spacer></v-spacer>
+                      <CustomPersonAvatar
+                        :person="{
+                          gender: Gender.MALE,
+                          avatarUrl: null,
+                          callname: '',
+                        }"
+                      />
+                    </div>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+              <v-col cols="12" sm="6">
+                <v-card>
+                  <v-card-text>
+                    <div class="d-flex">
+                      <div class="d-flex flex-column justify-space-between">
+                        <div>Số lượng nữ</div>
+                        <div class="text-h6">
+                          <v-skeleton-loader
+                            v-if="$store.state.isLoadingPeople"
+                            type="text"
+                            width="40"
+                          ></v-skeleton-loader>
+                          <template v-else>
+                            {{
+                              $store.state.people.filter(
+                                (p) => p.gender == Gender.FEMALE
+                              ).length
+                            }}
+                          </template>
+                        </div>
+                      </div>
+                      <v-spacer></v-spacer>
+                      <CustomPersonAvatar
+                        :person="{
+                          gender: Gender.FEMALE,
+                          avatarUrl: null,
+                          callname: '',
+                        }"
+                      />
+                    </div>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
+          </v-col>
+          <v-col cols="12">
+            <v-card>
+              <v-card-title>
+                Danh sách người thân
+                <v-btn
+                  v-if="$vuetify.breakpoint.smAndDown"
+                  fab
+                  dark
+                  bottom
+                  right
+                  color="primary"
+                  :large="$vuetify.breakpoint.sm ? true : undefined"
+                  fixed
+                  @click="showDialogAddOrCreatePerson"
+                >
+                  <v-icon>mdi-account-plus</v-icon>
+                </v-btn>
+                <template v-else>
+                  <v-divider vertical class="mx-4"></v-divider>
+                  <v-btn
+                    @click="showDialogAddOrCreatePerson"
+                    outlined
+                    color="primary"
+                  >
+                    <v-icon left>mdi-account-plus</v-icon> Thêm
+                  </v-btn>
+                </template>
+                <v-spacer></v-spacer>
+                <v-text-field
+                  v-model="search"
+                  append-icon="mdi-magnify"
+                  label="Tìm kiếm"
+                  single-line
+                  outlined
+                  dense
+                  hide-details
+                  tabindex="-1"
+                ></v-text-field>
+              </v-card-title>
+              <v-divider></v-divider>
+              <v-data-table
+                :headers="headers"
+                :items="peopleList"
+                :loading="$store.state.isLoadingPeople"
+                :custom-sort="sortPeople"
+                :page.sync="page"
+                item-key="id"
+                @click:row="showDialogPersonDetailInfo"
+              >
+                <template v-slot:item.avatarUrl="{ item, isMobile }">
+                  <div :class="!isMobile ? 'pa-2' : 'pt-2'">
+                    <CustomPersonAvatar size="40" :person="item" textSize="5" />
+                  </div>
+                </template>
 
-        <template v-slot:item.gender="{ value }">
-          {{ value != Gender.MALE ? "Nữ" : "Nam" }}
-        </template>
+                <template v-slot:item.gender="{ value }">
+                  {{ value != Gender.MALE ? "Nữ" : "Nam" }}
+                </template>
 
-        <template
-          v-slot:header.birthdate="{ header }"
-          v-if="!peopleTableInMobileLayout"
-        >
-          <span style="display: inline-block; text-align: end; width: 80px">{{
-            header.text
-          }}</span>
-        </template>
+                <template
+                  v-slot:header.birthdate="{ header }"
+                  v-if="!peopleTableInMobileLayout"
+                >
+                  <span
+                    style="display: inline-block; text-align: end; width: 80px"
+                    >{{ header.text }}</span
+                  >
+                </template>
 
-        <template v-slot:item.birthdate="{ item }">
-          <span
-            v-if="item.birthdate"
-            :style="
-              peopleTableInMobileLayout
-                ? {}
-                : { display: 'inline-block', textAlign: 'end', width: '80px' }
-            "
-          >
-            {{
-              transformDateString(item.birthdate, {
-                showLunarDate: false,
-              })
-            }}
-          </span>
-        </template>
+                <template v-slot:item.birthdate="{ item }">
+                  <span
+                    v-if="item.birthdate"
+                    :style="
+                      peopleTableInMobileLayout
+                        ? {}
+                        : {
+                            display: 'inline-block',
+                            textAlign: 'end',
+                            width: '80px',
+                          }
+                    "
+                  >
+                    {{
+                      transformDateString(item.birthdate, {
+                        showLunarDate: false,
+                      })
+                    }}
+                  </span>
+                </template>
 
-        <template v-slot:item.status_deathdate="{ item }">
-          <template v-if="item.status == LifeStatus.ALIVE">
-            <span style="color: green">Còn sống</span>
-          </template>
+                <template v-slot:item.status_deathdate="{ item }">
+                  <template v-if="item.status == LifeStatus.ALIVE">
+                    <span style="color: green">Còn sống</span>
+                  </template>
 
-          <template v-else-if="item.status == LifeStatus.DEAD">
-            <span style="color: red">Đã mất</span>
-            <template v-if="item.deathdate">
-              <span style="color: blue"> |</span>
-              {{
-                transformDateString(item.deathdate, {
-                  showNormalDate: !peopleTableInMobileLayout,
-                  showLunarDate: !peopleTableInMobileLayout,
-                })
-              }}
-            </template>
-          </template>
-        </template>
+                  <template v-else-if="item.status == LifeStatus.DEAD">
+                    <span style="color: red">Đã mất</span>
+                    <span v-if="item.deathdate" class="ml-2">
+                      {{
+                        transformDateString(item.deathdate, {
+                          showNormalDate: !peopleTableInMobileLayout,
+                          showLunarDate: !peopleTableInMobileLayout,
+                        })
+                      }}
+                    </span>
+                  </template>
+                </template>
+              </v-data-table>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-col>
+      <v-col cols="12" lg="3">
+        <v-row>
+          <v-col cols="12" lg="12">
+            <v-card>
+              <v-card-title>Sự kiện sắp tới</v-card-title>
+              <v-card-subtitle>7 ngày sắp tới</v-card-subtitle>
+              <v-card-text>
+                <div v-if="eventsLoading" class="d-flex justify-center py-5">
+                  <v-progress-circular
+                    indeterminate
+                    color="primary"
+                  ></v-progress-circular>
+                </div>
+                <template v-else>
+                  <v-list v-if="events.length > 0" class="mx-n4 mt-n4">
+                    <v-list-item
+                      v-for="event in events"
+                      :key="event.personId + event.normalDate + event.type"
+                    >
+                      <v-list-item-avatar>
+                        <CustomPersonAvatar
+                          :person="$store.state.personMapping[event.personId]"
+                        ></CustomPersonAvatar>
+                      </v-list-item-avatar>
 
-        <template v-slot:item.actions="{ item }">
-          <v-icon
-            dense
-            :class="peopleTableInMobileLayout ? 'mr-10' : 'mr-4'"
-            @click.stop="editPerson(item)"
-          >
-            mdi-pencil
-          </v-icon>
-
-          <v-icon
-            v-if="!item.isStandForUser"
-            color="error"
-            dense
-            @click.stop="deletePerson(item)"
-          >
-            mdi-delete
-          </v-icon>
-        </template>
-      </v-data-table>
-    </v-card>
+                      <v-list-item-content>
+                        <v-list-item-title>{{
+                          $store.state.personMapping[event.personId].callname
+                        }}</v-list-item-title>
+                        <v-list-item-subtitle>
+                          <span class="text--primary">
+                            {{
+                              allEventTypes.find((et) => et.value == event.type)
+                                ?.text
+                            }}
+                          </span>
+                          —
+                          {{
+                            event.normalDate.split("/").slice(0, 2).join("/")
+                          }}
+                        </v-list-item-subtitle>
+                      </v-list-item-content>
+                    </v-list-item>
+                  </v-list>
+                  <div v-else class="grey--text" style="height: 50px">
+                    Không có sự kiện nào cả
+                  </div>
+                </template>
+              </v-card-text>
+              <v-card-actions v-if="!eventsLoading">
+                <v-btn color="primary" text to="/upcoming_events">
+                  Xem nhiều hơn
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
@@ -114,19 +251,19 @@
 import Vue from "vue";
 
 import { Gender, LifeStatus, Person } from "../../../backend/src/model/Person";
+import { eventApi } from "@/api/event";
+import { type Event } from "../../../backend/src/controller/event";
+import { allEventTypes } from "../../../backend/src/model/EventSetting";
 import {
   compareTwoDateString,
   transformDateString,
+  todayDate,
+  datePlusDay,
 } from "../../../backend/src/utils/DateUtils";
 import CustomPersonAvatar from "@/components/CustomPersonAvatar.vue";
 import { filterPeople } from "../../../backend/src/controller/person";
-import { personApi } from "@/api/person";
-import { mapActions } from "vuex";
-import { FETCH_PEOPLE } from "@/store";
-import { showDialogConfirm } from "@/components/utilities/ShowDialogConfirm.vue";
 import { showDialogAddOrCreatePerson } from "@/components/utilities/ShowDialogAddOrCreatePerson.vue";
 import { showDialogPersonDetailInfo } from "@/components/utilities/UtilDialogPersonDetailInfo.vue";
-import { showSnackbar } from "@/components/utilities/ShowSnackbar.vue";
 
 export default Vue.extend({
   components: {
@@ -134,6 +271,7 @@ export default Vue.extend({
   },
   data: function () {
     return {
+      allEventTypes,
       Gender,
       LifeStatus,
 
@@ -162,8 +300,14 @@ export default Vue.extend({
           text: "Tình trạng",
           value: "status_deathdate",
         },
-        { text: "", value: "actions", sortable: false },
       ],
+
+      // Events
+      eventsLoading: true,
+      events: [] as Event[],
+
+      // Statistic
+      statisticLoading: true,
     };
   },
   computed: {
@@ -181,9 +325,7 @@ export default Vue.extend({
     },
   },
   methods: {
-    showDialogAddOrCreatePerson,
     transformDateString,
-    ...mapActions([FETCH_PEOPLE]),
     sortPeople(people: Person[], sortBy: string[], sortDesc: boolean[]) {
       let compare: (v1: any, v2: any, k1: Person, k2: Person) => number = (
         a: any,
@@ -235,29 +377,38 @@ export default Vue.extend({
 
       return indices.map((i) => people[i]);
     },
-    deletePerson(person: Person) {
-      const onConfirmed = async () => {
-        await personApi.deletePerson({ id: person.id }).then(() => {
-          this[FETCH_PEOPLE]();
-        });
-        showSnackbar({ msg: `Xóa ${person.callname} thành công` });
-      };
-      showDialogConfirm({
-        onConfirmed,
-        header: `Bạn có chắc chắn muốn xóa ${person.callname} không?`,
-        info: "Nếu xóa người này, mối quan hệ của những người liên quan với người này sẽ bị xóa",
-        confirmText: "Xóa",
-        confirmColor: "error",
-      });
+    refreshEventsAndStatistics() {
+      this.fetchEvents();
     },
-    editPerson(person: Person) {
-      showDialogAddOrCreatePerson({
-        person,
-      });
+    showDialogAddOrCreatePerson() {
+      showDialogAddOrCreatePerson({ onDone: this.refreshEventsAndStatistics });
     },
     showDialogPersonDetailInfo(person: Person) {
-      showDialogPersonDetailInfo({ personId: person.id });
+      showDialogPersonDetailInfo({
+        personId: person.id,
+        editable: true,
+        onPersonEdited: this.refreshEventsAndStatistics,
+        onPersonDeleted: this.refreshEventsAndStatistics,
+      });
     },
+    fetchEvents() {
+      this.eventsLoading = true;
+      eventApi
+        .getEvents({
+          startDate: todayDate(),
+          endDate: datePlusDay(todayDate(), 7),
+        })
+        .then(({ data }) => {
+          const { events } = data;
+          this.events = events;
+        })
+        .finally(() => {
+          this.eventsLoading = false;
+        });
+    },
+  },
+  mounted() {
+    this.fetchEvents();
   },
 });
 </script>

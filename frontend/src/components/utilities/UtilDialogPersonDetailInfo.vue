@@ -1,6 +1,12 @@
 <template>
   <div style="display: none">
-    <PersonDetailDialog v-model="dialog" :personId="personId" />
+    <PersonDetailDialog
+      v-model="dialog"
+      :personId="personId"
+      :editable="editable"
+      :onPersonEdited="onPersonEdited"
+      :onPersonDeleted="onPersonDeleted"
+    />
   </div>
 </template>
 
@@ -10,6 +16,9 @@ import PersonDetailDialog from "../PersonDetailDialog.vue";
 
 type ShowDialogPersonDetailInfoParams = {
   personId: string;
+  editable?: boolean;
+  onPersonDeleted?: () => any;
+  onPersonEdited?: () => any;
 };
 let _showDialogPersonDetailInfo:
   | ((data: ShowDialogPersonDetailInfoParams) => any)
@@ -31,19 +40,31 @@ export default defineComponent({
       dialog: false,
 
       personId: "",
+      editable: undefined as boolean | undefined,
+      onPersonDeleted: undefined as (() => any) | undefined,
+      onPersonEdited: undefined as (() => any) | undefined,
     };
   },
   watch: {
     dialog(val) {
       if (!val) {
         this.personId = "";
+        this.editable = undefined;
       }
     },
   },
   methods: {
-    showDialogPersonDetailInfo({ personId }: ShowDialogPersonDetailInfoParams) {
+    showDialogPersonDetailInfo({
+      personId,
+      editable,
+      onPersonDeleted,
+      onPersonEdited,
+    }: ShowDialogPersonDetailInfoParams) {
       this.dialog = true;
       this.personId = personId;
+      this.editable = editable;
+      this.onPersonDeleted = onPersonDeleted;
+      this.onPersonEdited = onPersonEdited;
     },
   },
   mounted() {

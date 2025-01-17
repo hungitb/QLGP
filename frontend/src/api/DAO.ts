@@ -13,8 +13,8 @@ import {
 const GENERATE_FAKE_DATA =
   process.env.NODE_ENV == "development" &&
   process.env.GENERATE_FAKE_DATA == "true" &&
-  false;
-const DELAY = 0;
+  true;
+const DELAY = 1000;
 
 type Dict = { [key: string]: any };
 type AllTableTypes = [User[], Person[], FieldDef[], FieldVal[], EventSetting[]];
@@ -300,7 +300,7 @@ function createDAO(key: string, pkName: string, initialRows: Promise<Dict[]>) {
 }
 
 function generateFakeData(): AllTableTypes {
-  const NUM_PEOPLE = 10;
+  const NUM_PEOPLE = 100;
   const MALE_RATE = 0.6;
   const DEATH_RATE = 0.4;
 

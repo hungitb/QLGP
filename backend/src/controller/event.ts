@@ -280,7 +280,7 @@ export default function getEventController(eventSettingDAO: IDAO<EventSetting>, 
             const typesArray = data.types.split(",");
             typesArray.sort();
             data.types = typesArray.filter(type => {
-                return allEventTypes.map(et => et.value).includes(type as any);
+                return allEventTypes.filter(et => !et.default).map(et => et.value).includes(type as any);
             }).join(",");
         }
         if (data.numGenerationsAbove) {

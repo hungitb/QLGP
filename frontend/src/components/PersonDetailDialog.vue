@@ -41,6 +41,23 @@
           </div>
         </v-col>
 
+        <v-col cols="12" v-if="editable">
+          <v-row dense>
+            <v-col cols="12" sm="6">
+              <v-btn block color="primary" outlined @click="editPerson">
+                <v-icon left>mdi-pencil</v-icon>
+                Sửa thông tin
+              </v-btn>
+            </v-col>
+            <v-col cols="12" sm="6" v-if="!person.isStandForUser">
+              <v-btn block color="red" outlined @click="deletePerson">
+                <v-icon left>mdi-delete</v-icon>
+                Xóa người thân
+              </v-btn>
+            </v-col>
+          </v-row>
+        </v-col>
+
         <v-col cols="12">
           <v-card :loading="isLoadingDetailInfo">
             <v-card-title style="word-break: initial">
@@ -94,6 +111,11 @@ import { personApi } from "@/api/person";
 import CustomPersonAvatar from "./CustomPersonAvatar.vue";
 import { Person, Gender, LifeStatus } from "../../../backend/src/model/Person";
 import { transformDateString } from "../../../backend/src/utils/DateUtils";
+import { showDialogConfirm } from "@/components/utilities/ShowDialogConfirm.vue";
+import { showSnackbar } from "@/components/utilities/ShowSnackbar.vue";
+import { showDialogAddOrCreatePerson } from "@/components/utilities/ShowDialogAddOrCreatePerson.vue";
+import { mapActions } from "vuex";
+import { FETCH_PEOPLE } from "@/store";
 
 export default defineComponent({
   components: {
@@ -108,6 +130,16 @@ export default defineComponent({
     personId: {
       type: String,
       default: "",
+    },
+    editable: {
+      type: Boolean,
+      default: false,
+    },
+    onPersonDeleted: {
+      type: Function,
+    },
+    onPersonEdited: {
+      type: Function,
     },
   },
   data() {
@@ -138,14 +170,18 @@ export default defineComponent({
     personId(val) {
       this.internalPersonId = val;
     },
-    async internalPersonId() {
+    internalPersonId() {
+      this.refresh();
+    },
+  },
+  methods: {
+    ...mapActions([FETCH_PEOPLE]),
+    transformDateString,
+    refresh() {
       this.groups = [];
       (this.$refs.dialog as any).scrollTop();
       this.fetchPersonDetailInfo();
     },
-  },
-  methods: {
-    transformDateString,
     async fetchPersonDetailInfo() {
       if (!this.internalPersonId) return;
       this.isLoadingDetailInfo = true;
@@ -194,6 +230,42 @@ export default defineComponent({
       this.groups = this.groups.filter(
         ({ personIds }) => personIds.length != 0
       );
+    },
+    editPerson() {
+      if (!this.person) {
+        return;
+      }
+      const onDone = () => {
+        this.refresh();
+      };
+      showDialogAddOrCreatePerson({
+        person: this.person,
+        onDone,
+      });
+    },
+    deletePerson() {
+      if (!this.person) {
+        return;
+      }
+      const person = this.person;
+      const onConfirmed = async () => {
+        await personApi.deletePerson({ id: person.id }).then(() => {
+          this[FETCH_PEOPLE]();
+        });
+        showSnackbar({ msg: `Xóa ${person.callname} thành công` });
+        if (this.onPersonDeleted) {
+          this.onPersonDeleted();
+        }
+
+        this.dialog = false;
+      };
+      showDialogConfirm({
+        onConfirmed,
+        header: `Bạn có chắc chắn muốn xóa ${person.callname} không?`,
+        info: "Nếu xóa người này, mối quan hệ của những người liên quan với người này sẽ bị xóa",
+        confirmText: "Xóa",
+        confirmColor: "error",
+      });
     },
   },
   mounted() {
