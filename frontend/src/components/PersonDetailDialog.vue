@@ -111,9 +111,11 @@ import { personApi } from "@/api/person";
 import CustomPersonAvatar from "./CustomPersonAvatar.vue";
 import { Person, Gender, LifeStatus } from "../../../backend/src/model/Person";
 import { transformDateString } from "../../../backend/src/utils/DateUtils";
-import { showDialogConfirm } from "@/components/utilities/ShowDialogConfirm.vue";
-import { showSnackbar } from "@/components/utilities/ShowSnackbar.vue";
-import { showDialogAddOrCreatePerson } from "@/components/utilities/ShowDialogAddOrCreatePerson.vue";
+import {
+  showDialogConfirm,
+  showSnackbar,
+  showDialogAddOrCreatePerson,
+} from "@/components/utilities";
 import { mapActions } from "vuex";
 import { FETCH_PEOPLE } from "@/store";
 

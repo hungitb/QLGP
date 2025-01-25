@@ -111,11 +111,13 @@ import {
   Person,
 } from "../../../../backend/src/model/Person";
 import { FamilyCardConfig, PersonCardLayout } from "../types";
-import { showDialogAddPersonWithSpecificRole } from "../utilities/ShowDialogAddPersonWithSpecificRole.vue";
+import {
+  showDialogAddPersonWithSpecificRole,
+  showDialogPersonDetailInfo,
+} from "@/components/utilities";
 import { checkIfIsMobile } from "@/utils";
 import CustomPersonAvatar from "../CustomPersonAvatar.vue";
 import { transformDateString } from "../../../../backend/src/utils/DateUtils";
-import { showDialogPersonDetailInfo } from "../utilities/UtilDialogPersonDetailInfo.vue";
 
 export default Vue.extend({
   components: {

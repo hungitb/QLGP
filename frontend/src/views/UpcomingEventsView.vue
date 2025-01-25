@@ -247,13 +247,13 @@
 
             <v-divider
               v-else-if="item.divider"
-              :key="item.key"
+              :key="'divider' + item.key"
               inset
             ></v-divider>
 
-            <v-list-item v-else :key="item.key">
+            <v-list-item v-else :key="'list-item' + item.key">
               <v-list-item-avatar>
-                <CustomPersonAvatar :person="item.person" />
+                <CustomPersonAvatar :person="item.person" textSize="5" />
               </v-list-item-avatar>
 
               <v-list-item-content>
@@ -301,7 +301,7 @@ import {
 } from "../../../backend/src/utils/DateUtils";
 import CustomDialog from "@/components/CustomDialog.vue";
 import PersonInputGroup from "@/components/input/PersonInputGroup.vue";
-import { showSnackbar } from "@/components/utilities/ShowSnackbar.vue";
+import { showSnackbar } from "@/components/utilities";
 
 export default defineComponent({
   components: {

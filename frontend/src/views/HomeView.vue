@@ -1,6 +1,6 @@
 <template>
   <v-container>
-    <v-row class="pt-3">
+    <v-row class="py-3">
       <v-col cols="12" lg="9">
         <v-row>
           <v-col cols="12">
@@ -134,7 +134,7 @@
 
                 <template
                   v-slot:header.birthdate="{ header }"
-                  v-if="!peopleTableInMobileLayout"
+                  v-if="!$vuetify.breakpoint.xs"
                 >
                   <span
                     style="display: inline-block; text-align: end; width: 80px"
@@ -146,7 +146,7 @@
                   <span
                     v-if="item.birthdate"
                     :style="
-                      peopleTableInMobileLayout
+                      $vuetify.breakpoint.xs
                         ? {}
                         : {
                             display: 'inline-block',
@@ -173,8 +173,8 @@
                     <span v-if="item.deathdate" class="ml-2">
                       {{
                         transformDateString(item.deathdate, {
-                          showNormalDate: !peopleTableInMobileLayout,
-                          showLunarDate: !peopleTableInMobileLayout,
+                          showNormalDate: !$vuetify.breakpoint.xs,
+                          showLunarDate: !$vuetify.breakpoint.xs,
                         })
                       }}
                     </span>
@@ -207,6 +207,7 @@
                       <v-list-item-avatar>
                         <CustomPersonAvatar
                           :person="$store.state.personMapping[event.personId]"
+                          textSize="5"
                         ></CustomPersonAvatar>
                       </v-list-item-avatar>
 
@@ -215,7 +216,7 @@
                           $store.state.personMapping[event.personId].callname
                         }}</v-list-item-title>
                         <v-list-item-subtitle>
-                          <span class="text--primary">
+                          <span class="text--primary" style="line-height: 24px">
                             {{
                               allEventTypes.find((et) => et.value == event.type)
                                 ?.text
@@ -262,8 +263,10 @@ import {
 } from "../../../backend/src/utils/DateUtils";
 import CustomPersonAvatar from "@/components/CustomPersonAvatar.vue";
 import { filterPeople } from "../../../backend/src/controller/person";
-import { showDialogAddOrCreatePerson } from "@/components/utilities/ShowDialogAddOrCreatePerson.vue";
-import { showDialogPersonDetailInfo } from "@/components/utilities/UtilDialogPersonDetailInfo.vue";
+import {
+  showDialogAddOrCreatePerson,
+  showDialogPersonDetailInfo,
+} from "@/components/utilities";
 
 export default Vue.extend({
   components: {
@@ -305,18 +308,12 @@ export default Vue.extend({
       // Events
       eventsLoading: true,
       events: [] as Event[],
-
-      // Statistic
-      statisticLoading: true,
     };
   },
   computed: {
     peopleList() {
       const people = this.$store.state.people as Person[];
       return filterPeople(people, (this as any).search);
-    },
-    peopleTableInMobileLayout() {
-      return this.$vuetify.breakpoint.width < 600; // 600: default mobile-breakpoint of v-data-table
     },
   },
   watch: {
@@ -377,18 +374,15 @@ export default Vue.extend({
 
       return indices.map((i) => people[i]);
     },
-    refreshEventsAndStatistics() {
-      this.fetchEvents();
-    },
     showDialogAddOrCreatePerson() {
-      showDialogAddOrCreatePerson({ onDone: this.refreshEventsAndStatistics });
+      showDialogAddOrCreatePerson({ onDone: this.fetchEvents });
     },
     showDialogPersonDetailInfo(person: Person) {
       showDialogPersonDetailInfo({
         personId: person.id,
         editable: true,
-        onPersonEdited: this.refreshEventsAndStatistics,
-        onPersonDeleted: this.refreshEventsAndStatistics,
+        onPersonEdited: this.fetchEvents,
+        onPersonDeleted: this.fetchEvents,
       });
     },
     fetchEvents() {

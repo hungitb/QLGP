@@ -58,12 +58,7 @@
         @click="dialogChoosePerson = true"
       >
         <template v-slot:selection="{ selected, attrs, item }">
-          <v-chip
-            v-bind="attrs"
-            :input-value="selected"
-            :close="disabled ? undefined : true"
-            @click:close="remove(item)"
-          >
+          <v-chip v-bind="attrs" :input-value="selected">
             <CustomPersonAvatar :person="item" left />
             {{ item.callname }}
           </v-chip>
@@ -86,7 +81,7 @@
 
       <CustomDialog
         v-model="dialogChoosePerson"
-        header="Chọn người thân"
+        :header="label"
         buttonText
         maxWidth="400px"
         :buttons="[{ text: 'Lưu', click: dialogSaveBtnHandler }]"
@@ -94,9 +89,10 @@
       >
         <div
           v-if="
-            one
+            dialogChoosePersonSelectedIds &&
+            (one
               ? dialogChoosePersonSelectedIds
-              : dialogChoosePersonSelectedIds.length > 0
+              : dialogChoosePersonSelectedIds.length > 0)
           "
           class="mb-4"
         >
@@ -114,6 +110,7 @@
             {{ $store.state.personMapping[id].callname }}
           </v-chip>
         </div>
+        <div v-else class="mb-4 grey--text">Chưa có ai được chọn</div>
         <v-text-field
           v-model="searchPerson"
           dense
@@ -132,7 +129,7 @@
             :key="person.id"
           >
             <v-list-item-avatar>
-              <CustomPersonAvatar :person="person" viewable />
+              <CustomPersonAvatar :person="person" viewable textSize="6" />
             </v-list-item-avatar>
 
             <v-list-item-content>

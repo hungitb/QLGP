@@ -9,6 +9,7 @@ async function buildStatic() {
         useBackend: false
     });
 
+    clearDirSync(path.resolve(distDir, "static"));
     copyDirSync(
         path.resolve(frontendDir, "dist"),
         path.resolve(distDir, "static")
@@ -17,7 +18,7 @@ async function buildStatic() {
     deleteDirSync(path.resolve(frontendDir, "dist"));
 }
 
-async function buildFull({ fe = true, be = true }= {}) {
+async function buildFull({ fe = true, be = true } = {}) {
     if (fe) {
         await runProdCommand({ cmd: ["npm", "--prefix=" + frontendDir, "run", "build"] });
 

@@ -65,7 +65,7 @@
     <ShowDialogConfirm />
     <ShowSnackbar />
     <ShowImage />
-    <UtilDialogPersonDetailInfo />
+    <ShowDialogPersonDetailInfo />
   </v-app>
 </template>
 
@@ -82,7 +82,7 @@ import ShowDialogAddPersonWithSpecificRole from "@/components/utilities/ShowDial
 import ShowDialogConfirm from "@/components/utilities/ShowDialogConfirm.vue";
 import ShowSnackbar from "@/components/utilities/ShowSnackbar.vue";
 import ShowImage from "@/components/utilities/ShowImage.vue";
-import UtilDialogPersonDetailInfo from "@/components/utilities/UtilDialogPersonDetailInfo.vue";
+import ShowDialogPersonDetailInfo from "@/components/utilities/ShowDialogPersonDetailInfo.vue";
 
 export default Vue.extend({
   components: {
@@ -92,7 +92,7 @@ export default Vue.extend({
     ShowDialogConfirm,
     ShowSnackbar,
     ShowImage,
-    UtilDialogPersonDetailInfo,
+    ShowDialogPersonDetailInfo,
   },
   data: () => ({
     isLoading: false,
