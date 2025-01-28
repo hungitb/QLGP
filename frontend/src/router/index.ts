@@ -8,9 +8,11 @@ import RegisterView from "@/views/RegisterView.vue";
 import LoggedInLayout from "@/views/LoggedInLayout.vue";
 import HomeView from "@/views/HomeView.vue";
 import FamilyTreeView from "@/views/FamilyTreeView.vue";
-import StatisticView from "@/views/StatisticView.vue";
+import UtilitiesListView from "@/views/utilities/UtilitiesListView.vue";
 import UpcomingEventsView from "@/views/UpcomingEventsView.vue";
 import NotFoundView from "@/views/NotFoundView.vue";
+import StatisticView from "@/views/utilities/StatisticView.vue";
+import BackupDataView from "@/views/utilities/BackupDataView.vue";
 
 Vue.use(VueRouter);
 
@@ -46,14 +48,26 @@ const routes: Array<RouteConfig> = [
         component: FamilyTreeView,
       },
       {
-        path: "/statistic",
-        name: "statistic",
-        component: StatisticView,
-      },
-      {
         path: "/upcoming_events",
         name: "upcoming_events",
         component: UpcomingEventsView,
+      },
+      {
+        path: "/utilities",
+        name: "utilities",
+        component: UtilitiesListView,
+        children: [
+          {
+            path: "statistic",
+            name: "statistic",
+            component: StatisticView,
+          },
+          {
+            path: "backup",
+            name: "backup",
+            component: BackupDataView,
+          },
+        ],
       },
     ],
   },

@@ -1,5 +1,5 @@
 <template>
-  <v-container :style="isLoading ? { height: '100%' } : {}">
+  <div :style="isLoading ? { height: 'calc(100vh - 100px)' } : {}">
     <FullViewLoading :floating="false" v-if="isLoading" />
     <v-row v-else>
       <v-col>
@@ -41,7 +41,7 @@
         />
       </v-col>
     </v-row>
-  </v-container>
+  </div>
 </template>
 
 <script lang="ts">
@@ -74,7 +74,7 @@ ChartJS.register(
 
 import { personApi } from "@/api/person";
 import FullViewLoading from "@/components/FullViewLoading.vue";
-import { Gender, LifeStatus } from "../../../backend/src/model/Person";
+import { Gender, LifeStatus } from "../../../../backend/src/model/Person";
 
 function getSampleData({
   arrayBackgroundColor = false,

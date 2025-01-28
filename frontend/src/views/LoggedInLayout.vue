@@ -19,7 +19,11 @@
             <v-list-item-icon
               :style="{ fontSize: '18px', marginRight: '10px' }"
             >
-              <i :class="`bi bi-${item.icon}`"></i>
+              <i
+                v-if="item.icon.startsWith('bi')"
+                :class="`bi ${item.icon}`"
+              ></i>
+              <v-icon v-else>{{ item.icon }}</v-icon>
             </v-list-item-icon>
 
             <v-list-item-content>
@@ -100,23 +104,35 @@ export default Vue.extend({
     interval: null as number | null,
     drawer: null as boolean | null,
     items: [
-      { title: "Trang chủ", icon: "house-door-fill", link: "/" },
-      { title: "Cây gia phả", icon: "diagram-3-fill", link: "/family_tree" },
-      { title: "Thống kê", icon: "pie-chart-fill", link: "/statistic" },
+      { title: "Trang chủ", icon: "mdi-home", link: "/" },
+      {
+        title: "Cây gia phả",
+        icon: "$bootstrap-diagram-3-fill",
+        link: "/family_tree",
+      },
       {
         title: "Sự kiện sắp tới",
-        icon: "calendar-event-fill",
+        icon: "mdi-calendar",
         link: "/upcoming_events",
       },
+      { title: "Tiện ích", icon: "mdi-apps", link: "/utilities" },
     ],
     selectedItem: 0,
   }),
   methods: {
     ...mapActions([FETCH_PEOPLE, CLEAR_STORE]),
     updateSelectedItemFromRoute(route: Route) {
-      const matchingIndex = this.items.findIndex(
-        (item) => item.link === route.path
-      );
+      let matchingIndex = -1;
+      let bestMatchLength = -1;
+      this.items.forEach((item, index) => {
+        if (
+          route.path.startsWith(item.link) &&
+          item.link.length > bestMatchLength
+        ) {
+          matchingIndex = index;
+          bestMatchLength = item.link.length;
+        }
+      });
       this.selectedItem = matchingIndex !== -1 ? matchingIndex : 0;
     },
     async logout() {

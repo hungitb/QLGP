@@ -566,3 +566,22 @@ if (process.env.NODE_ENV == "development") {
   (window as any).fieldValDAO = fieldValDAO;
   (window as any).eventSettingDAO = eventSettingDAO;
 }
+
+export async function exportData() {
+  const [users, people, fieldDefs, fieldVals, eventSettings] =
+    await Promise.all([
+      userDAO.findAll(),
+      personDAO.findAll(),
+      fieldDefDAO.findAll(),
+      fieldValDAO.findAll(),
+      eventSettingDAO.findAll(),
+    ]);
+
+  return JSON.stringify({
+    users,
+    people,
+    fieldDefs,
+    fieldVals,
+    eventSettings,
+  });
+}
