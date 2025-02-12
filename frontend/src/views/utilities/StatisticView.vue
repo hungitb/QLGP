@@ -1,5 +1,5 @@
 <template>
-  <div :style="isLoading ? { height: 'calc(100vh - 100px)' } : {}">
+  <div :style="isLoading ? { height: 'calc(100vh - 300px)' } : {}">
     <FullViewLoading :floating="false" v-if="isLoading" />
     <v-row v-else>
       <v-col>

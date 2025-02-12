@@ -13,6 +13,7 @@ import UpcomingEventsView from "@/views/UpcomingEventsView.vue";
 import NotFoundView from "@/views/NotFoundView.vue";
 import StatisticView from "@/views/utilities/StatisticView.vue";
 import BackupDataView from "@/views/utilities/BackupDataView.vue";
+import LunarCalendarView from "@/views/utilities/LunarCalendarView.vue";
 
 Vue.use(VueRouter);
 
@@ -61,6 +62,11 @@ const routes: Array<RouteConfig> = [
             path: "statistic",
             name: "statistic",
             component: StatisticView,
+          },
+          {
+            path: "lunar_calendar",
+            name: "lunar_calendar",
+            component: LunarCalendarView,
           },
           {
             path: "backup",

@@ -5,6 +5,8 @@
         v-for="item in items"
         :key="item.title"
         @click="$router.push(item.url)"
+        class="rounded-lg"
+        style="overflow: hidden"
       >
         <v-list-item-icon>
           <v-icon>
@@ -24,8 +26,8 @@
       </v-list-item>
     </v-list>
     <template v-else>
-      <v-btn class="mb-4" @click="$router.go(-1)" outlined color="primary">
-        <v-icon left>mdi-chevron-left</v-icon>
+      <v-btn class="mb-8 mt-2" @click="$router.go(-1)" outlined color="primary">
+        <v-icon left>mdi-arrow-left-thick</v-icon>
         Quay lại
       </v-btn>
       <router-view></router-view>
@@ -35,6 +37,8 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+
+const buildStatic = process.env.QLGP_USE_BACKEND != "true";
 
 export default defineComponent({
   data() {
@@ -47,11 +51,21 @@ export default defineComponent({
           url: "/utilities/statistic",
         },
         {
-          icon: "mdi-content-save",
-          title: "Sao lưu dữ liệu",
-          subtitle: "Tạo dữ liệu sao lưu để di chuyển sang thiết bị khác",
-          url: "/utilities/backup",
+          icon: "mdi-calendar-month",
+          title: "Lịch âm",
+          subtitle: "Xem lịch âm các tháng, các năm",
+          url: "/utilities/lunar_calendar",
         },
+        ...(buildStatic
+          ? [
+              {
+                icon: "mdi-content-save",
+                title: "Sao lưu dữ liệu",
+                subtitle: "Tạo dữ liệu sao lưu để di chuyển sang thiết bị khác",
+                url: "/utilities/backup",
+              },
+            ]
+          : []),
       ],
     };
   },
