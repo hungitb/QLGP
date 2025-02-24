@@ -289,8 +289,8 @@ export default Vue.extend({
     this.wrapperElement = (this.$refs as any).wrapper as HTMLElement;
 
     const mc = new Hammer.Manager(this.contentElement);
-    mc.add(new Hammer.Pinch({ threshold: 0 }));
     mc.add(new Hammer.Pan({ threshold: 0, pointers: 0 }));
+    mc.add(new Hammer.Pinch({ threshold: 0 })).recognizeWith(mc.get("pan"));
     mc.on("pinchstart pinchmove", this.onPinch);
     mc.on("panstart panmove panend", this.onPan);
     this.mc = mc;
