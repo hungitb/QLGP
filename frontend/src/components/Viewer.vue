@@ -1,5 +1,5 @@
 <template>
-  <div ref="viewer" :class="'viewer' + (isMobile ? ' viewer-mobile' : '')">
+  <div ref="viewer" class="viewer">
     <div ref="content" class="content">
       <div ref="wrapper" class="wrapper">
         <slot></slot>
@@ -11,10 +11,8 @@
 <script lang="ts">
 import Vue from "vue";
 import $ from "jquery";
-
+import Hammer from "hammerjs";
 import { checkIfIsMobile } from "@/utils";
-
-const FPS = 120;
 
 type Point = {
   clientX: number;
@@ -63,11 +61,9 @@ function processDuration(duration: number) {
   return duration;
 }
 
-const ViewerPC = Vue.extend({
+export default Vue.extend({
   data() {
     return {
-      mustTriggerZoomManually: false,
-      isMobile: false,
       interval: undefined as number | undefined,
       contentElement: null as HTMLElement | null,
       wrapperElement: null as HTMLElement | null,
@@ -76,35 +72,50 @@ const ViewerPC = Vue.extend({
         scale: 1,
         translateX: 0,
         translateY: 0,
+        scaleStart: 1,
 
-        panning: false,
-        panningStart: {
-          clientX: 0,
-          clientY: 0,
-        } as Point,
         // Để kiểm tra click event
-        firstPanningStart: {
+        panStart: {
           clientX: 0,
           clientY: 0,
-        } as Point,
-        panningEnd: {
+        },
+        panEnd: {
           clientX: 0,
           clientY: 0,
-        } as Point,
+        },
       },
+      ticking: false,
+      mc: null as any,
+      lastPinchEventEndTimestamp: 0,
     };
   },
   methods: {
-    render() {
+    updateElementTransform() {
       if (this.wrapperElement) {
-        this.wrapperElement.style.transform = `translateX(${this.state.translateX}px) translateY(${this.state.translateY}px) scale(${this.state.scale})`;
+        const values = [
+          `translateX(${this.state.translateX}px)`,
+          `translateY(${this.state.translateY}px)`,
+          `scale(${this.state.scale})`,
+        ];
+
+        this.wrapperElement.style.transform = values.join(" ");
+      }
+    },
+    requestElementUpdate() {
+      if (!this.ticking) {
+        requestAnimationFrame(() => {
+          this.updateElementTransform();
+          this.ticking = false;
+        });
+
+        this.ticking = true;
       }
     },
     moveRelative(x: number, y: number) {
       this.state.translateX += x;
       this.state.translateY += y;
 
-      this.render();
+      this.requestElementUpdate();
     },
     scale(raito: number, pivot?: Point) {
       if (!pivot) {
@@ -134,17 +145,16 @@ const ViewerPC = Vue.extend({
         (newScale / oldScale - 1) * (wrapperCenter.clientY - pivot.clientY);
       this.state.scale = newScale;
 
-      this.render();
+      this.requestElementUpdate();
     },
     isClickEvent() {
       const delta = 10;
+
       return (
-        Math.abs(
-          this.state.firstPanningStart.clientX - this.state.panningEnd.clientX
-        ) < delta &&
-        Math.abs(
-          this.state.firstPanningStart.clientY - this.state.panningEnd.clientY
-        ) < delta
+        Math.abs(this.state.panStart.clientX - this.state.panEnd.clientX) <
+          delta &&
+        Math.abs(this.state.panStart.clientY - this.state.panEnd.clientY) <
+          delta
       );
     },
     focusElement(element: HTMLElement, speed?: number) {
@@ -189,8 +199,8 @@ const ViewerPC = Vue.extend({
           {
             duration,
             step: (now, fx) => {
-              this.state[fx.prop as "translateX" | "translateY"] = now as never;
-              this.render();
+              this.state[fx.prop] = now;
+              this.updateElementTransform();
             },
             done: () => {
               resolve();
@@ -216,46 +226,54 @@ const ViewerPC = Vue.extend({
         clientY: event.clientY,
       });
     },
-    onMousedown(event: MouseEvent) {
-      event.preventDefault();
+    onPan(e: any) {
+      if (checkIfIsMobile()) {
+        // Trên mobile, sau khi pinch thì phải nghỉ 100 ms rồi mới unlock pan event
+        // Tránh tình trạng dễ bị giật hình trên mobile
+        if (new Date().getTime() - this.lastPinchEventEndTimestamp < 100) {
+          return;
+        }
+      }
 
-      this.state.panning = true;
+      if (e.type == "panstart") {
+        this.state.panStart = {
+          clientX: this.state.translateX,
+          clientY: this.state.translateY,
+        };
+      }
 
-      this.state.panningStart = {
-        clientX: event.clientX,
-        clientY: event.clientY,
-      };
+      if (e.type == "panend") {
+        this.state.panEnd = {
+          clientX: this.state.translateX,
+          clientY: this.state.translateY,
+        };
+        setTimeout(() => {
+          // Set cho bằng panStart để click hoạt động trở lại
+          this.state.panEnd = {
+            clientX: this.state.panStart.clientX,
+            clientY: this.state.panStart.clientY,
+          };
+        }, 100);
+        return;
+      }
 
-      this.state.firstPanningStart = {
-        clientX: event.clientX,
-        clientY: event.clientY,
-      };
+      this.state.translateX = this.state.panStart.clientX + e.deltaX;
+      this.state.translateY = this.state.panStart.clientY + e.deltaY;
+
+      this.requestElementUpdate();
     },
-    onMouseup(event: MouseEvent) {
-      event.preventDefault();
+    onPinch(e: any) {
+      if (e.type == "pinchstart") {
+        this.state.scaleStart = 1;
+      }
 
-      this.state.panning = false;
+      this.scale(e.scale / this.state.scaleStart, {
+        clientX: e.center.x,
+        clientY: e.center.y,
+      });
 
-      this.state.panningEnd = {
-        clientX: event.clientX,
-        clientY: event.clientY,
-      };
-    },
-    onMousemove(event: MouseEvent) {
-      event.preventDefault();
-      if (!this.state.panning) return;
-
-      // to do: Check if mouse from outer then set panning to false
-
-      this.moveRelative(
-        event.clientX - this.state.panningStart.clientX,
-        event.clientY - this.state.panningStart.clientY
-      );
-
-      this.state.panningStart = {
-        clientX: event.clientX,
-        clientY: event.clientY,
-      };
+      this.state.scaleStart = e.scale;
+      this.lastPinchEventEndTimestamp = new Date().getTime();
     },
     refreshBCROfElements() {
       if (this.contentElement) {
@@ -270,10 +288,14 @@ const ViewerPC = Vue.extend({
     this.contentElement = (this.$refs as any).content as HTMLElement;
     this.wrapperElement = (this.$refs as any).wrapper as HTMLElement;
 
+    const mc = new Hammer.Manager(this.contentElement);
+    mc.add(new Hammer.Pinch({ threshold: 0 }));
+    mc.add(new Hammer.Pan({ threshold: 0, pointers: 0 }));
+    mc.on("pinchstart pinchmove", this.onPinch);
+    mc.on("panstart panmove panend", this.onPan);
+    this.mc = mc;
+
     this.contentElement.addEventListener("wheel", this.onWheel);
-    this.contentElement.addEventListener("mousedown", this.onMousedown);
-    this.contentElement.addEventListener("mouseup", this.onMouseup);
-    this.contentElement.addEventListener("mousemove", this.onMousemove);
 
     this.refreshBCROfElements();
     setTimeout(this.refreshBCROfElements, 100);
@@ -282,194 +304,17 @@ const ViewerPC = Vue.extend({
   beforeDestroy() {
     if (this.contentElement) {
       this.contentElement.removeEventListener("wheel", this.onWheel);
-      this.contentElement.removeEventListener("mousedown", this.onMousedown);
-      this.contentElement.removeEventListener("mouseup", this.onMouseup);
-      this.contentElement.removeEventListener("mousemove", this.onMousemove);
     }
 
+    const mc = this.mc!;
+    mc.off("pinchstart pinchmove");
+    mc.off("panstart panmove panend");
+    mc.remove(mc.get("pan"));
+    mc.remove(mc.get("pinch"));
+
     clearInterval(this.interval);
   },
 });
-
-const ViewerMobile = Vue.extend({
-  data() {
-    return {
-      mustTriggerZoomManually: true,
-      isInitialDone: false,
-      interval: undefined as number | undefined,
-      isMobile: true,
-      viewerElement: null as HTMLElement | null,
-      contentElement: null as HTMLElement | null,
-      wrapperElement: null as HTMLElement | null,
-      viewerBCR: getDefaultBCR(),
-
-      state: {
-        scale: 1,
-      },
-    };
-  },
-  methods: {
-    scale(raito: number, pivot?: Point) {
-      if (this.wrapperElement && this.contentElement && this.viewerElement) {
-        if (!pivot) {
-          // Center of viewer
-          pivot = {
-            clientX: this.viewerBCR.x + this.viewerBCR.width / 2,
-            clientY: this.viewerBCR.y + this.viewerBCR.height / 2,
-          };
-        }
-
-        const newScale = processScale(this.state.scale * raito);
-
-        const oldWrapperBCR = this.wrapperElement.getBoundingClientRect();
-        this.wrapperElement.style.transform = `scale(${newScale})`;
-        const newWrapperBCR = this.wrapperElement.getBoundingClientRect();
-        Object.assign(this.contentElement.style, {
-          height: newWrapperBCR.height + "px",
-          width: newWrapperBCR.width + "px",
-        });
-
-        const oldScale = this.state.scale;
-
-        this.viewerElement.scrollLeft =
-          ((pivot.clientX - oldWrapperBCR.x) * newScale) / oldScale -
-          (pivot.clientX - this.viewerBCR.x);
-        this.viewerElement.scrollTop =
-          ((pivot.clientY - oldWrapperBCR.y) * newScale) / oldScale -
-          (pivot.clientY - this.viewerBCR.y);
-        this.state.scale = newScale;
-      }
-    },
-    isClickEvent() {
-      // Trên điện thoại sẽ luôn click được
-      return true;
-    },
-    async focusElement(element: HTMLElement, speed?: number) {
-      // to do: Check if viewer conatins element, if not then return.
-
-      if (!this.viewerElement) return;
-
-      await this.awaitInitialDone();
-      const elementBCR = element.getBoundingClientRect();
-      this.refreshBCROfElements();
-
-      const deltaX =
-        this.viewerBCR.x +
-        this.viewerBCR.width / 2 -
-        elementBCR.x -
-        elementBCR.width / 2;
-
-      const deltaY =
-        this.viewerBCR.y +
-        this.viewerBCR.height / 2 -
-        elementBCR.y -
-        elementBCR.height / 2;
-
-      if (!speed || (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1)) {
-        this.viewerElement.scrollLeft -= deltaX;
-        this.viewerElement.scrollTop -= deltaY;
-        return;
-      }
-
-      const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
-      let duration = processDuration(distance / speed);
-
-      await new Promise<void>((resolve) => {
-        if (!this.viewerElement) return; // By pass typescript
-
-        $({
-          scrollLeft: this.viewerElement.scrollLeft,
-          scrollTop: this.viewerElement.scrollTop,
-        }).animate(
-          {
-            scrollLeft: this.viewerElement.scrollLeft - deltaX,
-            scrollTop: this.viewerElement.scrollTop - deltaY,
-          },
-          {
-            duration,
-            step: (now, fx) => {
-              if (this.viewerElement) {
-                this.viewerElement[fx.prop as "scrollLeft" | "scrollTop"] = now;
-              }
-            },
-            done: () => {
-              resolve();
-            },
-          }
-        );
-      });
-
-      return;
-    },
-    refreshBCROfElements() {
-      if (this.viewerElement) {
-        assignDOMRect(
-          this.viewerBCR,
-          this.viewerElement.getBoundingClientRect()
-        );
-      }
-    },
-    awaitInitialDone() {
-      return new Promise<void>((resolve) => {
-        const check = () => {
-          if (this.isInitialDone) {
-            resolve();
-            return;
-          }
-
-          setTimeout(check, 10);
-        };
-        check();
-      });
-    },
-  },
-  mounted() {
-    this.viewerElement = (this.$refs as any).viewer as HTMLElement;
-    this.contentElement = (this.$refs as any).content as HTMLElement;
-    this.wrapperElement = (this.$refs as any).wrapper as HTMLElement;
-
-    let numTimeTries = 0;
-    const setContentElementSize = () => {
-      if (!this.wrapperElement || !this.contentElement) return;
-
-      numTimeTries++;
-
-      const wrapperBCR = this.wrapperElement.getBoundingClientRect();
-      if (
-        (wrapperBCR.height == 0 || wrapperBCR.width == 0) &&
-        numTimeTries < 10
-      ) {
-        setTimeout(setContentElementSize, 1);
-        return;
-      }
-      Object.assign(this.contentElement.style, {
-        height: wrapperBCR.height + "px",
-        width: wrapperBCR.width + "px",
-      });
-
-      this.isInitialDone = true;
-    };
-    setContentElementSize();
-
-    this.refreshBCROfElements();
-    setTimeout(this.refreshBCROfElements, 100);
-    this.interval = setInterval(this.refreshBCROfElements, 1000);
-  },
-  beforeDestroy() {
-    clearInterval(this.interval);
-  },
-  updated() {
-    // Có thể content resize nên viewer phải resize theo
-    if (!this.wrapperElement || !this.contentElement) return;
-    const wrapperBCR = this.wrapperElement.getBoundingClientRect();
-    Object.assign(this.contentElement.style, {
-      height: wrapperBCR.height + "px",
-      width: wrapperBCR.width + "px",
-    });
-  },
-});
-
-export default checkIfIsMobile() ? ViewerMobile : ViewerPC;
 </script>
 
 <style lang="scss">
@@ -487,19 +332,6 @@ export default checkIfIsMobile() ? ViewerMobile : ViewerPC;
       width: max-content;
       height: max-content;
     }
-  }
-}
-
-.viewer.viewer-mobile {
-  overflow: auto;
-
-  .content {
-    min-height: 100%;
-    min-width: 100%;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
   }
 }
 </style>

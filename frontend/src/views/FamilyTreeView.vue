@@ -28,28 +28,6 @@
         fab
         dark
         color="primary"
-        v-if="viewer.mustTriggerZoomManually"
-        @click="viewer.scale(1.2)"
-        :disabled="disableButtons"
-      >
-        <v-icon dark> mdi-magnify-plus-outline </v-icon>
-      </v-btn>
-      <v-btn
-        class="mx-2"
-        fab
-        dark
-        color="primary"
-        v-if="viewer.mustTriggerZoomManually"
-        @click="viewer.scale(1 / 1.2)"
-        :disabled="disableButtons"
-      >
-        <v-icon dark> mdi-magnify-minus-outline </v-icon>
-      </v-btn>
-      <v-btn
-        class="mx-2"
-        fab
-        dark
-        color="primary"
         @click="() => focusSubject()"
         :disabled="disableButtons"
       >
