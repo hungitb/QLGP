@@ -318,7 +318,7 @@ export default Vue.extend({
 </script>
 
 <style lang="scss">
-.viewer:not(.viewer-mobile) {
+.viewer {
   .content {
     width: 100%;
     height: 100%;

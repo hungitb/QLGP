@@ -24,6 +24,12 @@
         </div>
         <div
           class="pa-3"
+          v-if="
+            config.show.name ||
+            config.show.gender ||
+            config.show.birthdate ||
+            config.show.status
+          "
           :style="
             config.layout == PersonCardLayout.MIN_WIDTH
               ? {
@@ -32,7 +38,9 @@
               : {}
           "
         >
-          <div class="text-h6">{{ person.callname }}</div>
+          <div class="text-h6" v-if="config.show.name">
+            {{ person.callname }}
+          </div>
           <div v-if="config.show.gender">
             {{ person.gender == Gender.MALE ? "Nam" : "Nữ" }}
           </div>
@@ -149,6 +157,7 @@ export default Vue.extend({
       isMobile: checkIfIsMobile(),
       showingMobileOverlay: false,
       showControl: false,
+      timeoutClearMobileOverlay: undefined as number | undefined,
     };
   },
   methods: {
@@ -178,9 +187,16 @@ export default Vue.extend({
       }
       if (this.isMobile) {
         this.showingMobileOverlay = true;
-        setTimeout(() => {
+
+        if (this.timeoutClearMobileOverlay) {
+          clearInterval(this.timeoutClearMobileOverlay);
+        }
+
+        this.timeoutClearMobileOverlay = setTimeout(() => {
           this.showingMobileOverlay = false;
+          this.timeoutClearMobileOverlay = undefined;
         }, 4000);
+
         return;
       }
 

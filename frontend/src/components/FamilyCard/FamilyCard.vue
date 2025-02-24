@@ -637,6 +637,10 @@ export default Vue.extend({
   .children {
     display: flex;
     width: max-content;
+
+    // Update để gia đình có 1 con thì con được căn giữa
+    justify-content: center;
+    width: 100%;
   }
 }
 </style>

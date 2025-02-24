@@ -77,9 +77,13 @@
 
           <v-col cols="12">
             <div class="d-flex flex-column align-center">
-              <span>Xem trước</span>
+              <span class="mb-1">Xem trước</span>
               <PersonCard
-                :person="$store.state.personStandForUser"
+                :person="
+                  settingVModel.subjectId
+                    ? $store.state.personMapping[settingVModel.subjectId]
+                    : $store.state.personStandForUser
+                "
                 viewOnly
                 :config="settingVModel"
               />
@@ -89,20 +93,19 @@
           <v-col cols="12">
             <span>Thông tin thẻ người thân</span>
             <v-checkbox
+              v-model="settingVModel.show.image"
+              hide-details
+              label="Ảnh đại diện"
+            />
+            <v-checkbox
               v-model="settingVModel.show.name"
               hide-details
-              disabled
               label="Tên"
             />
             <v-checkbox
               v-model="settingVModel.show.gender"
               hide-details
               label="Giới tính"
-            />
-            <v-checkbox
-              v-model="settingVModel.show.image"
-              hide-details
-              label="Ảnh đại diện"
             />
             <v-checkbox
               v-model="settingVModel.show.birthdate"
@@ -119,11 +122,11 @@
           <v-col cols="12">
             <v-radio-group label="Bố cục" v-model="settingVModel.layout">
               <v-radio
-                label="Tối ưu chiều rộng"
+                label="Thẻ dọc"
                 :value="PersonCardLayout.MIN_WIDTH"
               ></v-radio>
               <v-radio
-                label="Tối ưu chiều cao"
+                label="Thẻ ngang"
                 :value="PersonCardLayout.MIN_HEIGHT"
               ></v-radio>
             </v-radio-group>
@@ -247,6 +250,16 @@ export default Vue.extend({
     interval(val, oldVal) {
       if (oldVal) {
         clearInterval(oldVal);
+      }
+    },
+    "settingVModel.show.image"(newValue) {
+      if (!newValue) {
+        this.settingVModel.show.name = true;
+      }
+    },
+    "settingVModel.show.name"(newValue) {
+      if (!newValue) {
+        this.settingVModel.show.image = true;
       }
     },
   },
