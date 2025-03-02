@@ -56,13 +56,6 @@
     <FullViewLoading :tbb="true" v-if="isLoading"></FullViewLoading>
     <FullViewLoading v-if="isLoadingUser"></FullViewLoading>
 
-    <!-- Force load, because in mobile view this is not pre load -->
-    <v-img
-      :src="require('@/assets/logo.png')"
-      alt="Logo"
-      style="display: none"
-    />
-
     <!-- Import Utilities so that it is useable -->
     <ShowDialogAddOrCreatePerson />
     <ShowDialogAddPersonWithSpecificRole />

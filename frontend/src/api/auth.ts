@@ -7,6 +7,7 @@ import {
 } from "./utils";
 import getAuthController from "../../../backend/src/controller/auth";
 import { userDAO, personDAO, eventSettingDAO, wrapApi } from "./DAO";
+import { Gender } from "../../../backend/src/model/Person";
 
 const authController = getAuthController(userDAO, personDAO, eventSettingDAO);
 
@@ -38,7 +39,12 @@ export const authApi = wrapApi({
 
     return response;
   },
-  register: async (data: { username: string; password: string }) => {
+  register: async (data: {
+    username: string;
+    password: string;
+    fullname: string;
+    gender: Gender;
+  }) => {
     if (useBackend) {
       return wrapAxiosCall(() => api.post("/auth/register", data));
     }

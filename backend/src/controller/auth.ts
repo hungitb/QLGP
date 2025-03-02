@@ -41,7 +41,9 @@ export default function getAuthController(userDAO: IDAO<User>, personDAO: IDAO<P
         }
     }
 
-    async function register({ username, password }: { username: string, password: string }, loggedInUser: User | null): Promise<CHR<{ msg: string }>> {
+    type RegisterParams = { username: string, password: string, fullname: string, gender: Gender };
+    
+    async function register({ username, password, fullname, gender }: RegisterParams, loggedInUser: User | null): Promise<CHR<{ msg: string }>> {
         const user = await userDAO.findOne({ where: { username } })
         if (user) return {
             data: { msg: AuthMessages.USERNAME_ALREADY_EXISTS },
@@ -60,8 +62,8 @@ export default function getAuthController(userDAO: IDAO<User>, personDAO: IDAO<P
             id: uuidv4(),
             ownerUserId: newUser.id,
             isStandForUser: true,
-            callname: "Tôi",
-            gender: Gender.MALE,
+            callname: fullname,
+            gender,
             status: LifeStatus.ALIVE
         };
 

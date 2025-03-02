@@ -8,6 +8,7 @@
               :src="require('@/assets/logo.png')"
               class="mb-8 mx-auto"
               style="width: 160px"
+              eager
             />
             <div class="text-h5 text-center font-weight-medium mb-8">
               Không tìm thấy trang!

@@ -4,12 +4,38 @@
       :src="require('@/assets/logo.png')"
       class="mb-8 mx-auto"
       style="width: 160px"
+      eager
     />
     <div class="text-h5 text-center font-weight-medium mb-8">
       Đăng ký tài khoản
     </div>
     <v-form v-model="valid" ref="form">
       <v-row>
+        <v-col cols="12" class="py-0">
+          <v-text-field
+            v-model="fullname"
+            :rules="rulesFullname"
+            label="Họ tên đầy đủ"
+            name="fullname"
+            autocomplete="fullname"
+            required
+            outlined
+            @input="clearRegisterErrorMessage"
+            :readonly="isLoadingRegister"
+          ></v-text-field>
+        </v-col>
+
+        <v-col cols="12" class="py-0">
+          <v-select
+            v-model="gender"
+            :items="[Gender.MALE, Gender.FEMALE]"
+            label="Giới tính"
+            outlined
+            @input="clearRegisterErrorMessage"
+            :readonly="isLoadingRegister"
+          ></v-select>
+        </v-col>
+
         <v-col cols="12" class="py-0">
           <v-text-field
             v-model="username"
@@ -98,16 +124,21 @@
 import Vue from "vue";
 
 import { authApi } from "@/api/auth";
+import { Gender } from "../../../backend/src/model/Person";
 
 const isDev = process.env.NODE_ENV == "development";
 export default Vue.extend({
   data: () => ({
+    Gender,
     showPassword: false,
     showPassword2: false,
     valid: false,
+    fullname: isDev ? "Nguyễn Văn Hùng" : "",
+    gender: Gender.MALE,
     username: isDev ? "qlgp1234" : "",
     password: isDev ? "qlgp1234" : "",
     password2: isDev ? "qlgp1234" : "",
+    rulesFullname: [(v: string) => !!v || "Không được để trống"],
     rules: [
       (v: string) => !!v || "Không được để trống",
       (v: string) =>
@@ -144,6 +175,8 @@ export default Vue.extend({
 
       this.isLoadingRegister = true;
       const { data, status } = await authApi.register({
+        fullname: this.fullname,
+        gender: this.gender,
         username: this.username,
         password: this.password,
       });
