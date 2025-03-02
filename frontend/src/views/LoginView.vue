@@ -43,7 +43,7 @@
           ></v-text-field>
         </v-col>
 
-        <v-col cols="12" class="py-0">
+        <v-col cols="12" class="py-0" v-if="showRememberMe">
           <v-checkbox
             v-model="rememberMe"
             label="Nhớ thông tin đăng nhập (Không bảo mật)"
@@ -103,6 +103,7 @@ export default Vue.extend({
         localStorage.getItem("QLGP.username") &&
         localStorage.getItem("QLGP.password")
       ),
+      showRememberMe: false,
       rules: [
         (v: string) => !!v || "Không được để trống",
         (v: string) =>
