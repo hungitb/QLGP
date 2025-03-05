@@ -14,6 +14,7 @@ import NotFoundView from "@/views/NotFoundView.vue";
 import StatisticView from "@/views/utilities/StatisticView.vue";
 import BackupDataView from "@/views/utilities/BackupDataView.vue";
 import LunarCalendarView from "@/views/utilities/LunarCalendarView.vue";
+import RelationshipAnalyzeView from "@/views/utilities/RelationshipAnalyzeView.vue";
 
 Vue.use(VueRouter);
 
@@ -72,6 +73,11 @@ const routes: Array<RouteConfig> = [
             path: "backup",
             name: "backup",
             component: BackupDataView,
+          },
+          {
+            path: "relationship_analyze",
+            name: "relationship_analyze",
+            component: RelationshipAnalyzeView,
           },
         ],
       },

@@ -6,8 +6,11 @@ import type { User } from "../model/User";
 import type { IDAO } from "../model/IDAO";
 import { Gender, LifeStatus, Person } from "../model/Person";
 import { EventSetting, EventTargetType, allEventTypes } from "../model/EventSetting";
+import getFusekiApi from "./fusekiApi";
 
 export default function getAuthController(userDAO: IDAO<User>, personDAO: IDAO<Person>, eventSettingDAO: IDAO<EventSetting>) {
+    const fusekiApi = getFusekiApi(personDAO);
+
     async function login({ username, password }: { username: string, password: string }, loggedInUser: User | null): Promise<CHR<{ msg: string, sessionToken: string }>> {
         const user = await userDAO.findOne({ where: { username } })
         if (!user) return {
@@ -80,7 +83,8 @@ export default function getAuthController(userDAO: IDAO<User>, personDAO: IDAO<P
         await Promise.all([
             userDAO.create(newUser),
             personDAO.create(newPerson as Person),
-            eventSettingDAO.create(newEventSetting)
+            eventSettingDAO.create(newEventSetting),
+            fusekiApi.addPerson({ id: newPerson.id as string })
         ]);
 
         return CommonResponse.OK;

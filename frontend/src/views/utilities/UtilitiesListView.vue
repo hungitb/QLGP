@@ -51,6 +51,12 @@ export default defineComponent({
           url: "/utilities/statistic",
         },
         {
+          icon: "mdi-account-switch",
+          title: "Phân tích mối quan hệ",
+          subtitle: "Phân tích mối quan hệ giữa những người thân của bạn",
+          url: "/utilities/relationship_analyze",
+        },
+        {
           icon: "mdi-calendar-month",
           title: "Lịch âm",
           subtitle: "Xem lịch âm các tháng, các năm",

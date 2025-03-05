@@ -15,5 +15,6 @@ router.get("/all", wrapHandlerAdvance(personController, "getAllPeopleBaseInfo"))
 router.get("/detail", wrapHandlerAdvance(personController, "getPersonDetailInfo"));
 router.get("/tree", wrapHandlerAdvance(personController, "getFamilyTreeInfo"));
 router.get("/statistic", wrapHandlerAdvance(personController, "statistic"));
+router.get("/analyze_relationship", wrapHandlerAdvance(personController, "analyzeRelationship"));
 
 export default router;

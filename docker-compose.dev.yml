@@ -1,0 +1,13 @@
+services:
+  fuseki:
+    image: stain/jena-fuseki
+    container_name: fuseki
+    ports:
+    - 3030:3030
+    volumes:
+    - ./fuseki/config.ttl:/fuseki/config.ttl
+    - ./fuseki/rules.txt:/fuseki/rules.txt
+    environment:
+    - FUSEKI_ARGS=--config /fuseki/config.ttl
+    - ADMIN_PASSWORD=1
+    restart: unless-stopped

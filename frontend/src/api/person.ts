@@ -87,4 +87,16 @@ export const personApi = wrapApi({
       await getLoggedInUserLocalStorage()
     );
   },
+  async analyzeRelationship(data: { id1: string; id2: string }) {
+    if (useBackend) {
+      return wrapAxiosCall(() =>
+        api.get("/person/analyze_relationship", { params: data })
+      );
+    }
+
+    return await personController.analyzeRelationship(
+      data,
+      await getLoggedInUserLocalStorage()
+    );
+  },
 });
