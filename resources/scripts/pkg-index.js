@@ -17,9 +17,5 @@ if (!index) {
 
 runProdCommand({
     cmd: ["node", index],
-    printExecutedCommand: false,
-    env: {
-        QLGP_FOR_PERSONAL_USE: "true",
-        QLGP_SQLITE_DATA_DIR: path.resolve("app-data")
-    }
+    printExecutedCommand: false
 });

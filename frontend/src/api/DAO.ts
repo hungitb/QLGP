@@ -12,8 +12,7 @@ import {
 
 const GENERATE_FAKE_DATA =
   process.env.NODE_ENV == "development" &&
-  process.env.GENERATE_FAKE_DATA == "true" &&
-  false;
+  process.env.QLGP_USE_BACKEND == "false";
 const DELAY = 100;
 
 type Dict = { [key: string]: any };

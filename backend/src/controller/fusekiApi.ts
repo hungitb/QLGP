@@ -71,6 +71,8 @@ async function initFuseki(personDAO: IDAO<Person>) {
 }
 
 async function execSparQLQuery(query: string, method: "post" | "get" = "get") {
+    const fusekiUrl = process.env.QLGP_FUSEKI_URL;
+
     query = `
         PREFIX fuseki: <http://jena.apache.org/fuseki#>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -84,7 +86,7 @@ async function execSparQLQuery(query: string, method: "post" | "get" = "get") {
     `;
 
     if (method == "get") {
-        const response = await axios.get("http://localhost:3030/dataset", {
+        const response = await axios.get(`${fusekiUrl}/dataset`, {
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
                 Accept: "application/sparql-results+json"
@@ -95,7 +97,7 @@ async function execSparQLQuery(query: string, method: "post" | "get" = "get") {
         return response.data;
     }
 
-    const response = await axios.post("http://localhost:3030/dataset", query, {
+    const response = await axios.post(`${fusekiUrl}/dataset`, query, {
         headers: {
             "Content-Type": "application/sparql-update",
             Accept: "application/sparql-results+json",

@@ -2,7 +2,7 @@ const { spawn } = require("child_process");
 const os = require("os");
 const path = require("path");
 const fs = require("fs");
-require("dotenv").config({ path: ["./.env", "./default.env"] });
+require("dotenv").config({ path: "../.env" });
 
 const backendDir = path.resolve(__dirname, "..", "..", "backend");
 const frontendDir = path.resolve(__dirname, "..", "..", "frontend");
@@ -49,9 +49,7 @@ function runProdCommand({ cmd, env = {}, printExecutedCommand = true, useBackend
         env: {
             ...env,
             NODE_ENV: "production",
-            GENERATE_FAKE_DATA: "false",
-            QLGP_USE_BACKEND: useBackend ? "true" : "false",
-            QLGP_REQUIRE_LOGIN: "true"
+            QLGP_USE_BACKEND: useBackend ? "true" : "false"
         }
     });
 }

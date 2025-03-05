@@ -1,8 +1,3 @@
-
-if (process.env.QLGP_FOR_PERSONAL_USE == "true") {
-    process.stdout.write("Đang khởi động ứng dụng, chờ một tí...");
-}
-
 import path from "path";
 import dotenv from "dotenv";
 import express from "express";
@@ -10,7 +5,7 @@ import morgan from "morgan";
 import cookiePaser from "cookie-parser";
 import type { Request, Response, NextFunction } from "express";
 
-dotenv.config({ path: ["../.env", "../default.env"] });
+dotenv.config({ path: "../.env" });
 
 import { getDatabaseInstance } from "./DAO/database";
 import authRouter from "./routes/auth";
@@ -21,9 +16,7 @@ getDatabaseInstance().then(async () => {
     const isDev = process.env.NODE_ENV == "development";
     const app = express();
     app.use(express.json({ limit: "50mb" }));
-    if (process.env.QLGP_FOR_PERSONAL_USE != "true") {
-        app.use(morgan(isDev ? "dev" : "combined"));
-    }
+    app.use(morgan(isDev ? "dev" : "combined"));
     app.use(cookiePaser());
     app.use((req, res, next) => {
         // Assign query parameters to body
@@ -58,12 +51,6 @@ getDatabaseInstance().then(async () => {
 
     const port = parseInt(process.env.QLGP_BACKEND_PORT || "4800");
     app.listen(port, () => {
-        process.stdout.clearLine(0);
-        process.stdout.cursorTo(0);
-        if (process.env.QLGP_FOR_PERSONAL_USE == "true") {
-            process.stdout.write(`Khởi tạo ứng dụng thành công! Truy cập trình duyệt tại đường link http://localhost:${port}`);
-        } else {
-            console.log(`Express running → PORT ${port}`);
-        }
-    })
+        console.log(`Express running → PORT ${port} → http://localhost:${port}`);
+    });
 })

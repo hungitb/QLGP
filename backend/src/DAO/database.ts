@@ -17,9 +17,7 @@ import type { EventSetting } from "../model/EventSetting";
 
 const sequelize = new Sequelize({
     dialect: 'sqlite',
-    storage: process.env.QLGP_SQLITE_DATA_DIR ?
-        path.resolve(process.env.QLGP_SQLITE_DATA_DIR, "database.sqlite") :
-        path.resolve(__dirname, "..", "..", "..", "app-data", "database.sqlite"),
+    storage: path.resolve(__dirname, "..", "..", "..", "app-data", "database.sqlite"),
     logging: false,
 });
 
@@ -59,9 +57,6 @@ export async function getDatabaseInstance() {
         await sequelize.authenticate();
         await sequelize.sync();
 
-        if (process.env.QLGP_FOR_PERSONAL_USE != "true") {
-            console.log('Connection has been established successfully.');
-        }
         connectionChecked = true;
     }
 

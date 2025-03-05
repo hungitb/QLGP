@@ -1,14 +1,13 @@
-require("dotenv").config({ path: ["../.env", "../default.env"] });
+require("dotenv").config({ path: "../.env" });
 const { defineConfig } = require("@vue/cli-service");
 const { EnvironmentPlugin } = require("webpack");
+
 module.exports = defineConfig({
   transpileDependencies: ["vuetify"],
   configureWebpack: {
     plugins: [
       new EnvironmentPlugin([
         "NODE_ENV",
-        "GENERATE_FAKE_DATA",
-        "QLGP_REQUIRE_LOGIN",
         "QLGP_USE_BACKEND",
       ]),
     ],
