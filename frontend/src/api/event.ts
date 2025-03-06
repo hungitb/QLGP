@@ -6,7 +6,11 @@ import {
   stringifyValuesOfObject,
 } from "./utils";
 import getEventController from "../../../backend/src/controller/event";
-import { eventSettingDAO, personDAO, wrapApi } from "./DAO";
+import {
+  eventSettingDAO,
+  personDAO,
+  wrapApi,
+} from "../../../backend/src/DAO/FakeDAO";
 import { EventSetting } from "../../../backend/src/model/EventSetting";
 
 const eventController = getEventController(eventSettingDAO, personDAO);

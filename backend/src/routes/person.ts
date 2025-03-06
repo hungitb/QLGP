@@ -1,7 +1,7 @@
 
 import { Router } from "express";
 
-import { personDAO } from "../DAO/database";
+import { personDAO } from "../DAO";
 import { wrapHandlerAdvance } from "./utils";
 import getPersonController from "../controller/person";
 

@@ -1,7 +1,7 @@
 
 import { Router } from "express";
 
-import { personDAO, userDAO, eventSettingDAO } from "../DAO/database";
+import { personDAO, userDAO, eventSettingDAO } from "../DAO";
 import { getLoggedInUser, wrapHandlerSimple } from "./utils";
 import getAuthController from "../controller/auth";
 

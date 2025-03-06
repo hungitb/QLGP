@@ -6,7 +6,12 @@ import {
   getLoggedInUserLocalStorage,
 } from "./utils";
 import getAuthController from "../../../backend/src/controller/auth";
-import { userDAO, personDAO, eventSettingDAO, wrapApi } from "./DAO";
+import {
+  userDAO,
+  personDAO,
+  eventSettingDAO,
+  wrapApi,
+} from "../../../backend/src/DAO/FakeDAO";
 import { Gender } from "../../../backend/src/model/Person";
 
 const authController = getAuthController(userDAO, personDAO, eventSettingDAO);

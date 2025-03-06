@@ -71,6 +71,10 @@ async function initFuseki(personDAO: IDAO<Person>) {
 }
 
 async function execSparQLQuery(query: string, method: "post" | "get" = "get") {
+    if (typeof window != "undefined" && typeof document != "undefined") {
+        return {};
+    }
+
     const fusekiUrl = process.env.QLGP_FUSEKI_URL;
 
     query = `

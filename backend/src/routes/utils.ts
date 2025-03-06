@@ -1,7 +1,7 @@
 
 import type { Request, Response, NextFunction } from "express";
 
-import { userDAO } from "../DAO/database";
+import { userDAO } from "../DAO";
 import {  type ControllerHandlerResult as CHR } from "../controller/utils";
 import { User } from "../model/User";
 

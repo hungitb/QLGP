@@ -1,18 +1,22 @@
-import type { IDAO } from "../../../backend/src/model/IDAO";
-import type { User } from "../../../backend/src/model/User";
-import type { Person } from "../../../backend/src/model/Person";
-import { Gender, LifeStatus } from "../../../backend/src/model/Person";
-import type { FieldDef } from "../../../backend/src/model/FieldDef";
-import type { FieldVal } from "../../../backend/src/model/FieldVal";
+import type { IDAO } from "../model/IDAO";
+import type { User } from "../model/User";
+import type { Person } from "../model/Person";
+import { Gender, LifeStatus } from "../model/Person";
+import type { FieldDef } from "../model/FieldDef";
+import type { FieldVal } from "../model/FieldVal";
 import {
   EventTargetType,
   EventType,
   type EventSetting,
-} from "../../../backend/src/model/EventSetting";
+} from "../model/EventSetting";
+
+const isWeb = typeof window != "undefined" && typeof document != "undefined";
 
 const GENERATE_FAKE_DATA =
   process.env.NODE_ENV == "development" &&
-  process.env.QLGP_USE_BACKEND == "false";
+  isWeb
+    ? process.env.QLGP_FRONTEND_GEN_FAKE_DATA == "true"
+    : process.env.QLGP_BACKEND_FAKE_DB == "true";
 const DELAY = 100;
 
 type Dict = { [key: string]: any };
@@ -26,12 +30,24 @@ type Storage = {
 
 const storage: Storage = (() => {
   const { getItem: _getItem, setItem: _setItem } = (() => {
+    // Không phải trên web nên không thực hiện gì cả
+    if (!isWeb) {
+      return {
+        getItem(key: string) {
+          return Promise.resolve([] as Dict[]);
+        },
+        setItem(key: string, value: Dict[]) {
+          return Promise.resolve();
+        }
+      }
+    }
+
     const getItemLocalStorage = (key: string) =>
       JSON.parse(localStorage.getItem(key) || "[]");
     const setItemLocalStorage = (key: string, value: Dict[]) =>
       localStorage.setItem(key, JSON.stringify(value));
 
-    if (!window.indexedDB) {
+    if ((!isWeb) || (!window.indexedDB)) {
       return {
         getItem: (key: string) =>
           Promise.resolve(getItemLocalStorage(key) as Dict[]),
@@ -558,7 +574,7 @@ export const eventSettingDAO: IDAO<EventSetting> = createDAO(
   eventSettings
 ) as unknown as IDAO<EventSetting>;
 
-if (process.env.NODE_ENV == "development") {
+if (process.env.NODE_ENV == "development" && isWeb) {
   (window as any).userDAO = userDAO;
   (window as any).personDAO = personDAO;
   (window as any).fieldDefDAO = fieldDefDAO;

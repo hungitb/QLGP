@@ -1,7 +1,7 @@
 
 import { Router } from "express";
 
-import { personDAO, eventSettingDAO } from "../DAO/database";
+import { personDAO, eventSettingDAO } from "../DAO";
 import { wrapHandlerAdvance } from "./utils";
 import getEventController from "../controller/event";
 

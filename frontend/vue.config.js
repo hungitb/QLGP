@@ -9,6 +9,7 @@ module.exports = defineConfig({
       new EnvironmentPlugin([
         "NODE_ENV",
         "QLGP_USE_BACKEND",
+        "QLGP_FRONTEND_GEN_FAKE_DATA"
       ]),
     ],
   },

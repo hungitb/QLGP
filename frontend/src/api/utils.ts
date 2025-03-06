@@ -1,6 +1,6 @@
 import { type AxiosResponse } from "axios";
 
-import { userDAO } from "./DAO";
+import { userDAO } from "../../../backend/src/DAO/FakeDAO";
 import { type ControllerHandlerResult as CHR } from "../../../backend/src/controller/utils";
 
 export const sessionTokenKeyStoreLoggedInUserInLocalStorage =
