@@ -38,7 +38,7 @@
       grow
       v-model="selectedItem"
     >
-      <v-btn v-for="({ title, icon }, i) in items" :key="i">
+      <v-btn v-for="({ title, icon, link }, i) in items" :key="i" :to="link">
         <span>{{ title }}</span>
         <v-icon>{{ icon }}</v-icon>
       </v-btn>
@@ -107,6 +107,22 @@ export default Vue.extend({
   }),
   methods: {
     ...mapActions([FETCH_PEOPLE, CLEAR_STORE]),
+    updateSelectedItemFromRoute(route: Route) {
+      window.scrollTo(0, 0);
+
+      let matchingIndex = -1;
+      let bestMatchLength = -1;
+      this.items.forEach((item, index) => {
+        if (
+          route.path.startsWith(item.link) &&
+          item.link.length > bestMatchLength
+        ) {
+          matchingIndex = index;
+          bestMatchLength = item.link.length;
+        }
+      });
+      this.selectedItem = matchingIndex !== -1 ? matchingIndex : 0;
+    },
     async logout() {
       this.isLoading = true;
       await authApi.logout();
@@ -128,13 +144,7 @@ export default Vue.extend({
     },
   },
   watch: {
-    selectedItem(v: number) {
-      window.scrollTo(0, 0);
-      const newLink = this.items[v].link;
-      if (newLink != this.$route.path) {
-        this.$router.push(this.items[v].link);
-      }
-    },
+    $route: "updateSelectedItemFromRoute",
   },
   async mounted() {
     // Mặc dù nếu không ok thì đã push route nhưng, route chưa kịp load thì code vẫn chạy tới
@@ -148,18 +158,7 @@ export default Vue.extend({
       }, 30_000);
       this.isLoadingUser = false;
 
-      let matchingIndex = -1;
-      let bestMatchLength = -1;
-      this.items.forEach((item, index) => {
-        if (
-          this.$route.path.startsWith(item.link) &&
-          item.link.length > bestMatchLength
-        ) {
-          matchingIndex = index;
-          bestMatchLength = item.link.length;
-        }
-      });
-      this.selectedItem = matchingIndex !== -1 ? matchingIndex : 0;
+      this.updateSelectedItemFromRoute(this.$route);
 
       this[FETCH_PEOPLE]();
     }
