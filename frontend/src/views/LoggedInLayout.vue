@@ -7,31 +7,9 @@
 
       <v-divider></v-divider>
 
-      <v-list nav dense>
-        <v-list-item-group v-model="selectedItem" color="primary">
-          <v-list-item
-            v-for="(item, i) in items"
-            :key="item.title"
-            link
-            :to="item.link"
-            :disabled="selectedItem == i"
-          >
-            <v-list-item-icon
-              :style="{ fontSize: '18px', marginRight: '10px' }"
-            >
-              <i
-                v-if="item.icon.startsWith('bi')"
-                :class="`bi ${item.icon}`"
-              ></i>
-              <v-icon v-else>{{ item.icon }}</v-icon>
-            </v-list-item-icon>
-
-            <v-list-item-content>
-              <v-list-item-title>{{ item.title }}</v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list-item-group>
-      </v-list>
+      <div class="px-3 mt-2 text-subtitle-1 primary--text">
+        Xin chào {{ user?.username }}!
+      </div>
 
       <template v-slot:append>
         <div class="pa-4">
@@ -43,7 +21,7 @@
       </template>
     </v-navigation-drawer>
 
-    <v-app-bar app dark color="primary">
+    <v-app-bar app dark color="primary" id="app-bar">
       <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
 
       <!-- <v-toolbar-title>Quản lý gia phả</v-toolbar-title> -->
@@ -52,6 +30,19 @@
     <v-main>
       <router-view v-if="!isLoadingUser"></router-view>
     </v-main>
+
+    <v-bottom-navigation
+      app
+      id="bottom-navigation"
+      color="primary"
+      grow
+      v-model="selectedItem"
+    >
+      <v-btn v-for="({ title, icon }, i) in items" :key="i">
+        <span>{{ title }}</span>
+        <v-icon>{{ icon }}</v-icon>
+      </v-btn>
+    </v-bottom-navigation>
 
     <FullViewLoading :tbb="true" v-if="isLoading"></FullViewLoading>
     <FullViewLoading v-if="isLoadingUser"></FullViewLoading>
@@ -80,6 +71,7 @@ import ShowDialogConfirm from "@/components/utilities/ShowDialogConfirm.vue";
 import ShowSnackbar from "@/components/utilities/ShowSnackbar.vue";
 import ShowImage from "@/components/utilities/ShowImage.vue";
 import ShowDialogPersonDetailInfo from "@/components/utilities/ShowDialogPersonDetailInfo.vue";
+import { User } from "../../../backend/src/model/User";
 
 export default Vue.extend({
   components: {
@@ -94,6 +86,7 @@ export default Vue.extend({
   data: () => ({
     isLoading: false,
     isLoadingUser: true,
+    user: null as User | null,
     interval: null as number | null,
     drawer: null as boolean | null,
     items: [
@@ -104,7 +97,7 @@ export default Vue.extend({
         link: "/family_tree",
       },
       {
-        title: "Sự kiện sắp tới",
+        title: "Sự kiện",
         icon: "mdi-calendar",
         link: "/upcoming_events",
       },
@@ -114,20 +107,6 @@ export default Vue.extend({
   }),
   methods: {
     ...mapActions([FETCH_PEOPLE, CLEAR_STORE]),
-    updateSelectedItemFromRoute(route: Route) {
-      let matchingIndex = -1;
-      let bestMatchLength = -1;
-      this.items.forEach((item, index) => {
-        if (
-          route.path.startsWith(item.link) &&
-          item.link.length > bestMatchLength
-        ) {
-          matchingIndex = index;
-          bestMatchLength = item.link.length;
-        }
-      });
-      this.selectedItem = matchingIndex !== -1 ? matchingIndex : 0;
-    },
     async logout() {
       this.isLoading = true;
       await authApi.logout();
@@ -144,11 +123,18 @@ export default Vue.extend({
         }
         return false;
       }
+      this.user = data.user;
       return true;
     },
   },
   watch: {
-    $route: "updateSelectedItemFromRoute",
+    selectedItem(v: number) {
+      window.scrollTo(0, 0);
+      const newLink = this.items[v].link;
+      if (newLink != this.$route.path) {
+        this.$router.push(this.items[v].link);
+      }
+    },
   },
   async mounted() {
     // Mặc dù nếu không ok thì đã push route nhưng, route chưa kịp load thì code vẫn chạy tới
@@ -161,7 +147,19 @@ export default Vue.extend({
         this.checkUser();
       }, 30_000);
       this.isLoadingUser = false;
-      this.updateSelectedItemFromRoute(this.$route);
+
+      let matchingIndex = -1;
+      let bestMatchLength = -1;
+      this.items.forEach((item, index) => {
+        if (
+          this.$route.path.startsWith(item.link) &&
+          item.link.length > bestMatchLength
+        ) {
+          matchingIndex = index;
+          bestMatchLength = item.link.length;
+        }
+      });
+      this.selectedItem = matchingIndex !== -1 ? matchingIndex : 0;
 
       this[FETCH_PEOPLE]();
     }

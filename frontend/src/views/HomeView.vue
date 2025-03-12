@@ -77,20 +77,7 @@
             <v-card>
               <v-card-title>
                 Danh sách người thân
-                <v-btn
-                  v-if="$vuetify.breakpoint.smAndDown"
-                  fab
-                  dark
-                  bottom
-                  right
-                  color="primary"
-                  :large="$vuetify.breakpoint.sm ? true : undefined"
-                  fixed
-                  @click="showDialogAddOrCreatePerson"
-                >
-                  <v-icon>mdi-account-plus</v-icon>
-                </v-btn>
-                <template v-else>
+                <template v-if="!$vuetify.breakpoint.smAndDown">
                   <v-divider vertical class="mx-4"></v-divider>
                   <v-btn
                     @click="showDialogAddOrCreatePerson"
@@ -245,6 +232,22 @@
         </v-row>
       </v-col>
     </v-row>
+
+    <!-- Hard code position -->
+    <div
+      v-if="$vuetify.breakpoint.smAndDown"
+      style="position: fixed; right: 12px; bottom: 72px"
+    >
+      <v-btn
+        fab
+        dark
+        color="primary"
+        :large="$vuetify.breakpoint.sm ? true : undefined"
+        @click="showDialogAddOrCreatePerson"
+      >
+        <v-icon>mdi-account-plus</v-icon>
+      </v-btn>
+    </div>
   </v-container>
 </template>
 

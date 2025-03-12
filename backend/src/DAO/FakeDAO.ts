@@ -224,14 +224,14 @@ function createDAO(key: string, pkName: string, initialRows: Promise<Dict[]>) {
 
   const findByPk = async (pk: string) => {
     await init();
-    return createPromiseResolve(
+    return await createPromiseResolve(
       makeCopy(rows.find((row) => row[pkName] == pk))
     );
   };
 
   const findOne = async ({ where }: { where: Record<string, any> }) => {
     await init();
-    return createPromiseResolve(
+    return await createPromiseResolve(
       makeCopy(
         rows.find((row) => Object.entries(where).every(([k, v]) => row[k] == v))
       )
@@ -246,7 +246,7 @@ function createDAO(key: string, pkName: string, initialRows: Promise<Dict[]>) {
 
     const { where } = param;
 
-    return createPromiseResolve(
+    return await createPromiseResolve(
       makeCopy(
         rows.filter((row) =>
           Object.entries(where).every(([k, v]) => row[k] == v)
@@ -257,7 +257,7 @@ function createDAO(key: string, pkName: string, initialRows: Promise<Dict[]>) {
 
   const count = async ({ where }: { where: Record<string, any> }) => {
     await init();
-    return createPromiseResolve(
+    return await createPromiseResolve(
       rows.filter((row) => Object.entries(where).every(([k, v]) => row[k] == v))
         .length
     );

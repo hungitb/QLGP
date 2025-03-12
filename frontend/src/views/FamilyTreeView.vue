@@ -1,176 +1,173 @@
 <template>
-  <div
-    id="family-tree"
-    class="d-flex justify-center align-center"
-    ref="container"
-  >
-    <Viewer
-      ref="viewer"
-      :key="key"
-      v-if="ancestor && !$store.state.isLoadingPeople"
-    >
-      <FamilyCard
-        ref="familyCard"
-        :person="ancestor"
-        :config="config"
-        :viewer="viewer"
-        @addPersonRelationShipDone="handlePersonAddRelationship"
-        :style="{
-          paddingBottom: config.verticalDistance + 'px',
-        }"
-      />
-    </Viewer>
-    <FullViewLoading :floating="false" v-else />
+  <div id="family-tree" class="d-flex justify-center align-center">
+    <template v-if="ancestor && !$store.state.isLoadingPeople">
+      <Viewer ref="viewer" :key="key">
+        <FamilyCard
+          ref="familyCard"
+          :person="ancestor"
+          :config="config"
+          :viewer="viewer"
+          @addPersonRelationShipDone="handlePersonAddRelationship"
+          :style="{
+            paddingBottom: config.verticalDistance + 'px',
+          }"
+        />
+      </Viewer>
 
-    <div style="position: fixed; right: 12px; bottom: 16px" v-if="viewer">
-      <v-btn
-        class="mx-2"
-        fab
-        dark
-        color="primary"
-        @click="() => focusSubject()"
-        :disabled="disableButtons"
-      >
-        <v-icon dark> mdi-map-marker </v-icon>
-      </v-btn>
-      <v-btn
-        class="mx-2"
-        fab
-        dark
-        color="primary"
-        :disabled="disableButtons"
-        @click="openDialogSetting"
-      >
-        <v-icon dark> mdi-cog </v-icon>
-      </v-btn>
+      <!-- Hard code position -->
+      <div style="position: fixed; right: 12px; bottom: 72px">
+        <v-btn
+          class="mx-2"
+          fab
+          dark
+          color="primary"
+          @click="() => focusSubject()"
+          :disabled="disableButtons"
+        >
+          <v-icon dark> mdi-map-marker </v-icon>
+        </v-btn>
+        <v-btn
+          class="ml-2"
+          fab
+          dark
+          color="primary"
+          :disabled="disableButtons"
+          @click="openDialogSetting"
+        >
+          <v-icon dark> mdi-cog </v-icon>
+        </v-btn>
 
-      <CustomDialog
-        v-model="dialogSetting"
-        header="Cài đặt biểu đồ gia phả"
-        buttonText
-        :buttons="[{ text: 'Lưu', click: applySetting }]"
-        maxWidth="600px"
-      >
-        <v-row>
-          <v-col cols="12">
-            <PersonInputGroup
-              label="Chủ thể biểu đồ"
-              one
-              v-model="settingVModel.subjectId"
-            />
-          </v-col>
-
-          <v-col cols="12">
-            <v-select
-              v-model="settingVModel.level"
-              label="Cấu hình cây gia phả"
-              :items="familyTreeLevelItems"
-              :hint="
-                familyTreeLevelItems.find(
-                  ({ value }) => value == settingVModel.level
-                )?.hint
-              "
-              persistent-hint
-              outlined
-            />
-          </v-col>
-
-          <v-col cols="12">
-            <div class="d-flex flex-column align-center">
-              <span class="mb-1">Xem trước</span>
-              <PersonCard
-                :person="
-                  settingVModel.subjectId
-                    ? $store.state.personMapping[settingVModel.subjectId]
-                    : $store.state.personStandForUser
-                "
-                viewOnly
-                :config="settingVModel"
+        <CustomDialog
+          v-model="dialogSetting"
+          header="Cài đặt biểu đồ gia phả"
+          buttonText
+          :buttons="[{ text: 'Lưu', click: applySetting }]"
+          maxWidth="600px"
+        >
+          <v-row>
+            <v-col cols="12">
+              <PersonInputGroup
+                label="Chủ thể biểu đồ"
+                one
+                v-model="settingVModel.subjectId"
               />
-            </div>
-          </v-col>
+            </v-col>
 
-          <v-col cols="12">
-            <span>Thông tin thẻ người thân</span>
-            <v-checkbox
-              v-model="settingVModel.show.image"
-              hide-details
-              label="Ảnh đại diện"
-            />
-            <v-checkbox
-              v-model="settingVModel.show.name"
-              hide-details
-              label="Tên"
-            />
-            <v-checkbox
-              v-model="settingVModel.show.gender"
-              hide-details
-              label="Giới tính"
-            />
-            <v-checkbox
-              v-model="settingVModel.show.birthdate"
-              hide-details
-              label="Ngày sinh"
-            />
-            <v-checkbox
-              v-model="settingVModel.show.status"
-              hide-details
-              label="Trạng thái, ngày mất (nếu có)"
-            />
-          </v-col>
+            <v-col cols="12">
+              <v-select
+                v-model="settingVModel.level"
+                label="Cấu hình cây gia phả"
+                :items="familyTreeLevelItems"
+                :hint="
+                  familyTreeLevelItems.find(
+                    ({ value }) => value == settingVModel.level
+                  )?.hint
+                "
+                persistent-hint
+                outlined
+              />
+            </v-col>
 
-          <v-col cols="12">
-            <v-radio-group label="Bố cục" v-model="settingVModel.layout">
-              <v-radio
-                label="Thẻ dọc"
-                :value="PersonCardLayout.MIN_WIDTH"
-              ></v-radio>
-              <v-radio
-                label="Thẻ ngang"
-                :value="PersonCardLayout.MIN_HEIGHT"
-              ></v-radio>
-            </v-radio-group>
-          </v-col>
+            <v-col cols="12">
+              <div class="d-flex flex-column align-center">
+                <span class="mb-1">Xem trước</span>
+                <PersonCard
+                  :person="
+                    settingVModel.subjectId
+                      ? $store.state.personMapping[settingVModel.subjectId]
+                      : $store.state.personStandForUser
+                  "
+                  viewOnly
+                  :config="settingVModel"
+                />
+              </div>
+            </v-col>
 
-          <v-col cols="12">
-            <v-slider
-              v-model="settingVModel.horizontalDistance"
-              thumb-label="always"
-              step="30"
-              min="30"
-              max="300"
-            >
-              <template v-slot:label
-                ><span style="min-width: 145px; display: block"
-                  >Khoảng cách ngang</span
-                ></template
+            <v-col cols="12">
+              <span>Thông tin thẻ người thân</span>
+              <v-checkbox
+                v-model="settingVModel.show.image"
+                hide-details
+                label="Ảnh đại diện"
+              />
+              <v-checkbox
+                v-model="settingVModel.show.name"
+                hide-details
+                label="Tên"
+              />
+              <v-checkbox
+                v-model="settingVModel.show.gender"
+                hide-details
+                label="Giới tính"
+              />
+              <v-checkbox
+                v-model="settingVModel.show.birthdate"
+                hide-details
+                label="Ngày sinh"
+              />
+              <v-checkbox
+                v-model="settingVModel.show.status"
+                hide-details
+                label="Trạng thái, ngày mất (nếu có)"
+              />
+            </v-col>
+
+            <v-col cols="12">
+              <v-radio-group label="Bố cục" v-model="settingVModel.layout">
+                <v-radio
+                  label="Thẻ dọc"
+                  :value="PersonCardLayout.MIN_WIDTH"
+                ></v-radio>
+                <v-radio
+                  label="Thẻ ngang"
+                  :value="PersonCardLayout.MIN_HEIGHT"
+                ></v-radio>
+              </v-radio-group>
+            </v-col>
+
+            <v-col cols="12">
+              <v-slider
+                v-model="settingVModel.horizontalDistance"
+                thumb-label="always"
+                step="30"
+                min="30"
+                max="300"
               >
-            </v-slider>
-          </v-col>
+                <template v-slot:label
+                  ><span style="min-width: 145px; display: block"
+                    >Khoảng cách ngang</span
+                  ></template
+                >
+              </v-slider>
+            </v-col>
 
-          <v-col cols="12">
-            <v-slider
-              v-model="settingVModel.verticalDistance"
-              thumb-label="always"
-              step="30"
-              min="30"
-              max="300"
-            >
-              <template v-slot:label
-                ><span style="min-width: 145px; display: block"
-                  >Khoảng cách dọc</span
-                ></template
+            <v-col cols="12">
+              <v-slider
+                v-model="settingVModel.verticalDistance"
+                thumb-label="always"
+                step="30"
+                min="30"
+                max="300"
               >
-            </v-slider>
-          </v-col>
-        </v-row>
-      </CustomDialog>
-    </div>
+                <template v-slot:label
+                  ><span style="min-width: 145px; display: block"
+                    >Khoảng cách dọc</span
+                  ></template
+                >
+              </v-slider>
+            </v-col>
+          </v-row>
+        </CustomDialog>
+      </div>
+    </template>
+
+    <FullViewLoading :floating="false" v-else />
   </div>
 </template>
 
 <script lang="ts">
 import Vue, { nextTick } from "vue";
+import $ from "jquery";
 
 import Viewer from "@/components/Viewer.vue";
 import FamilyCard from "@/components/FamilyCard/index";
@@ -211,6 +208,8 @@ export default Vue.extend({
       } as FamilyCardConfig);
     return {
       PersonCardLayout,
+      // Dùng để inject vào viewer để check click event
+      // Không thể truyền trực tiếp bằng $refs.viewer do đã test
       viewer: undefined as any,
       key: getUniqueID(),
       ancestor: null as ExtendedPerson | null,
@@ -266,13 +265,18 @@ export default Vue.extend({
   methods: {
     ...mapActions([FETCH_PEOPLE]),
     resizeViewer() {
-      if (!this.$refs.viewer || !this.$refs.container) return;
-      const container = this.$refs.container as HTMLElement;
+      if (!this.$refs.viewer) return;
       const viewer = (this.$refs.viewer as any).$el as HTMLElement;
-      const containerBCR = container.getBoundingClientRect();
 
-      viewer.style.width = window.innerWidth - containerBCR.left + "px";
-      viewer.style.height = window.innerHeight - containerBCR.top + "px";
+      const $appBar = $("#app-bar");
+      const $bottomNavigation = $("#bottom-navigation");
+
+      viewer.style.width = "100%";
+      viewer.style.height =
+        window.innerHeight -
+        $appBar.height()! -
+        $bottomNavigation.height()! +
+        "px";
     },
     handlePersonAddRelationship({
       addedPersonId,
