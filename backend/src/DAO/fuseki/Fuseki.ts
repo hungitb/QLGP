@@ -1,7 +1,5 @@
 import axios from "axios";
 
-const PREFIX = "http://qlgp#";
-
 type FusekiGetResponse<TFields extends string> = {
     results: {
         bindings: {
@@ -14,23 +12,33 @@ type FusekiGetResponse<TFields extends string> = {
     }
 };
 
+let fusekiQueryPrefix: string | undefined = undefined;
+const allPrefixes: Record<string, string> = {
+    fuseki: "http://jena.apache.org/fuseki#",
+    rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    rdfs: "http://www.w3.org/2000/01/rdf-schema#",
+    xsd: "http://www.w3.org/2001/XMLSchema#",
+    owl: "http://www.w3.org/2002/07/owl#",
+    "": "http://qlgp#"
+};
+
+function registerPrefix(prefix: string, url: string) {
+    allPrefixes[prefix] = url;
+    fusekiQueryPrefix = undefined
+}
+
 function execQuery<TFields extends string>(query: string, method: "get"): Promise<FusekiGetResponse<TFields>>;
 function execQuery(query: string, method: "post"): Promise<any>;
-
 async function execQuery<TFields extends string = any>(query: string, method: "post" | "get") {
     const fusekiUrl = process.env.QLGP_FUSEKI_URL || "localhost:3030";
 
-    query = `
-        PREFIX fuseki: <http://jena.apache.org/fuseki#>
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-        PREFIX owl: <http://www.w3.org/2002/07/owl#>
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-        PREFIX : <${PREFIX}>
+    if (!fusekiQueryPrefix) {
+        fusekiQueryPrefix = Object.entries(allPrefixes).map(([prefix, url]) => {
+            return `PREFIX ${prefix}: <${url}>`
+        }).join("\n");
+    }
 
-        ${query}
-    `;
+    query = `${fusekiQueryPrefix}\n${query}`;
 
     if (method == "get") {
         const response = await axios.get(`${fusekiUrl}/dataset`, {
@@ -65,7 +73,7 @@ async function execPostQuery(query: string) {
 }
 
 const Fuseki = {
-    PREFIX,
+    registerPrefix,
     execSelectQuery,
     execPostQuery
 };

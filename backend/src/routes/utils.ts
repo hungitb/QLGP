@@ -9,17 +9,23 @@ export async function getLoggedInUser(req: Request) {
     const sessionToken = req.cookies?.sessionToken;
     if (!sessionToken) return null;
 
+    const now = Date.now();
+
     const user = await userDAO.findOne({ where: { sessionToken } });
-    if (!user || !user.sessionExpiry || user.sessionExpiry < Date.now()) {
+    if (!user || !user.sessionExpiry || user.sessionExpiry < now) {
         return null;
     }
 
-    user.sessionExpiry = Date.now() + parseInt(process.env.QLGP_SESSION_DURATION || "30")*60*1000;
-    userDAO.update({
-        sessionExpiry: user.sessionExpiry
-    }, {
-        where: { id: user.id }
-    })
+    const sessionDurationMiliseconds = parseInt(process.env.QLGP_SESSION_DURATION || "30")*60*1000;
+    
+    if (user.sessionExpiry - now < 0.8*sessionDurationMiliseconds) {
+        user.sessionExpiry = now + sessionDurationMiliseconds;
+        userDAO.update({
+            sessionExpiry: user.sessionExpiry
+        }, {
+            where: { id: user.id }
+        });
+    }
 
     return user;
 }

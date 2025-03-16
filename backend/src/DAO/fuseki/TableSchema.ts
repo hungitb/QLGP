@@ -59,11 +59,16 @@ export class TableSchema<Model extends ValidModel> {
         });
     }
 
+    static getBaseUrl(schemaName: string) {
+        return `http://qlgp/${schemaName}#`;
+    }
+
     readonly __type__: "TableSchema";
     readonly name: string;
     readonly fields: TableSchemaFieldDefs<Model>;
     readonly primaryKey: Key<Model>;
     readonly allFields: Key<Model>[];
+    readonly urlBase: string;
 
     constructor({
         name,
@@ -74,6 +79,7 @@ export class TableSchema<Model extends ValidModel> {
     }) {
         this.__type__ = "TableSchema";
         this.name = name;
+        this.urlBase = TableSchema.getBaseUrl(name);
         this.fields = fields;
         this.allFields = Object.keys(fields) as Key<Model>[];
 
@@ -114,6 +120,20 @@ export class TableSchema<Model extends ValidModel> {
         this.registerItSelf();
     }
 
+    private registerItSelf() {
+        TableSchema.allSchemas.push(this);
+        Fuseki.registerPrefix(this.name, this.urlBase);
+        TableSchema.initialTriples.push([`:${this.name}`, "a", "owl:Class"]);
+
+        // this.entrieFields().forEach(([field, typeDef]) => {
+        //     const type = this.inferType(typeDef);
+
+        //     TableSchema.initialTriples.push(
+        //         [`:${this.convertField(field)}`, "a", this.isLiteralType(type) ? "owl:DataProperty" : "owl:ObjectProperty"]
+        //     );
+        // });
+    }
+
     private entrieFields() {
         return Object.entries(this.fields) as [Key<Model>, TableSchemaFieldDefs<Model>[string]][];
     }
@@ -132,16 +152,8 @@ export class TableSchema<Model extends ValidModel> {
         : typeDef;
     }
 
-    private convertField(field: Key<Model>): string {
-        return `${this.name}__${field}`;
-    }
-
-    private revertField(field: string): Key<Model> {
-        return field.substring(this.name.length + 2) as Key<Model>;
-    }
-
-    private removeFusekiPrefix(s: string) {
-        return s.substring(Fuseki.PREFIX.length);
+    private removeSelfPrefix(s: string) {
+        return s.substring(this.urlBase.length);
     }
 
     private isLiteralType(type: FieldType): type is LiteralType {
@@ -149,7 +161,7 @@ export class TableSchema<Model extends ValidModel> {
         return (ALL_LITERAL_TYPES).includes(type as LiteralType);
     }
 
-    private rdfsRange(type: FieldType) {
+    private dataType(type: Extract<FieldType, LiteralType>) {
         if (type == "string") {
             return "xsd:string";
         } else if (type == "boolean") {
@@ -158,29 +170,27 @@ export class TableSchema<Model extends ValidModel> {
             return "xsd:int";
         } else if (type == "decimal") {
             return "xsd:decimal";
-        } else if (type == "__self__") {
-            return `:${this.name}`;
         } else {
-            const schema = TableSchema.allSchemas.find(schema => schema == type);
-            if (schema) {
-                return `:${schema.name}`;
-            } else {
-                throw Error(`Unknown rdfs:range of type ${type}, schema ${this.name}`);
-            }
+            const x: never = type; // Typescript trick
         }
     }
 
-    private registerItSelf() {
-        TableSchema.allSchemas.push(this);
+    private getSchemaName(type: Exclude<FieldType, LiteralType>) {
+        if (type == "__self__") {
+            return this.name;
+        }
 
-        TableSchema.initialTriples.push([`:${this.name}`, "a", "owl:Class"]);
-        this.entrieFields().forEach(([field, typeDef]) => {
-            const type = this.inferType(typeDef);
+        const schema = TableSchema.allSchemas.find(schema => schema == type);
+        if (schema) {
+            return schema.name;
+        } else {
+            throw Error(`Unknown rdfs:range of type ${type}, schema ${this.name}`);
+        }
+    }
 
-            TableSchema.initialTriples.push(
-                [`:${this.convertField(field)}`, "a", this.isLiteralType(type) ? "owl:DataProperty" : "owl:ObjectProperty"]
-            );
-        });
+    private revertValue(value: string, type: Exclude<FieldType, LiteralType>) {
+        const schemaName = this.getSchemaName(type);
+        return value.substring(TableSchema.getBaseUrl(schemaName).length);
     }
 
     private filterInvalidProps(obj: Partial<Model>, filterPrimaryKey = false) {
@@ -199,8 +209,12 @@ export class TableSchema<Model extends ValidModel> {
         return this.isLiteralType(type)
             ? type == "string"
                 ? `"${escape(value as string)}"@vi`
-                : `"${value}"^^${this.rdfsRange(type)}`
-            : `:${value}`;
+                : `"${value}"^^${this.dataType(type)}`
+            : `${this.getSchemaName(type)}:${value}`;
+    }
+
+    private tripleQueryRepr(triples: Triple[]) {
+        return triples.map(t => t.join(" ")).join(" .\n");
     }
 
     async create(obj: Model) {
@@ -209,11 +223,15 @@ export class TableSchema<Model extends ValidModel> {
         const id = obj[this.primaryKey] as string;
         const data = this.filterInvalidProps(obj, true);
 
-        const triples: Triple[] = [[`:${id}`, "a", `:${this.name}`]];
+        const triples: Triple[] = [[`${this.name}:${id}`, "a", `:${this.name}`]];
+        const primaryKeyType = this.inferType(this.fields[this.primaryKey]);
+        if (!this.isLiteralType(primaryKeyType)) {
+            triples.push([`${this.name}:${id}`, `${this.name}:${this.primaryKey}`, `${this.getSchemaName(primaryKeyType)}:${id}`]);
+        }
         Object.entries(data).forEach(([_key, value]) => {
             const key = _key as Key<Model>;
 
-            triples.push([`:${id}`, `:${this.convertField(key)}`, this.tripleObjectRepr(key, value)]);
+            triples.push([`${this.name}:${id}`, `${this.name}:${key}`, this.tripleObjectRepr(key, value)]);
         });
 
         await Fuseki.execPostQuery(`
@@ -221,10 +239,6 @@ export class TableSchema<Model extends ValidModel> {
                 ${this.tripleQueryRepr(triples)}
             }
         `);
-    }
-
-    private tripleQueryRepr(triples: Triple[]) {
-        return triples.map(t => t.join(" ")).join(" .\n");
     }
 
     private buildObjects(triples: Triple[]) {
@@ -237,19 +251,24 @@ export class TableSchema<Model extends ValidModel> {
 
         const objs: Record<string, Model> = {};
         triples.forEach(([s, p, o]) => {
-            const id = this.removeFusekiPrefix(s);
+            // p is metadata. For example: rdf:type ("a"), ...
+            if (!p.startsWith(this.urlBase)) {
+                return;
+            }
+
+            const id = this.removeSelfPrefix(s);
             if (!objs[id]) {
                 objs[id] = {
                     [this.primaryKey]: id
                 } as Model;
             }
 
-            const field = this.revertField(this.removeFusekiPrefix(p));
+            const field = this.removeSelfPrefix(p) as Key<Model>;
             const type = this.inferType(this.fields[field]);
 
             objs[id][field] = this.isLiteralType(type)
                 ? constructorMapping[type](o)
-                : this.removeFusekiPrefix(o);
+                : this.revertValue(o, type);
         });
 
         return Object.values(objs);
@@ -261,8 +280,7 @@ export class TableSchema<Model extends ValidModel> {
         const response = await Fuseki.execSelectQuery<"p" | "o">(`
             SELECT ?p ?o
             WHERE {
-                :${pk} a :${this.name} .
-                :${pk} ?p ?o
+                ${this.name}:${pk} ?p ?o
             }
         `);
 
@@ -270,8 +288,7 @@ export class TableSchema<Model extends ValidModel> {
             return null;
         }
 
-        const triples = response.results.bindings.map(data => [Fuseki.PREFIX + pk, data.p.value, data.o.value] as Triple);
-
+        const triples = response.results.bindings.map(data => [this.urlBase + pk, data.p.value, data.o.value] as Triple);
         return this.buildObjects(triples)[0];
     }
 
@@ -297,24 +314,22 @@ export class TableSchema<Model extends ValidModel> {
         }
 
         const triples = match ? this.entriesPartialModel(this.filterInvalidProps(match)).map(([k, v]) => {
-            return ["?s", `:${this.convertField(k)}`, this.tripleObjectRepr(k, v)] as Triple;
+            return ["?s", `${this.name}:${k}`, this.tripleObjectRepr(k, v)] as Triple;
         }) : [];
 
         const response = await Fuseki.execSelectQuery<"s">(`
             SELECT ?s
             WHERE {
-                ?s a :${this.name} .
                 ${this.tripleQueryRepr(triples)}
             }
         `);
 
-        return response.results.bindings.map(data => this.removeFusekiPrefix(data.s.value));
+        return response.results.bindings.map(data => this.removeSelfPrefix(data.s.value));
     }
 
     async update(data: Partial<Model>, { where }: { where: PartialNonNullable<Model> }) {
         await TableSchema.sync();
 
-        const effectedFields = this.keys(data).map(field => this.convertField(field));
         const triples: Triple[] = [];
 
         const ids = await this.filter(where);
@@ -323,7 +338,7 @@ export class TableSchema<Model extends ValidModel> {
                 if (!data[field]) {
                     return;
                 }
-                triples.push([`:${id}`, `:${this.convertField(field)}`, this.tripleObjectRepr(field, data[field])]);
+                triples.push([`${this.name}:${id}`, `${this.name}:${field}`, this.tripleObjectRepr(field, data[field])]);
             });
         });
 
@@ -334,8 +349,8 @@ export class TableSchema<Model extends ValidModel> {
             
             WHERE {
                 ?s ?p ?o .
-                FILTER (?s IN (${ids.map(id => `:${id}`).join(", ")}))
-                FILTER (?p IN (${effectedFields.map(f => `:${f}`).join(", ")}))
+                FILTER (?s IN (${ids.map(id => `${this.name}:${id}`).join(", ")}))
+                FILTER (?p IN (${this.keys(data).map(k => `${this.name}:${k}`).join(", ")}))
             }
         `);
 
@@ -358,9 +373,8 @@ export class TableSchema<Model extends ValidModel> {
         const response = await Fuseki.execSelectQuery<"s" | "p" | "o">(`
             SELECT ?s ?p ?o
             WHERE {
-                ?s a :${this.name} .
                 ?s ?p ?o
-                FILTER (?s IN (${ids.map(id => `:${id}`).join(", ")}))
+                FILTER (?s IN (${ids.map(id => `${this.name}:${id}`).join(", ")}))
             }
         `);
 
@@ -379,7 +393,7 @@ export class TableSchema<Model extends ValidModel> {
         await TableSchema.sync();
 
         const ids = await this.filter(where);
-        const idsRepr = ids.map(id => `:${id}`).join(", ");
+        const idsRepr = ids.map(id => `${this.name}:${id}`).join(", ");
 
         await Fuseki.execPostQuery(`
             DELETE WHERE {
