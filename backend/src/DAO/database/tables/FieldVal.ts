@@ -2,7 +2,7 @@
 import { DataTypes } from "sequelize"
 import type { Sequelize } from "sequelize"
 import { SequlizeTableDefineColumns } from "./utils"
-import { FieldVal } from "../../model/FieldVal"
+import { FieldVal } from "../../../model/FieldVal"
 
 export default function getFieldValTable (sequelize: Sequelize) {
     return sequelize.define('FieldVal', {

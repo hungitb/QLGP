@@ -1,10 +1,11 @@
-import * as RealDAO from "./database";
-import * as FakeDAO from "./FakeDAO";
+import * as RealDAO from "./database/database";
+import * as FakeDAO from "./fake/FakeDAO";
+import * as FusekiDAO from "./fuseki/schema";
 
 const fakeData = process.env.QLGP_BACKEND_FAKE_DB == "true";
 
-export const personDAO = fakeData ? FakeDAO.personDAO : RealDAO.personDAO;
-export const fieldDefDAO = fakeData ? FakeDAO.fieldDefDAO : RealDAO.fieldDefDAO;
-export const fieldValDAO = fakeData ? FakeDAO.fieldValDAO : RealDAO.fieldValDAO;
-export const userDAO = fakeData ? FakeDAO.userDAO : RealDAO.userDAO;
-export const eventSettingDAO = fakeData ? FakeDAO.eventSettingDAO : RealDAO.eventSettingDAO;
+export const personDAO = fakeData ? FakeDAO.personDAO : FusekiDAO.personDAO;
+// export const fieldDefDAO = fakeData ? FakeDAO.fieldDefDAO : FusekiDAO.fieldDefDAO;
+// export const fieldValDAO = fakeData ? FakeDAO.fieldValDAO : FusekiDAO.fieldValDAO;
+export const userDAO = fakeData ? FakeDAO.userDAO : FusekiDAO.userDAO;
+export const eventSettingDAO = fakeData ? FakeDAO.eventSettingDAO : FusekiDAO.eventSettingDAO;

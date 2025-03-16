@@ -7,7 +7,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 
-import { exportData } from "../../../../backend/src/DAO/FakeDAO";
+import { exportData } from "../../../../backend/src/DAO/fake/FakeDAO";
 import { todayDate } from "../../../../backend/src/utils/DateUtils";
 
 export default defineComponent({

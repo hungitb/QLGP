@@ -1,18 +1,18 @@
 
-enum FieldType {
+export enum FieldType {
     TEXT = "TEXT",
     DATE = "DATE",
     PERSON_REF = "PERSON_REF",
     IMAGE = "IMAGE",
     CHECKBOX = "CHECKBOX"
-}
+};
 
-enum CheckboxTypeValue {
+export enum CheckboxTypeValue {
     CHECKED = "CHECKED",
     UNCHECK = "UNCHECK"
-}
+};
 
-interface FieldDef {
+export type FieldDef = {
     id: string
     ownerUserId: string
 
@@ -21,7 +21,4 @@ interface FieldDef {
     type: FieldType
     isMultiValue: boolean
     isForAll: boolean
-}
-
-export { FieldType, CheckboxTypeValue }
-export type { FieldDef }
+};

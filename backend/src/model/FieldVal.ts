@@ -1,10 +1,8 @@
 
-interface FieldVal {
+export type FieldVal = {
     id: string
     personId:  string
     fieldDefId: string
 
     value: string | null
-}
-
-export type { FieldVal }
+};

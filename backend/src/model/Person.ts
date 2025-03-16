@@ -9,7 +9,7 @@ enum LifeStatus {
     DEAD = "Đã mất"
 }
 
-interface Person {
+type Person = {
     id: string
     ownerUserId: string
     isStandForUser: boolean
@@ -23,7 +23,7 @@ interface Person {
     spouseId: string | null
     fatherId: string | null
     motherId: string | null
-}
+};
 
 export { Gender, LifeStatus }
 export type { Person }

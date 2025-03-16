@@ -11,7 +11,7 @@ import {
   personDAO,
   eventSettingDAO,
   wrapApi,
-} from "../../../backend/src/DAO/FakeDAO";
+} from "../../../backend/src/DAO/fake/FakeDAO";
 import { Gender } from "../../../backend/src/model/Person";
 
 const authController = getAuthController(userDAO, personDAO, eventSettingDAO);

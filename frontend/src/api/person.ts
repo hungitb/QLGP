@@ -9,7 +9,7 @@ import getPersonController, {
   CreatePersonParams,
 } from "../../../backend/src/controller/person";
 import type { Person } from "../../../backend/src/model/Person";
-import { personDAO, wrapApi } from "../../../backend/src/DAO/FakeDAO";
+import { personDAO, wrapApi } from "../../../backend/src/DAO/fake/FakeDAO";
 import { PaginateParams } from "../../../backend/src/controller/utils";
 
 const personController = getPersonController(personDAO);

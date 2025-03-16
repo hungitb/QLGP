@@ -10,7 +10,7 @@ import {
   eventSettingDAO,
   personDAO,
   wrapApi,
-} from "../../../backend/src/DAO/FakeDAO";
+} from "../../../backend/src/DAO/fake/FakeDAO";
 import { EventSetting } from "../../../backend/src/model/EventSetting";
 
 const eventController = getEventController(eventSettingDAO, personDAO);

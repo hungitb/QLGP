@@ -1,14 +1,14 @@
-import type { IDAO } from "../model/IDAO";
-import type { User } from "../model/User";
-import type { Person } from "../model/Person";
-import { Gender, LifeStatus } from "../model/Person";
-import type { FieldDef } from "../model/FieldDef";
-import type { FieldVal } from "../model/FieldVal";
+import type { IDAO } from "../../model/IDAO";
+import type { User } from "../../model/User";
+import type { Person } from "../../model/Person";
+import { Gender, LifeStatus } from "../../model/Person";
+import type { FieldDef } from "../../model/FieldDef";
+import type { FieldVal } from "../../model/FieldVal";
 import {
   EventTargetType,
   EventType,
   type EventSetting,
-} from "../model/EventSetting";
+} from "../../model/EventSetting";
 
 const isWeb = typeof window != "undefined" && typeof document != "undefined";
 

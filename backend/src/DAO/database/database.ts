@@ -7,16 +7,16 @@ import getFieldDefTable from "./tables/FieldDef";
 import getFieldValTable from "./tables/FieldVal";
 import getEventSettingTable from "./tables/EventSetting";
 
-import type { IDAO } from "../model/IDAO";
-import type { Person } from "../model/Person";
-import type { User } from "../model/User";
-import type { FieldDef } from "../model/FieldDef";
-import type { FieldVal } from "../model/FieldVal";
-import type { EventSetting } from "../model/EventSetting";
+import type { IDAO } from "../../model/IDAO";
+import type { Person } from "../../model/Person";
+import type { User } from "../../model/User";
+import type { FieldDef } from "../../model/FieldDef";
+import type { FieldVal } from "../../model/FieldVal";
+import type { EventSetting } from "../../model/EventSetting";
 
 const sequelize = new Sequelize({
     dialect: 'sqlite',
-    storage: path.resolve(__dirname, "..", "..", "..", "app-data", "database.sqlite"),
+    storage: path.resolve(__dirname, "..", "..", "..", "..", "app-data", "database.sqlite"),
     logging: false,
 });
 

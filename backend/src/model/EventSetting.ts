@@ -81,7 +81,7 @@ export const allEventTypes = [
   // },
 ];
 
-export interface EventSetting {
+export type EventSetting = {
     userId: string;
 
     targetType: EventTargetType;
@@ -91,4 +91,4 @@ export interface EventSetting {
     numGenerationsAbove: number;
     numGenerationsBelow: number;
     includePeopleEqualGeneration: boolean;
-}
+};

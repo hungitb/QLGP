@@ -202,7 +202,7 @@ export default Vue.extend({
           birthdate: true,
           status: true,
         },
-        layout: PersonCardLayout.MIN_HEIGHT,
+        layout: PersonCardLayout.MIN_WIDTH,
         horizontalDistance: 120,
         verticalDistance: 150,
       } as FamilyCardConfig);

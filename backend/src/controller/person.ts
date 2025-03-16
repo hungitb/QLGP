@@ -6,7 +6,6 @@ import { CommonResponse, paginateAndSortItems, type PaginateParams, type Control
 import { LifeStatus, Gender, type Person } from "../model/Person";
 import type { User } from "../model/User";
 import type { IDAO } from "../model/IDAO";
-import getFusekiApi from "./fusekiApi";
 
 export type ExtendedPerson = Person & {
     children: {
@@ -112,8 +111,6 @@ export function filterPeople(people: Person[], search: string, searchFieldsAsStr
 }
 
 export default function getPersonController(personDAO: IDAO<Person>) {
-    const fusekiApi = getFusekiApi(personDAO);
-
     async function getAllPeopleBaseInfo(data: PaginateParams, loggedInUser: User | null): Promise<CHR<{ people: Person[]; total: number }>> {
         if (!loggedInUser) return CommonResponse[401];
 
@@ -312,38 +309,22 @@ export default function getPersonController(personDAO: IDAO<Person>) {
             birthdate: data.person.birthdate ? shortenDateString(data.person.birthdate) : null,
             deathdate: data.person.deathdate ? shortenDateString(data.person.deathdate) : null,
         };
-        await Promise.all([
-            personDAO.create(newPerson),
-            fusekiApi.addPerson(newPerson)
-        ]);
+        await personDAO.create(newPerson);
 
-        const promises: Promise<any>[] = [
-            ...(newPerson.fatherId ? [fusekiApi.addRelationship(newPerson.id, newPerson.fatherId, "father")] : []),
-            ...(newPerson.motherId ? [fusekiApi.addRelationship(newPerson.id, newPerson.motherId, "mother")] : []),
-            ...(newPerson.spouseId ? [fusekiApi.addRelationship(newPerson.id, newPerson.spouseId, "spouse")] : [])
-        ];
-        const promises2: Promise<any>[] = [];
+        const promises: Promise<any>[] = [];
 
         if (data.role) {
             const { roleName, roleWithTargetPersonId } = data.role;
             if (roleName == "father") {
                 newPerson.gender = Gender.MALE; // Đảm bảo giới tính đúng
                 promises.push(
-                    personDAO.update({ fatherId: newPerson.id }, { where: { id: roleWithTargetPersonId } }),
-                    fusekiApi.deleteRelationship(roleWithTargetPersonId, null, "father")
-                );
-                promises2.push(
-                    fusekiApi.addRelationship(roleWithTargetPersonId, newPerson.id, "father")
+                    personDAO.update({ fatherId: newPerson.id }, { where: { id: roleWithTargetPersonId } })
                 );
             }
             else if (roleName == "mother") {
                 newPerson.gender = Gender.FEMALE; // Đảm bảo giới tính đúng
                 promises.push(
-                    personDAO.update({ motherId: newPerson.id }, { where: { id: roleWithTargetPersonId } }),
-                    fusekiApi.deleteRelationship(roleWithTargetPersonId, null, "mother")
-                );
-                promises2.push(
-                    fusekiApi.addRelationship(roleWithTargetPersonId, newPerson.id, "mother")
+                    personDAO.update({ motherId: newPerson.id }, { where: { id: roleWithTargetPersonId } })
                 );
             }
             // Check nếu role là child thì gán id bố và mẹ lại bằng roleWithTargetPersonId
@@ -355,14 +336,11 @@ export default function getPersonController(personDAO: IDAO<Person>) {
             const spouse = await personDAO.findByPk(newPerson.spouseId);
             if (spouse) {
                 promises.push(
-                    personDAO.update({ spouseId: newPerson.id }, { where: { id: spouse.id } }),
-                    fusekiApi.addRelationship(spouse.id, newPerson.id, "spouse")
+                    personDAO.update({ spouseId: newPerson.id }, { where: { id: spouse.id } })
                 );
                 if (spouse.spouseId) {
                     promises.push(
-                        personDAO.update({ spouseId: null }, { where: { id: spouse.spouseId } }),
-                        fusekiApi.deleteRelationship(spouse.id, spouse.spouseId, "spouse"),
-                        fusekiApi.deleteRelationship(spouse.spouseId, spouse.id, "spouse")
+                        personDAO.update({ spouseId: null }, { where: { id: spouse.spouseId } })
                     );
                 }
             }
@@ -371,7 +349,6 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         // to do: Create FieldVal with for all people FieldDef
 
         await Promise.all(promises);
-        await Promise.all(promises2);
 
         return {
             data: {
@@ -397,10 +374,7 @@ export default function getPersonController(personDAO: IDAO<Person>) {
             personDAO.update({ spouseId: null }, { where: { spouseId: id } }),
         ]);
 
-        await Promise.all([
-            personDAO.destroy({ where: { id } }),
-            fusekiApi.deletePerson(id)
-        ]);
+        await personDAO.destroy({ where: { id } });
 
         // to do: FieldVal & FieldDef
 
@@ -415,57 +389,38 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         const person = await personDAO.findByPk(data.id);
         if (!person) return CommonResponse[400];
 
-        const promises: Promise<any>[] = [];
         await Promise.all(Object.entries(data).map(async ([_field, value]) => {
             const field = _field as keyof typeof data;
 
             if (field == "gender" && value != person.gender) {
                 await Promise.all([
                     personDAO.update({ fatherId: null }, { where: { fatherId: person.id } }),
-                    personDAO.update({ motherId: null }, { where: { motherId: person.id } }),
-                    fusekiApi.deleteRelationship(null, person.id, "father"),
-                    fusekiApi.deleteRelationship(null, person.id, "mother")
+                    personDAO.update({ motherId: null }, { where: { motherId: person.id } })
                 ]);
             }
             else if (field == "fatherId" && value != person.fatherId) {
-                await fusekiApi.deleteRelationship(person.id, person.fatherId, "father");
-                promises.push(
-                    fusekiApi.addRelationship(person.id, value as string, "father")
-                );
+                // Pass
             }
             else if (field == "motherId" && value != person.motherId) {
-                await fusekiApi.deleteRelationship(person.id, person.motherId, "mother");
-                promises.push(
-                    fusekiApi.addRelationship(person.id, value as string, "mother")
-                );
+                // Pass;
             }
             else if (field == "spouseId" && value != person.spouseId) {
                 // Ban đầu có spouse
                 if (person.spouseId) {
-                    await Promise.all([
-                        personDAO.update({ spouseId: null }, { where: { id: person.spouseId } }),
-                        fusekiApi.deleteRelationship(person.id, person.spouseId, "spouse"),
-                        fusekiApi.deleteRelationship(person.spouseId, person.id, "spouse")
-                    ]);
+                    await personDAO.update({ spouseId: null }, { where: { id: person.spouseId } });
                 }
 
                 // Update to certain value
                 if (value) {
-                    const newSpouse = (await personDAO.findByPk(value as string))!;
-                    if (newSpouse.spouseId) {
-                        await Promise.all([
-                            personDAO.update({ spouseId: null }, { where: { id: newSpouse.spouseId } }),
-                            fusekiApi.deleteRelationship(newSpouse.id, newSpouse.spouseId, "spouse"),
-                            fusekiApi.deleteRelationship(newSpouse.spouseId, newSpouse.id, "spouse")
-                        ]);
+                    const newSpouse = await personDAO.findByPk(value as string);
+                    if (newSpouse) {
+                        if (newSpouse.spouseId) {
+                            await personDAO.update({ spouseId: null }, { where: { id: newSpouse.spouseId } });
+                        }
+                        await personDAO.update({ spouseId: person.id }, { where: { id: newSpouse.id } });
+                    } else {
+                        data.spouseId = null;
                     }
-
-                    await personDAO.update({ spouseId: person.id }, { where: { id: newSpouse.id } });
-
-                    promises.push(
-                        fusekiApi.addRelationship(person.id, value as string, "spouse"),
-                        fusekiApi.addRelationship(value as string, person.id, "spouse")
-                    );
                 }
             }
             else if (field == "status") {
@@ -478,10 +433,7 @@ export default function getPersonController(personDAO: IDAO<Person>) {
             }
         }));
 
-        await Promise.all([
-            personDAO.update(data, { where: { id: person.id } }),
-            ...promises
-        ]);
+        await personDAO.update(data, { where: { id: person.id } });
 
         return CommonResponse.OK;
     }
@@ -613,14 +565,11 @@ export default function getPersonController(personDAO: IDAO<Person>) {
 
         if (!p1 || !p2) return CommonResponse.BAD_REQUEST;
 
-        const data = await Promise.all([
-            fusekiApi.inferenceRelationship(id1, id2),
-            fusekiApi.inferenceRelationship(id2, id1)
-        ]);
+        // Do somethings
 
         return {
             data: {
-                data
+                data: ["Không rõ", "Không rõ"]
             },
             status: 200
         };
