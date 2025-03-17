@@ -11,7 +11,7 @@ import {
     normalDateMinusDay
 } from "../utils/DateUtils";
 import { isStringPureInterger } from "../utils/ValidationUtils";
-import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR } from "./utils";
+import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR, DetailUser } from "./utils";
 import { LifeStatus, Gender, type Person } from "../model/Person";
 import { allEventTypes, EventTargetType, EventType, type EventSetting } from "../model/EventSetting";
 import type { User } from "../model/User";
@@ -95,7 +95,7 @@ export function filterPeople(people: Person[], eventSetting: EventSetting) {
 }
 
 export default function getEventController(eventSettingDAO: IDAO<EventSetting>, personDAO: IDAO<Person>) {
-    async function getEvents({ startDate, endDate }: { startDate?: string, endDate?: string }, loggedInUser: User | null): Promise<CHR<{ events: Event[], eventSetting: EventSetting }>> {
+    async function getEvents({ startDate, endDate }: { startDate?: string, endDate?: string }, loggedInUser: DetailUser | null): Promise<CHR<{ events: Event[], eventSetting: EventSetting }>> {
         if (!loggedInUser) return CommonResponse.UNAUTHORIZED;
 
         if (!startDate) {
@@ -273,7 +273,7 @@ export default function getEventController(eventSettingDAO: IDAO<EventSetting>, 
         };
     }
 
-    async function updateEventSetting(data: Partial<EventSetting>, loggedInUser: User | null): Promise<CHR<{ msg: string }>> {
+    async function updateEventSetting(data: Partial<EventSetting>, loggedInUser: DetailUser | null): Promise<CHR<{ msg: string }>> {
         if (!loggedInUser) return CommonResponse.UNAUTHORIZED;
 
         if (data.types) {

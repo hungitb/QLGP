@@ -9,6 +9,7 @@ import {
   EventType,
   type EventSetting,
 } from "../../model/EventSetting";
+import { Share } from "../../model/Share";
 
 const isWeb = typeof window != "undefined" && typeof document != "undefined";
 
@@ -20,7 +21,7 @@ const GENERATE_FAKE_DATA =
 const DELAY = 100;
 
 type Dict = { [key: string]: any };
-type AllTableTypes = [User[], Person[], FieldDef[], FieldVal[], EventSetting[]];
+type AllTableTypes = [User[], Person[], FieldDef[], FieldVal[], EventSetting[], Share[]];
 type Storage = {
   startOperations: () => Promise<void>;
   endOperations: () => Promise<void>;
@@ -366,6 +367,7 @@ function generateFakeData(): AllTableTypes {
       password: "qlgp1234",
       sessionToken: "qlgp1234",
       sessionExpiry: null,
+      ownGraph: true,
     },
   ];
 
@@ -505,6 +507,7 @@ function generateFakeData(): AllTableTypes {
     [] as FieldDef[],
     [] as FieldVal[],
     fakeEventSettings,
+    [] as Share[]
   ];
 }
 
@@ -520,7 +523,9 @@ function getData(): Promise<Dict[]>[] {
     "fieldDefs",
     "fieldVals",
     "eventSettings",
-  ];
+    "shares"
+  ] as const;
+  const x: (typeof tableNames)["length"] extends AllTableTypes["length"] ? number : never = 1; // Trick
 
   let _cache: Dict[][] | null = null;
   async function getDataFromStorage() {
@@ -546,7 +551,7 @@ function getData(): Promise<Dict[]>[] {
   );
 }
 
-const [users, people, fieldDefs, fieldVals, eventSettings] = getData();
+const [users, people, fieldDefs, fieldVals, eventSettings, shares] = getData();
 
 export const userDAO: IDAO<User> = createDAO(
   "QLGP.users",
@@ -573,6 +578,11 @@ export const eventSettingDAO: IDAO<EventSetting> = createDAO(
   "userId",
   eventSettings
 ) as unknown as IDAO<EventSetting>;
+export const shareDAO: IDAO<Share> = createDAO(
+  "QLGP.shares",
+  "id",
+  shares
+);
 
 if (process.env.NODE_ENV == "development" && isWeb) {
   (window as any).userDAO = userDAO;

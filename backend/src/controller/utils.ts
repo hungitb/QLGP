@@ -1,9 +1,17 @@
+import { User } from "../model/User";
+
 export type ControllerHandlerResult<K extends object> = {
     data: {
       [attr in keyof K]?: K[attr];
     } & { msg?: string };
     status: number;
 };
+
+export type DetailUser = User & (
+    { ownGraph: true } |
+    { ownGraph: false, useGraphOfUserId: undefined } |
+    { ownGraph: false, useGraphOfUserId: string, perm: "read" | "write" }
+);
 
 export type PaginateParams = {
     sortBy?: string,

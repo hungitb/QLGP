@@ -3,24 +3,28 @@ import Vuex from "vuex";
 
 import { Person } from "../../../backend/src/model/Person";
 import { personApi } from "@/api/person";
+import { DetailUser } from "../../../backend/src/controller/utils";
 
 Vue.use(Vuex);
 
+export const SET_USER = "SET_USER";
 const SET_PEOPLE = "SET_PEOPLE";
 const SET_PERSON_MAPPING = "SET_PERSON_MAPPING";
 const SET_IS_LOADING_PEOPLE = "SET_IS_LOADING_PEOPLE";
 const SET_PERSON_STAND_FOR_USER = "SET_PERSON_STAND_FOR_USER";
 const CLEAR_ALL_STATE_DATA = "CLEAR_ALL_STATE_DATA";
 
+export const UPDATE_USER = "UPDATE_USER";
 export const FETCH_PEOPLE = "FETCH_PEOPLE";
 export const CLEAR_STORE = "CLEAR_STORE";
 
-function getDefaultState() {
+export function getDefaultState() {
   return {
+    user: null as unknown as DetailUser,
     isLoadingPeople: false,
     people: [] as Person[],
     personMapping: {} as Record<string, Person>,
-    personStandForUser: null as Person | null,
+    personStandForUser: null as unknown as Person,
   };
 }
 
@@ -28,6 +32,9 @@ export default new Vuex.Store({
   state: getDefaultState(),
   getters: {},
   mutations: {
+    [SET_USER](state, { user }) {
+      state.user = user;
+    },
     [SET_PEOPLE](state, { people }) {
       state.people = people;
     },
@@ -45,6 +52,9 @@ export default new Vuex.Store({
     },
   },
   actions: {
+    [UPDATE_USER](context, { user }) {
+      context.commit(SET_USER, { user });
+    },
     async [FETCH_PEOPLE](context) {
       context.commit(SET_IS_LOADING_PEOPLE, { isLoadingPeople: true });
       try {

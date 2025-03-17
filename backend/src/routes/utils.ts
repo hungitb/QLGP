@@ -1,17 +1,17 @@
 
 import type { Request, Response, NextFunction } from "express";
 
-import { userDAO } from "../DAO";
-import {  type ControllerHandlerResult as CHR } from "../controller/utils";
-import { User } from "../model/User";
+import { userDAO, shareDAO } from "../DAO";
+import {  DetailUser, type ControllerHandlerResult as CHR } from "../controller/utils";
 
-export async function getLoggedInUser(req: Request) {
+export async function getLoggedInUser(req: Request): Promise<DetailUser | null> {
     const sessionToken = req.cookies?.sessionToken;
     if (!sessionToken) return null;
 
     const now = Date.now();
 
     const user = await userDAO.findOne({ where: { sessionToken } });
+    console.log(user)
     if (!user || !user.sessionExpiry || user.sessionExpiry < now) {
         return null;
     }
@@ -27,7 +27,14 @@ export async function getLoggedInUser(req: Request) {
         });
     }
 
-    return user;
+    if (user.ownGraph) return Object.assign(user, { ownGraph: true } as const);
+
+    const share = await shareDAO.findOne({ where: { to: user.id } });
+    if (!share) {
+        return Object.assign(user, { ownGraph: false, useGraphOfUserId: undefined } as const);
+    }
+
+    return Object.assign(user, { ownGraph: false, useGraphOfUserId: share.from, perm: share.perm } as const);
 }
 
 export function wrapHandlerSimple(fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) {
@@ -37,7 +44,7 @@ export function wrapHandlerSimple(fn: (req: Request, res: Response, next: NextFu
 }
 
 export function wrapHandlerAdvance<T extends {
-    [method: string]: (data: any, loggedInUser: User | null) => Promise<CHR<any>>
+    [method: string]: (data: any, loggedInUser: DetailUser | null) => Promise<CHR<any>>
 }, K extends keyof T>(controller: T, method: K) {
     return wrapHandlerSimple(async (req, res) => {
         const user = await getLoggedInUser(req);

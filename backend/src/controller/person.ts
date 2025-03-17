@@ -2,7 +2,7 @@ import { v4 as uuid } from "uuid";
 
 import { compareTwoDateString, lunarDateToNormalDate, normalDateToLunarDate, shortenDateString, todayDate } from "../utils/DateUtils";
 import { isStringPureInterger } from "../utils/ValidationUtils";
-import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR } from "./utils";
+import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR, DetailUser } from "./utils";
 import { LifeStatus, Gender, type Person } from "../model/Person";
 import type { User } from "../model/User";
 import type { IDAO } from "../model/IDAO";
@@ -111,7 +111,7 @@ export function filterPeople(people: Person[], search: string, searchFieldsAsStr
 }
 
 export default function getPersonController(personDAO: IDAO<Person>) {
-    async function getAllPeopleBaseInfo(data: PaginateParams, loggedInUser: User | null): Promise<CHR<{ people: Person[]; total: number }>> {
+    async function getAllPeopleBaseInfo(data: PaginateParams, loggedInUser: DetailUser | null): Promise<CHR<{ people: Person[]; total: number }>> {
         if (!loggedInUser) return CommonResponse[401];
 
         let people = await personDAO.findAll({ where: { ownerUserId: loggedInUser.id } });
@@ -149,7 +149,7 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         };
     }
 
-    async function getPersonDetailInfo({ id }: { id: string }, loggedInUser: User | null): Promise<CHR<{ person: Person & {
+    async function getPersonDetailInfo({ id }: { id: string }, loggedInUser: DetailUser | null): Promise<CHR<{ person: Person & {
         personIdsOnlySameFather: string[],
         personIdsOnlySameMother: string[],
         personIdsSameBothFatherAndMother: string[],
@@ -191,7 +191,7 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         }
     }
 
-    async function getFamilyTreeInfo({ subjectId, level }: { subjectId?: string, level: string }, loggedInUser: User | null): Promise<CHR<{
+    async function getFamilyTreeInfo({ subjectId, level }: { subjectId?: string, level: string }, loggedInUser: DetailUser | null): Promise<CHR<{
         ancestor: ExtendedPerson,
         subjectId: string,
     }>> {
@@ -294,7 +294,7 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         }
     }
 
-    async function createPerson(data: CreatePersonParams, loggedInUser: User | null): Promise<CHR<{ createdPersonId: string }>> {
+    async function createPerson(data: CreatePersonParams, loggedInUser: DetailUser | null): Promise<CHR<{ createdPersonId: string }>> {
         if (!loggedInUser) {
             return CommonResponse[400];
         }
@@ -358,7 +358,7 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         };
     }
 
-    async function deletePerson({ id }: { id: string }, loggedInUser: User | null): Promise<CHR<{ msg: string }>> {
+    async function deletePerson({ id }: { id: string }, loggedInUser: DetailUser | null): Promise<CHR<{ msg: string }>> {
         if (!loggedInUser) {
             return CommonResponse[401];
         }
@@ -381,7 +381,7 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         return CommonResponse.OK;
     }
 
-    async function updatePerson(data: Partial<Person> & { id: string }, loggedInUser: User | null): Promise<CHR<{ msg: string }>> {
+    async function updatePerson(data: Partial<Person> & { id: string }, loggedInUser: DetailUser | null): Promise<CHR<{ msg: string }>> {
         if (!loggedInUser) return CommonResponse[401];
 
         // to do: Validate data
@@ -438,7 +438,7 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         return CommonResponse.OK;
     }
 
-    async function statistic(data: any, loggedInUser: User | null): Promise<CHR<{
+    async function statistic(data: any, loggedInUser: DetailUser | null): Promise<CHR<{
         status: {
             [LifeStatus.ALIVE]: number,
             [LifeStatus.DEAD]: number,
@@ -555,7 +555,7 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         };
     }
 
-    async function analyzeRelationship({ id1, id2 }: { id1: string, id2: string }, loggedInUser: User | null): Promise<CHR<{ data: [string, string] }>> {
+    async function analyzeRelationship({ id1, id2 }: { id1: string, id2: string }, loggedInUser: DetailUser | null): Promise<CHR<{ data: [string, string] }>> {
         if (!loggedInUser) return CommonResponse.UNAUTHORIZED;
 
         const [p1, p2] = await Promise.all([

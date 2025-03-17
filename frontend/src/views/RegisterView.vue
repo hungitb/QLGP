@@ -10,80 +10,87 @@
       Đăng ký tài khoản
     </div>
     <v-form v-model="valid" ref="form">
-      <v-row>
-        <v-col cols="12" class="py-0">
-          <v-text-field
-            v-model="fullname"
-            :rules="rulesFullname"
-            label="Họ tên đầy đủ"
-            name="fullname"
-            autocomplete="fullname"
-            required
-            outlined
-            @input="clearRegisterErrorMessage"
-            :readonly="isLoadingRegister"
-          ></v-text-field>
-        </v-col>
+      <v-text-field
+        v-model="username"
+        :rules="rules"
+        label="Tên đăng nhập"
+        name="username"
+        autocomplete="username"
+        hint="Độ dài từ 6 đến 12, chỉ bao gồm a-z, A-Z, và 0-9"
+        required
+        outlined
+        @input="clearRegisterErrorMessage"
+        :readonly="isLoadingRegister"
+      ></v-text-field>
 
-        <v-col cols="12" class="py-0">
-          <v-select
-            v-model="gender"
-            :items="[Gender.MALE, Gender.FEMALE]"
-            label="Giới tính"
-            outlined
-            @input="clearRegisterErrorMessage"
-            :readonly="isLoadingRegister"
-          ></v-select>
-        </v-col>
+      <v-text-field
+        v-model="password"
+        :rules="rules"
+        label="Mật khẩu"
+        name="password"
+        autocomplete="new-password"
+        hint="Độ dài từ 6 đến 12, chỉ bao gồm a-z, A-Z, và 0-9"
+        :type="showPassword ? 'text' : 'password'"
+        :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+        @click:append="showPassword = !showPassword"
+        outlined
+        @input="clearRegisterErrorMessage"
+        :readonly="isLoadingRegister"
+      ></v-text-field>
 
-        <v-col cols="12" class="py-0">
-          <v-text-field
-            v-model="username"
-            :rules="rules"
-            label="Tên đăng nhập"
-            name="username"
-            autocomplete="username"
-            hint="Độ dài từ 6 đến 12, chỉ bao gồm a-z, A-Z, và 0-9"
-            required
-            outlined
-            @input="clearRegisterErrorMessage"
-            :readonly="isLoadingRegister"
-          ></v-text-field>
-        </v-col>
+      <v-text-field
+        v-model="password2"
+        :rules="[...rules, testForPassword2]"
+        label="Nhập lại mật khẩu"
+        name="confirm-password"
+        autocomplete="new-password"
+        :type="showPassword2 ? 'text' : 'password'"
+        :append-icon="showPassword2 ? 'mdi-eye' : 'mdi-eye-off'"
+        @click:append="showPassword2 = !showPassword2"
+        outlined
+        @input="clearRegisterErrorMessage"
+        :readonly="isLoadingRegister"
+      ></v-text-field>
 
-        <v-col cols="12" class="py-0">
-          <v-text-field
-            v-model="password"
-            :rules="rules"
-            label="Mật khẩu"
-            name="password"
-            autocomplete="new-password"
-            hint="Độ dài từ 6 đến 12, chỉ bao gồm a-z, A-Z, và 0-9"
-            :type="showPassword ? 'text' : 'password'"
-            :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-            @click:append="showPassword = !showPassword"
-            outlined
-            @input="clearRegisterErrorMessage"
-            :readonly="isLoadingRegister"
-          ></v-text-field>
-        </v-col>
+      <v-checkbox
+        v-model="ownGraph"
+        label="Quản lý gia phả của riêng bạn"
+        persistent-hint
+        class="mt-0"
+        :hint="
+          ownGraph
+            ? 'Bạn có toàn quyền quản lý gia phả của mình'
+            : 'Bạn sẽ chỉ có thể tham gia vào gia phả của người khác'
+        "
+      ></v-checkbox>
 
-        <v-col cols="12" class="py-0">
-          <v-text-field
-            v-model="password2"
-            :rules="[...rules, testForPassword2]"
-            label="Nhập lại mật khẩu"
-            name="confirm-password"
-            autocomplete="new-password"
-            :type="showPassword2 ? 'text' : 'password'"
-            :append-icon="showPassword2 ? 'mdi-eye' : 'mdi-eye-off'"
-            @click:append="showPassword2 = !showPassword2"
-            outlined
-            @input="clearRegisterErrorMessage"
-            :readonly="isLoadingRegister"
-          ></v-text-field>
-        </v-col>
-      </v-row>
+      <div v-if="ownGraph" class="mt-4 pl-6">
+        <div class="text-subtitle">Người đứng đầu gia phả</div>
+        <div class="text-caption grey--text mb-3">
+          Bạn có thể thay đổi sau này
+        </div>
+
+        <v-text-field
+          v-model="fullname"
+          :rules="rulesFullname"
+          label="Họ tên"
+          name="fullname"
+          autocomplete="fullname"
+          required
+          outlined
+          @input="clearRegisterErrorMessage"
+          :readonly="isLoadingRegister"
+        ></v-text-field>
+
+        <v-select
+          v-model="gender"
+          :items="[Gender.MALE, Gender.FEMALE]"
+          label="Giới tính"
+          outlined
+          @input="clearRegisterErrorMessage"
+          :readonly="isLoadingRegister"
+        ></v-select>
+      </div>
     </v-form>
 
     <v-alert dense outlined type="error" v-if="registerErrorMessage">
@@ -138,6 +145,7 @@ export default Vue.extend({
     username: isDev ? "qlgp1234" : "",
     password: isDev ? "qlgp1234" : "",
     password2: isDev ? "qlgp1234" : "",
+    ownGraph: true,
     rulesFullname: [(v: string) => !!v || "Không được để trống"],
     rules: [
       (v: string) => !!v || "Không được để trống",
@@ -179,6 +187,7 @@ export default Vue.extend({
         gender: this.gender,
         username: this.username,
         password: this.password,
+        ownGraph: this.ownGraph,
       });
       this.isLoadingRegister = false;
 
