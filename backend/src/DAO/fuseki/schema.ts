@@ -38,7 +38,8 @@ const personSchema = new TableSchema<Person>({
         },
         ownerUserId: {
             type: userSchema,
-            allowNull: false
+            allowNull: false,
+            alias: "belongToUser"
         },
         isStandForUser: {
             type: "boolean",
@@ -56,9 +57,18 @@ const personSchema = new TableSchema<Person>({
         birthdate: "string",
         status: "string",
         deathdate: "string",
-        spouseId: "__self__",
-        fatherId: "__self__",
-        motherId: "__self__"
+        spouseId: {
+            type: "__self__",
+            alias: "hasSpouse"
+        },
+        fatherId: {
+            type: "__self__",
+            alias: "hasFather"
+        },
+        motherId: {
+            type: "__self__",
+            alias: "hasMother"
+        }
     }
 });
 
@@ -67,7 +77,8 @@ const eventSettingSchema = new TableSchema<EventSetting>({
     fields: {
         userId: {
             type: userSchema,
-            primaryKey: true
+            primaryKey: true,
+            alias: "belongToUser"
         },
         targetType: {
             type: "string",

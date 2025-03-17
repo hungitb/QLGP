@@ -12,6 +12,7 @@ type Key<Model extends ValidModel> = Extract<keyof Model, string>;
 type TableSchemaFieldDefs<Model extends ValidModel> = {
     [key in keyof Model]: FieldType | ({
         type: FieldType;
+        alias?: string;
     } & (Model[key] extends number | string | boolean ? { allowNull: false } | { primaryKey: true } : {}));
 };
 type Triple = [subject: string, predicate: string, object: string];
@@ -66,8 +67,9 @@ export class TableSchema<Model extends ValidModel> {
     readonly __type__: "TableSchema";
     readonly name: string;
     readonly fields: TableSchemaFieldDefs<Model>;
+    readonly aliasMapping: Record<string, Key<Model>> = {};
+    readonly fieldMapping: Record<Key<Model>, string> = {} as any;
     readonly primaryKey: Key<Model>;
-    readonly allFields: Key<Model>[];
     readonly urlBase: string;
 
     constructor({
@@ -81,15 +83,15 @@ export class TableSchema<Model extends ValidModel> {
         this.name = name;
         this.urlBase = TableSchema.getBaseUrl(name);
         this.fields = fields;
-        this.allFields = Object.keys(fields) as Key<Model>[];
 
         if (TableSchema.allSchemas.some(schema => schema.name == name)) {
             throw Error("Duplicate schema name: " + name);
         }
 
+        const allFields = Object.keys(fields) as Key<Model>[];
         let primaryKeyDefined = false;
-        for (let i = 0; i < this.allFields.length; i++) {
-            const type = this.fields[this.allFields[i]];
+        for (let i = 0; i < allFields.length; i++) {
+            const type = this.fields[allFields[i]];
             
             if (
                 typeof type == "object" &&
@@ -98,15 +100,19 @@ export class TableSchema<Model extends ValidModel> {
                 type.primaryKey === true
             ) {
                 if (primaryKeyDefined) {
-                    throw Error(`Schema ${this.name} has more than one primary key, the second this "${this.allFields[i]}"`);
+                    throw Error(`Schema ${this.name} has more than one primary key, the second this "${allFields[i]}"`);
                 }
 
                 if (type.type != "string" && !(type.type instanceof TableSchema)) {
-                    throw Error(`Field ${this.allFields[i]} of schema ${this.name} is primary key, and it must be "string"`);
+                    throw Error(`Field ${allFields[i]} of schema ${this.name} is primary key, and it must be "string"`);
+                }
+
+                if (!(type.type instanceof TableSchema) && "alias" in type) {
+                    throw Error(`Does not support alias for primary key ${allFields[i]}, schema ${this.name}`);
                 }
 
                 primaryKeyDefined = true;
-                this.primaryKey = this.allFields[i];
+                this.primaryKey = allFields[i];
                 break;
             }
         }
@@ -115,7 +121,24 @@ export class TableSchema<Model extends ValidModel> {
             throw Error(`Missing primary key in schema ${name}`);
         }
 
-        this.primaryKey = this.allFields[0]; // By pass typescript
+        this.primaryKey = allFields[0]; // By pass typescript
+
+        allFields.forEach(field => {
+            const type = fields[field];
+            var alias;
+            if (
+                typeof type == "object" &&
+                (!("__type__" in type) || type.__type__ != "TableSchema") &&
+                "alias" in type && type.alias
+            ) {
+                alias = type.alias;
+            } else {
+                alias = field;
+            }
+
+            this.aliasMapping[alias] = field;
+            this.fieldMapping[field] = alias;
+        });
 
         this.registerItSelf();
     }
