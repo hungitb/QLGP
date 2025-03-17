@@ -1,8 +1,8 @@
 <template>
   <div
     class="person-card-wrapper"
-    @mouseover="showControl = true"
-    @mouseleave="showControl = false"
+    @mouseover="onMouseover"
+    @mouseleave="onMouseleave"
   >
     <div
       class="person-card elevation-2"
@@ -158,10 +158,25 @@ export default Vue.extend({
       showingMobileOverlay: false,
       showControl: false,
       timeoutClearMobileOverlay: undefined as number | undefined,
+      timeoutHideControlDesktop: undefined as number | undefined,
     };
   },
   methods: {
     transformDateString,
+    onMouseover() {
+      if (this.timeoutHideControlDesktop) {
+        clearTimeout(this.timeoutHideControlDesktop);
+        this.timeoutHideControlDesktop = undefined;
+      }
+
+      this.showControl = true;
+    },
+    onMouseleave() {
+      this.timeoutHideControlDesktop = setTimeout(() => {
+        this.showControl = false;
+        this.timeoutHideControlDesktop = undefined;
+      }, 2000);
+    },
     addPerson(type: string) {
       if (this.viewer && !this.viewer.isClickEvent()) {
         return;
@@ -189,7 +204,7 @@ export default Vue.extend({
         this.showingMobileOverlay = true;
 
         if (this.timeoutClearMobileOverlay) {
-          clearInterval(this.timeoutClearMobileOverlay);
+          clearTimeout(this.timeoutClearMobileOverlay);
         }
 
         this.timeoutClearMobileOverlay = setTimeout(() => {
