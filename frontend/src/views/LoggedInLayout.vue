@@ -28,22 +28,47 @@
         <!-- <v-toolbar-title>Quản lý gia phả</v-toolbar-title> -->
       </v-app-bar>
 
-      <v-main>
-        <router-view v-if="!isLoadingUser"></router-view>
-      </v-main>
-
-      <v-bottom-navigation
-        app
-        id="bottom-navigation"
-        color="primary"
-        grow
-        v-model="selectedItem"
+      <template
+        v-if="$store.state.user.ownGraph || $store.state.user.useGraphOfUserId"
       >
-        <v-btn v-for="({ title, icon, link }, i) in items" :key="i" :to="link">
-          <span>{{ title }}</span>
-          <v-icon>{{ icon }}</v-icon>
-        </v-btn>
-      </v-bottom-navigation>
+        <v-main>
+          <router-view v-if="!isLoadingUser"></router-view>
+        </v-main>
+
+        <v-bottom-navigation
+          app
+          id="bottom-navigation"
+          color="primary"
+          grow
+          v-model="selectedItem"
+        >
+          <v-btn
+            v-for="({ title, icon, link }, i) in items"
+            :key="i"
+            :to="link"
+          >
+            <span>{{ title }}</span>
+            <v-icon>{{ icon }}</v-icon>
+          </v-btn>
+        </v-bottom-navigation>
+      </template>
+      <template v-else>
+        <v-main>
+          <div
+            style="width: 100%; height: calc(100vh - 200px)"
+            class="d-flex justify-center align-center"
+          >
+            <div>
+              <div class="text-h4 text-center">
+                Bạn chưa tham gia gia phả nào cả
+              </div>
+              <div class="text-subtitle grey--text text-center mt-2">
+                Liên hệ người quản trị gia phả để được thêm vào
+              </div>
+            </div>
+          </div>
+        </v-main>
+      </template>
     </template>
 
     <FullViewLoading :tbb="true" v-if="isLoading"></FullViewLoading>
@@ -109,6 +134,7 @@ export default Vue.extend({
     ...mapActions([FETCH_PEOPLE, CLEAR_STORE, UPDATE_USER]),
     updateSelectedItemFromRoute(route: Route) {
       window.scrollTo(0, 0);
+      this.checkUser();
 
       let matchingIndex = -1;
       let bestMatchLength = -1;

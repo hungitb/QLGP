@@ -56,7 +56,7 @@
         v-model="ownGraph"
         label="Quản lý gia phả của riêng bạn"
         persistent-hint
-        class="mt-0"
+        class="mt-0 mb-4"
         :hint="
           ownGraph
             ? 'Bạn có toàn quyền quản lý gia phả của mình'
@@ -64,7 +64,7 @@
         "
       ></v-checkbox>
 
-      <div v-if="ownGraph" class="mt-4 pl-6">
+      <div v-if="ownGraph" class="pl-6">
         <div class="text-subtitle">Người đứng đầu gia phả</div>
         <div class="text-caption grey--text mb-3">
           Bạn có thể thay đổi sau này

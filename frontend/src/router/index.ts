@@ -15,6 +15,7 @@ import StatisticView from "@/views/utilities/StatisticView.vue";
 import BackupDataView from "@/views/utilities/BackupDataView.vue";
 import LunarCalendarView from "@/views/utilities/LunarCalendarView.vue";
 import RelationshipAnalyzeView from "@/views/utilities/RelationshipAnalyzeView.vue";
+import ShareManagementView from "@/views/utilities/ShareManagementView.vue";
 
 Vue.use(VueRouter);
 
@@ -78,6 +79,11 @@ const routes: Array<RouteConfig> = [
             path: "relationship_analyze",
             name: "relationship_analyze",
             component: RelationshipAnalyzeView,
+          },
+          {
+            path: "share_management",
+            name: "share_management",
+            component: ShareManagementView,
           },
         ],
       },

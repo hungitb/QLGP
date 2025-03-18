@@ -336,13 +336,14 @@ export class TableSchema<Model extends ValidModel> {
             return [];
         }
 
-        const triples = match ? this.entriesPartialModel(this.filterInvalidProps(match)).map(([k, v]) => {
+        const triples: Triple[] = match ? this.entriesPartialModel(match).map(([k, v]) => {
             return ["?s", `${this.name}:${k}`, this.tripleObjectRepr(k, v)] as Triple;
-        }) : [];
+        }) : [["?s", "?p", "?o"]];
 
         const response = await Fuseki.execSelectQuery<"s">(`
             SELECT ?s
             WHERE {
+                ?s a :${this.name} .
                 ${this.tripleQueryRepr(triples)}
             }
         `);

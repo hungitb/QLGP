@@ -10,47 +10,40 @@
       Đăng nhập vào tài khoản của bạn
     </div>
     <v-form v-model="valid" ref="form">
-      <v-row>
-        <v-col cols="12" class="py-0">
-          <v-text-field
-            v-model="username"
-            :rules="rules"
-            label="Tên đăng nhập"
-            name="username"
-            autocomplete="username"
-            hint="Độ dài từ 6 đến 12, chỉ bao gồm a-z, A-Z, và 0-9"
-            required
-            outlined
-            @input="clearLoginErrorMessage"
-            :readonly="isLoadingLogin"
-          ></v-text-field>
-        </v-col>
+      <v-text-field
+        v-model="username"
+        :rules="rules"
+        label="Tên đăng nhập"
+        name="username"
+        autocomplete="username"
+        hint="Độ dài từ 6 đến 12, chỉ bao gồm a-z, A-Z, và 0-9"
+        required
+        outlined
+        @input="clearLoginErrorMessage"
+        :readonly="isLoadingLogin"
+      ></v-text-field>
 
-        <v-col cols="12" class="py-0">
-          <v-text-field
-            v-model="password"
-            :rules="rules"
-            label="Mật khẩu"
-            name="password"
-            autocomplete="current-password"
-            hint="Độ dài từ 6 đến 12, chỉ bao gồm a-z, A-Z, và 0-9"
-            :type="showPassword ? 'text' : 'password'"
-            :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-            @click:append="showPassword = !showPassword"
-            outlined
-            @input="clearLoginErrorMessage"
-            :readonly="isLoadingLogin"
-          ></v-text-field>
-        </v-col>
+      <v-text-field
+        v-model="password"
+        :rules="rules"
+        label="Mật khẩu"
+        name="password"
+        autocomplete="current-password"
+        hint="Độ dài từ 6 đến 12, chỉ bao gồm a-z, A-Z, và 0-9"
+        :type="showPassword ? 'text' : 'password'"
+        :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+        @click:append="showPassword = !showPassword"
+        outlined
+        @input="clearLoginErrorMessage"
+        :readonly="isLoadingLogin"
+      ></v-text-field>
 
-        <v-col cols="12" class="py-0" v-if="showRememberMe">
-          <v-checkbox
-            v-model="rememberMe"
-            label="Nhớ thông tin đăng nhập (Không bảo mật)"
-            class="mt-0"
-          ></v-checkbox>
-        </v-col>
-      </v-row>
+      <v-checkbox
+        v-if="showRememberMe"
+        v-model="rememberMe"
+        label="Nhớ thông tin đăng nhập (Không bảo mật)"
+        class="mt-0"
+      ></v-checkbox>
     </v-form>
 
     <v-alert dense outlined type="error" v-if="loginErrorMessage">

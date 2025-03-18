@@ -13,7 +13,10 @@ import {
   wrapApi,
 } from "../../../backend/src/DAO/fake/FakeDAO";
 import { Gender } from "../../../backend/src/model/Person";
-import { ControllerHandlerResult as CHR, DetailUser } from "../../../backend/src/controller/utils";
+import {
+  ControllerHandlerResult as CHR,
+  DetailUser,
+} from "../../../backend/src/controller/utils";
 
 const authController = getAuthController(userDAO, personDAO, eventSettingDAO);
 

@@ -11,7 +11,6 @@ export async function getLoggedInUser(req: Request): Promise<DetailUser | null> 
     const now = Date.now();
 
     const user = await userDAO.findOne({ where: { sessionToken } });
-    console.log(user)
     if (!user || !user.sessionExpiry || user.sessionExpiry < now) {
         return null;
     }

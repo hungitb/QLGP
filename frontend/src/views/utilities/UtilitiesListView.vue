@@ -36,11 +36,13 @@
 </template>
 
 <script lang="ts">
+import { permissionMixin } from "@/utils";
 import { defineComponent } from "vue";
 
 const buildStatic = process.env.QLGP_USE_BACKEND != "true";
 
 export default defineComponent({
+  mixins: [permissionMixin],
   data() {
     return {
       items: [
@@ -69,6 +71,17 @@ export default defineComponent({
                 title: "Sao lưu dữ liệu",
                 subtitle: "Tạo dữ liệu sao lưu để di chuyển sang thiết bị khác",
                 url: "/utilities/backup",
+              },
+            ]
+          : []),
+        ...(this.ownGraph()
+          ? [
+              {
+                icon: "mdi-share-variant",
+                title: "Chia sẻ gia phả",
+                subtitle:
+                  "Cho phép người khác có thể tham gia, xem, hoặc sửa thông tin gia phả của bạn",
+                url: "/utilities/share_management",
               },
             ]
           : []),
