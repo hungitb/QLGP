@@ -190,6 +190,7 @@
             </v-list>
           </CustomDialog>
           <v-btn
+            v-if="canWrite()"
             :small="isSmallScreen ? true : undefined"
             outlined
             color="primary"
@@ -302,6 +303,7 @@ import {
 import CustomDialog from "@/components/CustomDialog.vue";
 import PersonInputGroup from "@/components/input/PersonInputGroup.vue";
 import { showSnackbar } from "@/components/utilities";
+import { permissionMixin } from "@/utils";
 
 export default defineComponent({
   components: {
@@ -309,6 +311,7 @@ export default defineComponent({
     CustomDialog,
     PersonInputGroup,
   },
+  mixins: [permissionMixin],
   data() {
     return {
       EventTargetType,
@@ -343,7 +346,7 @@ export default defineComponent({
   },
   computed: {
     isSmallScreen() {
-      return this.$vuetify.breakpoint.width < 500;
+      return (this as any).$vuetify.breakpoint.width < 500;
     },
   },
   methods: {

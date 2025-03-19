@@ -1,4 +1,5 @@
 import { DateFormat } from "./components/types";
+import store from "./store";
 
 export function checkIfIsMobile() {
   let isMobile = false;
@@ -86,3 +87,19 @@ export function resizeImageSrc(imageSrc: string): Promise<string> {
     }
   });
 }
+
+type PermissionMixinThis = {
+  $store: typeof store;
+};
+
+export const permissionMixin = {
+  methods: {
+    ownGraph(this: PermissionMixinThis) {
+      return this.$store.state.user.ownGraph;
+    },
+    canWrite(this: PermissionMixinThis) {
+      const user = this.$store.state.user;
+      return !!(user.ownGraph || (user.useGraphOfUserId && user.perm == "write"));
+    },
+  },
+};

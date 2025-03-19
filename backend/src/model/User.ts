@@ -5,4 +5,5 @@ export type User = {
     password: string
     sessionToken: string | null
     sessionExpiry: number | null
+    ownGraph: boolean
 };

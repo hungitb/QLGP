@@ -77,7 +77,7 @@
             <v-card>
               <v-card-title>
                 Danh sách người thân
-                <template v-if="!$vuetify.breakpoint.smAndDown">
+                <template v-if="!$vuetify.breakpoint.smAndDown && canWrite()">
                   <v-divider vertical class="mx-4"></v-divider>
                   <v-btn
                     @click="showDialogAddOrCreatePerson"
@@ -235,7 +235,7 @@
 
     <!-- Hard code position -->
     <div
-      v-if="$vuetify.breakpoint.smAndDown"
+      v-if="$vuetify.breakpoint.smAndDown && canWrite()"
       style="position: fixed; right: 12px; bottom: 72px"
     >
       <v-btn
@@ -270,11 +270,13 @@ import {
   showDialogAddOrCreatePerson,
   showDialogPersonDetailInfo,
 } from "@/components/utilities";
+import { permissionMixin } from "@/utils";
 
 export default Vue.extend({
   components: {
     CustomPersonAvatar,
   },
+  mixins: [permissionMixin],
   data: function () {
     return {
       allEventTypes,

@@ -1,9 +1,17 @@
-export type ControllerHandlerResult<K extends object> = {
+import { User } from "../model/User";
+
+export type ControllerHandlerResult<K extends object = {}> = {
     data: {
       [attr in keyof K]?: K[attr];
     } & { msg?: string };
     status: number;
 };
+
+export type DetailUser = User & (
+    { ownGraph: true } |
+    { ownGraph: false, useGraphOfUserId: undefined } |
+    { ownGraph: false, useGraphOfUserId: string, perm: "read" | "write" }
+);
 
 export type PaginateParams = {
     sortBy?: string,
@@ -95,7 +103,8 @@ export enum CommonMessages {
     OK = "OK",
     NOK = "Not OK",
     UNAUTHORIZED = "Unauthorized",
-    BAD_REQUEST = "Bad request!"
+    BAD_REQUEST = "Bad request!",
+    FORBIDDEN = "Forbidden"
 }
 
 export enum AuthMessages {
@@ -110,8 +119,16 @@ export async function generateSessionToken() {
 
 export const CommonResponse = {
     400: { data: { msg: CommonMessages.BAD_REQUEST }, status: 400 },
+    FORBIDDEN: { data: { msg: CommonMessages.FORBIDDEN }, status: 403 },
     BAD_REQUEST: { data: { msg: CommonMessages.BAD_REQUEST }, status: 400 },
     401: { data: { msg: CommonMessages.UNAUTHORIZED }, status: 401 },
     UNAUTHORIZED: { data: { msg: CommonMessages.UNAUTHORIZED }, status: 401 },
     OK: { data: { msg: CommonMessages.OK }, status: 200 }
+}
+
+export function badRequetWithMsg(msg: string) {
+    return {
+        data: { msg },
+        status: 400
+    };
 }

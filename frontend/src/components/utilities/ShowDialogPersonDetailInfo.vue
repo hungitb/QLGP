@@ -3,7 +3,7 @@
     <PersonDetailDialog
       v-model="dialog"
       :personId="personId"
-      :editable="editable"
+      :editable="editable && canWrite()"
       :onPersonEdited="onPersonEdited"
       :onPersonDeleted="onPersonDeleted"
     />
@@ -13,6 +13,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import PersonDetailDialog from "../PersonDetailDialog.vue";
+import { permissionMixin } from "@/utils";
 
 type ShowDialogPersonDetailInfoParams = {
   personId: string;
@@ -35,6 +36,7 @@ export default defineComponent({
   components: {
     PersonDetailDialog,
   },
+  mixins: [permissionMixin],
   data() {
     return {
       dialog: false,
