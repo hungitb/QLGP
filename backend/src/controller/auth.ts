@@ -28,12 +28,12 @@ export default function getAuthController(userDAO: IDAO<User>, personDAO: IDAO<P
         user.sessionToken = process.env.QLGP_USE_BACKEND == "true" ? (await generateSessionToken()) : user.username
         user.sessionExpiry = Date.now() + parseInt(process.env.QLGP_SESSION_DURATION || "30")*60*1000;
 
-        userDAO.update({
+        await userDAO.update({
             sessionToken: user.sessionToken,
             sessionExpiry: user.sessionExpiry
         }, {
             where: { id: user.id }
-        })
+        });
 
         return {
             data: {

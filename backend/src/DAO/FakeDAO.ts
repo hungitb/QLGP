@@ -519,8 +519,9 @@ function getData(): Promise<Dict[]>[] {
     "people",
     "fieldDefs",
     "fieldVals",
-    "eventSettings",
-  ];
+    "eventSettings"
+  ] as const;
+  const x: (typeof tableNames)["length"] extends AllTableTypes["length"] ? number : never = 1; // Trick
 
   let _cache: Dict[][] | null = null;
   async function getDataFromStorage() {
