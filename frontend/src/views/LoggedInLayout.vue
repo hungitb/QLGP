@@ -58,7 +58,7 @@
             style="width: 100%; height: calc(100vh - 200px)"
             class="d-flex justify-center align-center"
           >
-            <div>
+            <div class="px-6">
               <div class="text-h4 text-center">
                 Bạn chưa tham gia gia phả nào cả
               </div>

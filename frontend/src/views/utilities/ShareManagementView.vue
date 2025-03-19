@@ -86,8 +86,10 @@ import { shareApi } from "@/api/share";
 import { User } from "../../../../backend/src/model/User";
 import { showSnackbar } from "@/components/utilities/ShowSnackbar.vue";
 import { showDialogConfirm } from "@/components/utilities";
+import { permissionMixin } from "@/utils";
 
 export default defineComponent({
+  mixins: [permissionMixin],
   data() {
     return {
       search: "",
@@ -215,6 +217,11 @@ export default defineComponent({
       this.loadSharedUsers();
       this.choosedUsername = null;
     },
+  },
+  beforeMount() {
+    if (!this.ownGraph()) {
+      this.$router.push("/");
+    }
   },
   mounted() {
     this.loadSharedUsers();
