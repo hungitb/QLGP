@@ -114,7 +114,9 @@ export default function getPersonController(personDAO: IDAO<Person>) {
     async function getAllPeopleBaseInfo(data: PaginateParams, loggedInUser: DetailUser | null): Promise<CHR<{ people: Person[]; total: number }>> {
         if (!loggedInUser) return CommonResponse[401];
 
-        let people = await personDAO.findAll({ where: { ownerUserId: loggedInUser.id } });
+        const graphOfUserId = loggedInUser.ownGraph ? loggedInUser.id : (loggedInUser.useGraphOfUserId!);
+
+        let people = await personDAO.findAll({ where: { ownerUserId: graphOfUserId } });
         if (data.search) {
             people = filterPeople(people, data.search, data.searchFields);
         }
@@ -157,7 +159,9 @@ export default function getPersonController(personDAO: IDAO<Person>) {
     } }>> {
         if (!loggedInUser) return CommonResponse.UNAUTHORIZED;
 
-        const person = await personDAO.findOne({ where: { id, ownerUserId: loggedInUser.id } });
+        const graphOfUserId = loggedInUser.ownGraph ? loggedInUser.id : (loggedInUser.useGraphOfUserId!);
+
+        const person = await personDAO.findOne({ where: { id, ownerUserId: graphOfUserId } });
         if (!person) return CommonResponse.BAD_REQUEST;
 
         const [peopleHasSameFather, peopleHasSameMother, children] = await Promise.all([
@@ -196,15 +200,17 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         subjectId: string,
     }>> {
         if (!loggedInUser) return CommonResponse.UNAUTHORIZED;
+        const graphOfUserId = loggedInUser.ownGraph ? loggedInUser.id : (loggedInUser.useGraphOfUserId!);
+
         const levelInt = parseInt(level);
         if (isNaN(levelInt)) return CommonResponse.BAD_REQUEST;
         if (!subjectId) {
-            const personStandForUser = await personDAO.findOne({ where: { ownerUserId: loggedInUser.id, isStandForUser: true } });
+            const personStandForUser = await personDAO.findOne({ where: { ownerUserId: graphOfUserId, isStandForUser: true } });
             if (!personStandForUser) return CommonResponse.UNAUTHORIZED;
             subjectId = personStandForUser.id;
         }
 
-        const people = await personDAO.findAll({ where: { ownerUserId: loggedInUser.id } });
+        const people = await personDAO.findAll({ where: { ownerUserId: graphOfUserId } });
 
         const mapIdToPerson: Record<string, ExtendedPerson> = {};
         const childrenIdsOf: Record<string, string[]> = {};
@@ -298,13 +304,15 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         if (!loggedInUser) {
             return CommonResponse[400];
         }
+        const graphOfUserId = loggedInUser.ownGraph ? loggedInUser.id : (loggedInUser.useGraphOfUserId!);
+
         // to do: Check params, check trùng, tồn tại,...
         // Check xem nếu có bố, mẹ thì giới tính bố, mẹ có phải nam hay nữ không
 
         const newPerson: Person = {
             ...data.person,
             id: uuid(),
-            ownerUserId: loggedInUser.id,
+            ownerUserId: graphOfUserId,
             isStandForUser: false,
             birthdate: data.person.birthdate ? shortenDateString(data.person.birthdate) : null,
             deathdate: data.person.deathdate ? shortenDateString(data.person.deathdate) : null,
@@ -362,9 +370,10 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         if (!loggedInUser) {
             return CommonResponse[401];
         }
+        const graphOfUserId = loggedInUser.ownGraph ? loggedInUser.id : (loggedInUser.useGraphOfUserId!);
 
         const person = await personDAO.findByPk(id);
-        if (!person || person.ownerUserId != loggedInUser.id || person.isStandForUser) {
+        if (!person || person.ownerUserId != graphOfUserId || person.isStandForUser) {
             return CommonResponse[400];
         }
 
@@ -383,11 +392,12 @@ export default function getPersonController(personDAO: IDAO<Person>) {
 
     async function updatePerson(data: Partial<Person> & { id: string }, loggedInUser: DetailUser | null): Promise<CHR<{ msg: string }>> {
         if (!loggedInUser) return CommonResponse[401];
+        const graphOfUserId = loggedInUser.ownGraph ? loggedInUser.id : (loggedInUser.useGraphOfUserId!);
 
         // to do: Validate data
 
-        const person = await personDAO.findByPk(data.id);
-        if (!person) return CommonResponse[400];
+        const person = await personDAO.findOne({ where: { id: data.id, ownerUserId: graphOfUserId } });
+        if (!person) return CommonResponse.BAD_REQUEST;
 
         await Promise.all(Object.entries(data).map(async ([_field, value]) => {
             const field = _field as keyof typeof data;
@@ -456,6 +466,7 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         deathYears: { [month: string]: number },
     }>> {
         if (!loggedInUser) return CommonResponse[401];
+        const graphOfUserId = loggedInUser.ownGraph ? loggedInUser.id : (loggedInUser.useGraphOfUserId!);
 
         const status = {
             [LifeStatus.ALIVE]: 0,
@@ -473,7 +484,7 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         const birthYears : { [month: string]: number } = {};
         const deathYears : { [month: string]: number } = {};
 
-        const people = await personDAO.findAll({ where: { ownerUserId: loggedInUser.id } });
+        const people = await personDAO.findAll({ where: { ownerUserId: graphOfUserId } });
         const [nd, nm, ny] = todayDate().split("/").map(n => parseInt(n));
 
         const increaseKeyValue = (obj: Record<string, number>, key: string | number) => {
@@ -558,9 +569,11 @@ export default function getPersonController(personDAO: IDAO<Person>) {
     async function analyzeRelationship({ id1, id2 }: { id1: string, id2: string }, loggedInUser: DetailUser | null): Promise<CHR<{ data: [string, string] }>> {
         if (!loggedInUser) return CommonResponse.UNAUTHORIZED;
 
+        const graphOfUserId = loggedInUser.ownGraph ? loggedInUser.id : (loggedInUser.useGraphOfUserId!);
+
         const [p1, p2] = await Promise.all([
-            personDAO.findByPk(id1),
-            personDAO.findByPk(id2)
+            personDAO.findOne({ where: { id: id1, ownerUserId: graphOfUserId } }),
+            personDAO.findOne({ where: { id: id2, ownerUserId: graphOfUserId } })
         ]);
 
         if (!p1 || !p2) return CommonResponse.BAD_REQUEST;

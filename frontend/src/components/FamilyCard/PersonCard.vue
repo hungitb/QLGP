@@ -87,6 +87,7 @@
     <div
       class="control top"
       v-if="
+        canWrite() &&
         (!person.fatherId || !person.motherId) &&
         (showControl || showingMobileOverlay) &&
         !viewOnly
@@ -99,7 +100,7 @@
 
     <div
       class="control bottom"
-      v-if="(showControl || showingMobileOverlay) && !viewOnly"
+      v-if="canWrite() && (showControl || showingMobileOverlay) && !viewOnly"
     >
       <Btn @click="addPerson('child')">Con</Btn>
       <v-spacer />
@@ -123,7 +124,7 @@ import {
   showDialogAddPersonWithSpecificRole,
   showDialogPersonDetailInfo,
 } from "@/components/utilities";
-import { checkIfIsMobile } from "@/utils";
+import { checkIfIsMobile, permissionMixin } from "@/utils";
 import CustomPersonAvatar from "../CustomPersonAvatar.vue";
 import { transformDateString } from "../../../../backend/src/utils/DateUtils";
 
@@ -132,6 +133,7 @@ export default Vue.extend({
     CustomPersonAvatar,
     Btn: PersonCardButton,
   },
+  mixins: [permissionMixin],
   props: {
     person: {
       type: Object as () => ExtendedPerson | Person,

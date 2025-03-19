@@ -98,6 +98,8 @@ export default function getEventController(eventSettingDAO: IDAO<EventSetting>, 
     async function getEvents({ startDate, endDate }: { startDate?: string, endDate?: string }, loggedInUser: DetailUser | null): Promise<CHR<{ events: Event[], eventSetting: EventSetting }>> {
         if (!loggedInUser) return CommonResponse.UNAUTHORIZED;
 
+        const graphOfUserId = loggedInUser.ownGraph ? loggedInUser.id : (loggedInUser.useGraphOfUserId!);
+
         if (!startDate) {
             startDate = todayDate();
         }
@@ -105,11 +107,11 @@ export default function getEventController(eventSettingDAO: IDAO<EventSetting>, 
             endDate = datePlusDay(startDate, 366);
         }
 
-        const eventSetting = await eventSettingDAO.findByPk(loggedInUser.id);
+        const eventSetting = await eventSettingDAO.findByPk(graphOfUserId);
         if (!eventSetting) return CommonResponse[400];
 
         const people = filterPeople(
-            await personDAO.findAll({ where: { ownerUserId: loggedInUser.id } }),
+            await personDAO.findAll({ where: { ownerUserId: graphOfUserId } }),
             eventSetting
         );
         const events: Event[] = [];
@@ -276,6 +278,8 @@ export default function getEventController(eventSettingDAO: IDAO<EventSetting>, 
     async function updateEventSetting(data: Partial<EventSetting>, loggedInUser: DetailUser | null): Promise<CHR<{ msg: string }>> {
         if (!loggedInUser) return CommonResponse.UNAUTHORIZED;
 
+        const graphOfUserId = loggedInUser.ownGraph ? loggedInUser.id : (loggedInUser.useGraphOfUserId!);
+
         if (data.types) {
             const typesArray = data.types.split(",");
             typesArray.sort();
@@ -299,7 +303,7 @@ export default function getEventController(eventSettingDAO: IDAO<EventSetting>, 
             }
         }
 
-        eventSettingDAO.update(data, { where: { userId: loggedInUser.id } });
+        eventSettingDAO.update(data, { where: { userId: graphOfUserId } });
 
         return CommonResponse.OK;
     }
