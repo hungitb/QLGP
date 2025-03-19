@@ -9,6 +9,9 @@ const router = Router();
 const shareController = getShareController(shareDAO, userDAO);
 
 router.get("/search", wrapHandlerAdvance(shareController, "searchUser"));
-router.get("/shared", wrapHandlerAdvance(shareController, "shared"));
+router.get("/", wrapHandlerAdvance(shareController, "shared"));
+router.post("/", wrapHandlerAdvance(shareController, "addShare"));
+router.patch("/", wrapHandlerAdvance(shareController, "changePerm"));
+router.delete("/", wrapHandlerAdvance(shareController, "deleteShare"));
 
 export default router;

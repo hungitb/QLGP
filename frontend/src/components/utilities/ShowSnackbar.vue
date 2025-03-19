@@ -1,5 +1,5 @@
 <template>
-  <v-snackbar v-model="snackbar" color="primary">
+  <v-snackbar v-model="snackbar" :color="color">
     {{ msg }}
 
     <template v-slot:action="{ attrs }">
@@ -13,7 +13,7 @@ import { defineComponent } from "vue";
 
 type ShowSnackbarParams = {
   msg: string;
-  type?: "info" | "success";
+  type?: "info" | "success" | "error";
 };
 let _showSnackbar: ((data: ShowSnackbarParams) => any) | undefined = undefined;
 export function showSnackbar(data: ShowSnackbarParams) {
@@ -29,6 +29,20 @@ export default defineComponent({
       msg: "",
       type: "info" as Exclude<ShowSnackbarParams["type"], undefined>,
     };
+  },
+  computed: {
+    color() {
+      const colorMapping: Record<
+        NonNullable<ShowSnackbarParams["type"]>,
+        string
+      > = {
+        info: "primary",
+        success: "success",
+        error: "red",
+      };
+
+      return colorMapping[(this as any).type];
+    },
   },
   watch: {
     snackbar(val) {

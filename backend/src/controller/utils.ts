@@ -1,6 +1,6 @@
 import { User } from "../model/User";
 
-export type ControllerHandlerResult<K extends object> = {
+export type ControllerHandlerResult<K extends object = {}> = {
     data: {
       [attr in keyof K]?: K[attr];
     } & { msg?: string };
@@ -124,4 +124,11 @@ export const CommonResponse = {
     401: { data: { msg: CommonMessages.UNAUTHORIZED }, status: 401 },
     UNAUTHORIZED: { data: { msg: CommonMessages.UNAUTHORIZED }, status: 401 },
     OK: { data: { msg: CommonMessages.OK }, status: 200 }
+}
+
+export function badRequetWithMsg(msg: string) {
+    return {
+        data: { msg },
+        status: 400
+    };
 }

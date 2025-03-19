@@ -11,6 +11,7 @@ import DialogConfirm from "@/components/DialogConfirm.vue";
 
 type ShowConfirmDialogParams = {
   onConfirmed: () => any;
+  notAwaitOnConfirmed?: boolean;
   header: string;
   info?: string;
   confirmText?: string;
@@ -41,11 +42,17 @@ export default defineComponent({
     },
   },
   methods: {
-    showDialogConfirm(data: ShowConfirmDialogParams) {
+    showDialogConfirm({ notAwaitOnConfirmed, ...data }: ShowConfirmDialogParams) {
       this.show = true;
       this.props = {
         ...data,
-        callbackBeforeClose: data.onConfirmed,
+        ...(
+          notAwaitOnConfirmed ? {
+            callbackAfterClose: data.onConfirmed
+          } : {
+            callbackBeforeClose: data.onConfirmed
+          }
+        ),
       };
     },
   },

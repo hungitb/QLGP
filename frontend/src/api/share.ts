@@ -29,11 +29,41 @@ export const shareApi = wrapApi({
   },
   async shared() {
     if (useBackend) {
-      return await wrapAxiosCall(() => api.get("/share/shared"));
+      return await wrapAxiosCall(() => api.get("/share"));
     }
 
     return await shareController.shared(
       {},
+      await getLoggedInUserLocalStorage()
+    );
+  },
+  async addShare(data: { username: string; perm: "read" | "write" }) {
+    if (useBackend) {
+      return await wrapAxiosCall(() => api.post("/share", data));
+    }
+
+    return await shareController.addShare(
+      data,
+      await getLoggedInUserLocalStorage()
+    );
+  },
+  async changePerm(data: { userId: string; perm: "read" | "write" }) {
+    if (useBackend) {
+      return await wrapAxiosCall(() => api.patch("/share", data));
+    }
+
+    return await shareController.changePerm(
+      data,
+      await getLoggedInUserLocalStorage()
+    );
+  },
+  async deleteShare(data: { userId: string }) {
+    if (useBackend) {
+      return await wrapAxiosCall(() => api.delete("/share", { params: data }));
+    }
+
+    return await shareController.deleteShare(
+      data,
       await getLoggedInUserLocalStorage()
     );
   },

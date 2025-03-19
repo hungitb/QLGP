@@ -420,7 +420,11 @@ export class TableSchema<Model extends ValidModel> {
         const idsRepr = ids.map(id => `${this.name}:${id}`).join(", ");
 
         await Fuseki.execPostQuery(`
-            DELETE WHERE {
+            DELETE {
+                ?s ?p ?o
+            }
+                
+            WHERE {
                 ?s ?p ?o .
                 FILTER (
                     ?s in (${idsRepr}) ||

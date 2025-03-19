@@ -131,7 +131,7 @@ export default Vue.extend({
         return;
       }
       if (status > 299) {
-        this.loginErrorMessage = data.msg || "";
+        this.loginErrorMessage = data.msg || "Có lỗi xảy ra";
         return;
       }
 
