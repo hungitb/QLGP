@@ -525,7 +525,6 @@ function getData(): Promise<Dict[]>[] {
     "eventSettings",
     "shares"
   ] as const;
-  const x: (typeof tableNames)["length"] extends AllTableTypes["length"] ? number : never = 1; // Trick
 
   let _cache: Dict[][] | null = null;
   async function getDataFromStorage() {
@@ -535,10 +534,11 @@ function getData(): Promise<Dict[]>[] {
       tableNames.map((name) => storage.getItem(`QLGP.${name}`))
     )) as AllTableTypes;
 
-    const [users, people, fieldDefs, fieldVals, eventSettings] = tableDatas;
+    const [users, people, fieldDefs, fieldVals, eventSettings, shares] = tableDatas;
+    const x: (typeof tableNames)["length"] extends AllTableTypes["length"] ? number : never = 1; // Trick
     await storage.setItem("QLGP.metadata", [{ dataVersion }]);
 
-    _cache = [users, people, fieldDefs, fieldVals, eventSettings];
+    _cache = [users, people, fieldDefs, fieldVals, eventSettings, shares];
     return _cache;
   }
   getDataFromStorage();
