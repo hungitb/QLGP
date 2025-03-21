@@ -1,5 +1,5 @@
 <template>
-  <v-snackbar v-model="snackbar" :color="color">
+  <v-snackbar v-model="snackbar" :color="color" app>
     {{ msg }}
 
     <template v-slot:action="{ attrs }">

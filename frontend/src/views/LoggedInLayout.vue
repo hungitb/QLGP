@@ -24,8 +24,7 @@
 
       <v-app-bar app dark color="primary" id="app-bar">
         <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
-
-        <!-- <v-toolbar-title>Quản lý gia phả</v-toolbar-title> -->
+        <v-toolbar-title>Quản lý gia phả</v-toolbar-title>
       </v-app-bar>
 
       <template
