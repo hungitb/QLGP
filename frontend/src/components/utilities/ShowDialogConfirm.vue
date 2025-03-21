@@ -42,17 +42,20 @@ export default defineComponent({
     },
   },
   methods: {
-    showDialogConfirm({ notAwaitOnConfirmed, ...data }: ShowConfirmDialogParams) {
+    showDialogConfirm({
+      notAwaitOnConfirmed,
+      ...data
+    }: ShowConfirmDialogParams) {
       this.show = true;
       this.props = {
         ...data,
-        ...(
-          notAwaitOnConfirmed ? {
-            callbackAfterClose: data.onConfirmed
-          } : {
-            callbackBeforeClose: data.onConfirmed
-          }
-        ),
+        ...(notAwaitOnConfirmed
+          ? {
+              callbackAfterClose: data.onConfirmed,
+            }
+          : {
+              callbackBeforeClose: data.onConfirmed,
+            }),
       };
     },
   },

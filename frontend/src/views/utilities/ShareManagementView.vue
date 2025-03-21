@@ -58,7 +58,7 @@
                       { text: 'Xem và sửa', value: 'write' },
                     ]"
                     :value="value"
-                    @change="v => onPermChange(item, v)"
+                    @change="(v) => onPermChange(item, v)"
                     dense
                     outlined
                     hide-details
@@ -136,20 +136,22 @@ export default defineComponent({
   methods: {
     async onPermChange(target: User, perm: "write" | "read") {
       this.loadingSharedUsers = true;
-      perm = (perm == "write") ? "write" : "read";
+      perm = perm == "write" ? "write" : "read";
 
       const { status } = await shareApi.changePerm({
         userId: target.id,
-        perm
+        perm,
       });
 
       if (status == 0 || status >= 400) {
         showSnackbar({
           msg: "Có lỗi xảy ra",
-          type: "error"
+          type: "error",
         });
       } else {
-        const targetIndex = this.sharedUsers.findIndex(u => u.id == target.id);
+        const targetIndex = this.sharedUsers.findIndex(
+          (u) => u.id == target.id
+        );
         if (targetIndex != -1) {
           this.sharedUsers[targetIndex].perm = perm;
         }
@@ -172,17 +174,19 @@ export default defineComponent({
           if (status == 0 || status >= 400) {
             showSnackbar({
               msg: "Có lỗi xảy ra",
-              type: "error"
+              type: "error",
             });
           } else {
-            const targetIndex = this.sharedUsers.findIndex(u => u.id == target.id);
+            const targetIndex = this.sharedUsers.findIndex(
+              (u) => u.id == target.id
+            );
             if (targetIndex != -1) {
               this.sharedUsers.splice(targetIndex, 1);
             }
           }
 
           this.loadingSharedUsers = false;
-        }
+        },
       });
     },
     async loadSharedUsers() {

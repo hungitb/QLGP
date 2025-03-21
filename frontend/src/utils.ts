@@ -99,7 +99,10 @@ export const permissionMixin = {
     },
     canWrite(this: PermissionMixinThis) {
       const user = this.$store.state.user;
-      return !!(user.ownGraph || (user.useGraphOfUserId && user.perm == "write"));
+      return !!(
+        user.ownGraph ||
+        (user.useGraphOfUserId && user.perm == "write")
+      );
     },
   },
 };
