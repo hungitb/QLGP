@@ -34,7 +34,6 @@
             noPadding
             buttonText
             maxWidth="500"
-            :isLoading="isDialogSettingLoading"
             :buttons="[{ text: 'Lưu', click: saveEventSetting }]"
           >
             <v-list subheader flat three-line>
@@ -79,76 +78,6 @@
                         v-model="eventTargetPersonIds"
                         label="Người thân"
                       />
-                    </div>
-                  </v-expand-transition>
-                </div>
-
-                <v-list-item class="px-6">
-                  <v-list-item-action>
-                    <v-radio
-                      name="event-target-type"
-                      value="closeRelationship"
-                    ></v-radio>
-                  </v-list-item-action>
-                  <v-list-item-content>
-                    <v-list-item-title>
-                      Những người có quan hệ gần
-                    </v-list-item-title>
-                    <v-list-item-subtitle>
-                      Chỉ những người có quan hệ gần với bạn mới xuất hiện, mức
-                      độ gần như thế nào sẽ do bạn quyết định
-                    </v-list-item-subtitle>
-                  </v-list-item-content>
-                </v-list-item>
-
-                <div class="pr-6" style="padding-left: 80px">
-                  <v-expand-transition>
-                    <div
-                      v-if="eventTargetTypeSetting == 'closeRelationship'"
-                      class="pt-4"
-                    >
-                      <v-form ref="form">
-                        <v-select
-                          v-model="peopleCloseRelationshipType"
-                          :items="[
-                            {
-                              text: 'Gia phả mức 2',
-                              value: '2',
-                            },
-                            {
-                              text: 'Gia phả mức 3',
-                              value: '3',
-                            },
-                          ]"
-                          label="Kiểu đối tượng"
-                          outlined
-                        ></v-select>
-
-                        <v-text-field
-                          v-model="peopleCloseRelationshipNumGenerationAbove"
-                          label="Số đời trên bạn"
-                          outlined
-                          :rules="numberRules"
-                          validate-on-blur
-                        ></v-text-field>
-
-                        <v-text-field
-                          v-model="peopleCloseRelationshipNumGenerationBelow"
-                          label="Số đời dưới bạn"
-                          outlined
-                          :rules="numberRules"
-                          validate-on-blur
-                        ></v-text-field>
-
-                        <v-checkbox
-                          v-model="
-                            peopleCloseRelationshipIncludeEqualGeneration
-                          "
-                          hide-details
-                          class="mt-0"
-                          label="Bao gồm những người ngang hàng bạn"
-                        ></v-checkbox>
-                      </v-form>
                     </div>
                   </v-expand-transition>
                 </div>
@@ -287,14 +216,12 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 
-import { eventApi } from "@/api/event";
 import CustomPersonAvatar from "@/components/CustomPersonAvatar.vue";
 import {
-  EventSetting,
   EventTargetType,
   EventType,
   allEventTypes,
-} from "../../../backend/src/model/EventSetting";
+} from "../../../backend/src/controller/event";
 import { Person } from "../../../backend/src/model/Person";
 import {
   normalDateToLunarDate,
@@ -303,7 +230,8 @@ import {
 import CustomDialog from "@/components/CustomDialog.vue";
 import PersonInputGroup from "@/components/input/PersonInputGroup.vue";
 import { showSnackbar } from "@/components/utilities";
-import { permissionMixin } from "@/utils";
+import { getEventSettingFromLocalStorage, permissionMixin, saveEventSettingToLocalStorage } from "@/utils";
+import { personApi } from "@/api/person";
 
 export default defineComponent({
   components: {
@@ -318,30 +246,15 @@ export default defineComponent({
       value: "",
       title: "",
       dialogSetting: false,
-      isDialogSettingLoading: false,
       isLoading: true,
       items: [] as any[],
       events: [] as any[],
-      eventSetting: {} as EventSetting,
 
       // Setting
-      numberRules: [
-        (v: string) => {
-          const n = parseInt(v);
-          if (isNaN(n) || n.toString() != v || n < 0) {
-            return "Phải là số nguyên >= 0";
-          }
-          return true;
-        },
-      ],
       allEventTypes,
-      eventTargetTypeSetting: "all" as "all" | "specific" | "closeRelationship",
+      eventTargetTypeSetting: "all" as "all" | "specific",
       eventTargetPersonIds: [] as string[],
-      peopleCloseRelationshipType: "2",
-      peopleCloseRelationshipNumGenerationAbove: 0,
-      peopleCloseRelationshipNumGenerationBelow: 0,
-      peopleCloseRelationshipIncludeEqualGeneration: true,
-      choosedEventTypes: [] as EventTargetType[],
+      choosedEventTypes: [] as EventType[],
     };
   },
   computed: {
@@ -374,10 +287,15 @@ export default defineComponent({
       this.isLoading = true;
       const [year, month] = this.value.split("-").map((s) => parseInt(s));
       const backupValue = this.value;
-      const { data } = await eventApi.getEvents({
+      const eventSetting = getEventSettingFromLocalStorage();
+      const { data } = await personApi.getEvents({
         startDate: `1/${month}/${year}`,
         endDate: month == 12 ? `1/1/${year + 1}` : `1/${month + 1}/${year}`,
+        allPeople: eventSetting.allPeople,
+        personIds: eventSetting.personIds?.join(","),
+        eventTypes: eventSetting.eventTypes?.join(","),
       });
+      
       // Trong khi fetch thì dữ liệu đã bị thay đổi, vì thế sẽ bỏ qua
       if (this.value != backupValue) {
         return;
@@ -462,10 +380,6 @@ export default defineComponent({
         };
       });
 
-      if (data.eventSetting) {
-        this.eventSetting = data.eventSetting;
-      }
-
       this.isLoading = false;
     },
     async saveEventSetting() {
@@ -474,49 +388,22 @@ export default defineComponent({
         return;
       }
 
-      const eventSetting: Partial<EventSetting> = {};
-
-      const eventTypesArray = [...this.choosedEventTypes];
-      eventTypesArray.sort();
-      eventSetting.types = eventTypesArray.join(",");
-
       if (this.eventTargetTypeSetting == "all") {
-        eventSetting.targetType = EventTargetType.ALL;
+        saveEventSettingToLocalStorage({
+          allPeople: true,
+          eventTypes: this.choosedEventTypes
+        });
       } else if (this.eventTargetTypeSetting == "specific") {
-        eventSetting.targetType = EventTargetType.SPECIFIC_PEOPLE;
-        eventSetting.specificPersonIds = this.eventTargetPersonIds.join(",");
-      } else if (this.eventTargetTypeSetting == "closeRelationship") {
-        eventSetting.targetType =
-          this.peopleCloseRelationshipType == "3"
-            ? EventTargetType.PEOPLE_IN_FAMILY_TREE_LEVEL_THREE
-            : EventTargetType.PEOPLE_IN_FAMILY_TREE_LEVEL_TWO;
-        eventSetting.numGenerationsAbove =
-          this.peopleCloseRelationshipNumGenerationAbove;
-        eventSetting.numGenerationsBelow =
-          this.peopleCloseRelationshipNumGenerationBelow;
-        eventSetting.includePeopleEqualGeneration =
-          this.peopleCloseRelationshipIncludeEqualGeneration;
+        saveEventSettingToLocalStorage({
+          allPeople: false,
+          eventTypes: this.choosedEventTypes,
+          personIds: this.eventTargetPersonIds,
+        });
+      } else {
+        const x: never = this.eventTargetTypeSetting;
       }
 
-      Object.keys(eventSetting).forEach((key) => {
-        if (
-          eventSetting[key as keyof EventSetting] ==
-          this.eventSetting[key as keyof EventSetting]
-        ) {
-          delete eventSetting[key as keyof EventSetting];
-        }
-      });
-
-      if (Object.keys(eventSetting).length == 0) {
-        this.dialogSetting = false;
-        return;
-      }
-
-      this.isDialogSettingLoading = true;
-      await eventApi.updateEventSetting(eventSetting);
       showSnackbar({ msg: "Lưu cài đặt sự kiện thành công" });
-      this.isDialogSettingLoading = false;
-
       this.dialogSetting = false;
       this.fetchEvents();
     },
@@ -533,36 +420,19 @@ export default defineComponent({
       this.fetchEvents();
     },
     dialogSetting(value) {
-      if (value) {
-        this.eventTargetTypeSetting = {
-          [EventTargetType.ALL]: "all",
-          [EventTargetType.PEOPLE_IN_FAMILY_TREE_LEVEL_TWO]:
-            "closeRelationship",
-          [EventTargetType.PEOPLE_IN_FAMILY_TREE_LEVEL_THREE]:
-            "closeRelationship",
-          [EventTargetType.SPECIFIC_PEOPLE]: "specific",
-        }[this.eventSetting.targetType] as
-          | "all"
-          | "specific"
-          | "closeRelationship";
+      const eventSetting = getEventSettingFromLocalStorage();
 
-        this.eventTargetPersonIds = this.eventSetting.specificPersonIds
-          ? this.eventSetting.specificPersonIds.split(",")
+      if (value) {
+        this.eventTargetTypeSetting = eventSetting.allPeople ? "all" : "specific";
+
+        this.eventTargetPersonIds = eventSetting.personIds
+          ? eventSetting.personIds
           : [];
-        this.peopleCloseRelationshipType =
-          this.eventSetting.targetType ==
-          EventTargetType.PEOPLE_IN_FAMILY_TREE_LEVEL_THREE
-            ? "3"
-            : "2";
-        this.peopleCloseRelationshipNumGenerationAbove =
-          this.eventSetting.numGenerationsAbove;
-        this.peopleCloseRelationshipNumGenerationBelow =
-          this.eventSetting.numGenerationsBelow;
-        this.peopleCloseRelationshipIncludeEqualGeneration =
-          this.eventSetting.includePeopleEqualGeneration;
-        this.choosedEventTypes = this.eventSetting.types.split(
-          ","
-        ) as EventTargetType[];
+        if (!eventSetting.eventTypes && !Array.isArray(eventSetting.eventTypes)) {
+          this.choosedEventTypes = allEventTypes.filter((et) => !et.default).map((et) => et.value);
+        } else {
+          this.choosedEventTypes = eventSetting.eventTypes as EventType[];
+        }
       }
     },
   },

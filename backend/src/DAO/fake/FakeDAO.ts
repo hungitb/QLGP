@@ -4,11 +4,6 @@ import type { Person } from "../../model/Person";
 import { Gender, LifeStatus } from "../../model/Person";
 import type { FieldDef } from "../../model/FieldDef";
 import type { FieldVal } from "../../model/FieldVal";
-import {
-  EventTargetType,
-  EventType,
-  type EventSetting,
-} from "../../model/EventSetting";
 import { Share } from "../../model/Share";
 
 const isWeb = typeof window != "undefined" && typeof document != "undefined";
@@ -21,7 +16,7 @@ const GENERATE_FAKE_DATA =
 const DELAY = 100;
 
 type Dict = { [key: string]: any };
-type AllTableTypes = [User[], Person[], FieldDef[], FieldVal[], EventSetting[], Share[]];
+type AllTableTypes = [User[], Person[], FieldDef[], FieldVal[], Share[]];
 type Storage = {
   startOperations: () => Promise<void>;
   endOperations: () => Promise<void>;
@@ -489,24 +484,11 @@ function generateFakeData(): AllTableTypes {
     }
   }
 
-  const fakeEventSettings: EventSetting[] = [
-    {
-      userId: fakseUserId,
-      targetType: EventTargetType.ALL,
-      types: [EventType.BIRTHDAY, EventType.DEATHDAY].join(","),
-      specificPersonIds: "",
-      numGenerationsAbove: 0,
-      numGenerationsBelow: 0,
-      includePeopleEqualGeneration: true,
-    },
-  ];
-
   return [
     fakeUsers,
     fakePeople,
     [] as FieldDef[],
     [] as FieldVal[],
-    fakeEventSettings,
     [] as Share[]
   ];
 }
@@ -522,7 +504,6 @@ function getData(): Promise<Dict[]>[] {
     "people",
     "fieldDefs",
     "fieldVals",
-    "eventSettings",
     "shares"
   ] as const;
 
@@ -534,11 +515,11 @@ function getData(): Promise<Dict[]>[] {
       tableNames.map((name) => storage.getItem(`QLGP.${name}`))
     )) as AllTableTypes;
 
-    const [users, people, fieldDefs, fieldVals, eventSettings, shares] = tableDatas;
+    const [users, people, fieldDefs, fieldVals, shares] = tableDatas;
     const x: (typeof tableNames)["length"] extends AllTableTypes["length"] ? number : never = 1; // Trick
     await storage.setItem("QLGP.metadata", [{ dataVersion }]);
 
-    _cache = [users, people, fieldDefs, fieldVals, eventSettings, shares];
+    _cache = [users, people, fieldDefs, fieldVals, shares];
     return _cache;
   }
   getDataFromStorage();
@@ -551,7 +532,7 @@ function getData(): Promise<Dict[]>[] {
   );
 }
 
-const [users, people, fieldDefs, fieldVals, eventSettings, shares] = getData();
+const [users, people, fieldDefs, fieldVals, shares] = getData();
 
 export const userDAO: IDAO<User> = createDAO(
   "QLGP.users",
@@ -573,11 +554,6 @@ export const fieldValDAO: IDAO<FieldVal> = createDAO(
   "id",
   fieldVals
 ) as unknown as IDAO<FieldVal>;
-export const eventSettingDAO: IDAO<EventSetting> = createDAO(
-  "QLGP.eventSettings",
-  "userId",
-  eventSettings
-) as unknown as IDAO<EventSetting>;
 export const shareDAO: IDAO<Share> = createDAO(
   "QLGP.shares",
   "id",
@@ -589,17 +565,15 @@ if (process.env.NODE_ENV == "development" && isWeb) {
   (window as any).personDAO = personDAO;
   (window as any).fieldDefDAO = fieldDefDAO;
   (window as any).fieldValDAO = fieldValDAO;
-  (window as any).eventSettingDAO = eventSettingDAO;
 }
 
 export async function exportData() {
-  const [users, people, fieldDefs, fieldVals, eventSettings] =
+  const [users, people, fieldDefs, fieldVals] =
     await Promise.all([
       userDAO.findAll(),
       personDAO.findAll(),
       fieldDefDAO.findAll(),
       fieldValDAO.findAll(),
-      eventSettingDAO.findAll(),
     ]);
 
   return JSON.stringify({
@@ -607,6 +581,5 @@ export async function exportData() {
     people,
     fieldDefs,
     fieldVals,
-    eventSettings,
   });
 }

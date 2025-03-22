@@ -9,7 +9,6 @@ dotenv.config({ path: "../.env" });
 
 import authRouter from "./routes/auth";
 import personRouter from "./routes/person";
-import eventRouter from "./routes/event";
 import shareRouter from "./routes/share";
 
 const isDev = process.env.NODE_ENV == "development";
@@ -29,7 +28,6 @@ app.use((req, res, next) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/person", personRouter);
-app.use("/api/event", eventRouter);
 app.use("/api/share", shareRouter);
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {

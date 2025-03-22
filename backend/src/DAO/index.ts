@@ -8,5 +8,4 @@ export const personDAO = fakeData ? FakeDAO.personDAO : FusekiDAO.personDAO;
 // export const fieldDefDAO = fakeData ? FakeDAO.fieldDefDAO : FusekiDAO.fieldDefDAO;
 // export const fieldValDAO = fakeData ? FakeDAO.fieldValDAO : FusekiDAO.fieldValDAO;
 export const userDAO = fakeData ? FakeDAO.userDAO : FusekiDAO.userDAO;
-export const eventSettingDAO = fakeData ? FakeDAO.eventSettingDAO : FusekiDAO.eventSettingDAO;
 export const shareDAO = FusekiDAO.shareDAO;

@@ -1,12 +1,12 @@
 
 import { Router } from "express";
 
-import { personDAO, userDAO, eventSettingDAO } from "../DAO";
+import { personDAO, userDAO } from "../DAO";
 import { getLoggedInUser, wrapHandlerSimple } from "./utils";
 import getAuthController from "../controller/auth";
 
 const router = Router();
-const authController = getAuthController(userDAO, personDAO, eventSettingDAO);
+const authController = getAuthController(userDAO, personDAO);
 
 router.get("/me", wrapHandlerSimple(async (req, res) => {
     const user = await getLoggedInUser(req);

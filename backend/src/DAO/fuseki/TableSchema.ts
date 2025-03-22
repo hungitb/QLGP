@@ -218,7 +218,7 @@ export class TableSchema<Model extends ValidModel> {
 
     private filterInvalidProps(obj: Partial<Model>, filterPrimaryKey = false) {
         return Object.entries(obj)
-            .filter(([key, value]) => value && (!filterPrimaryKey || key != this.primaryKey))
+            .filter(([key, value]) => value !== undefined && value !== null && (!filterPrimaryKey || key != this.primaryKey))
             .reduce((result, [key, value]) => {
                 result[key as keyof Model] = value;
                 return result;

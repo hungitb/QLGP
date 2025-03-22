@@ -1,11 +1,12 @@
 import { v4 as uuid } from "uuid";
 
-import { compareTwoDateString, lunarDateToNormalDate, normalDateToLunarDate, shortenDateString, todayDate } from "../utils/DateUtils";
+import { compareTwoDateString, datePlusDay, lunarDateToNormalDate, normalDateToLunarDate, shortenDateString, todayDate } from "../utils/DateUtils";
 import { isStringPureInterger } from "../utils/ValidationUtils";
 import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR, DetailUser } from "./utils";
 import { LifeStatus, Gender, type Person } from "../model/Person";
 import type { User } from "../model/User";
 import type { IDAO } from "../model/IDAO";
+import { extractEvents, type Event } from "./event";
 
 export type ExtendedPerson = Person & {
     children: {
@@ -588,6 +589,44 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         };
     }
 
+    type GetEventsParams = {
+        startDate?: string;
+        endDate?: string;
+        allPeople: boolean;
+        personIds?: string;
+        eventTypes?: string;
+    };
+
+    async function getEvents({ startDate, endDate, allPeople, personIds, eventTypes }: GetEventsParams, loggedInUser: DetailUser | null): Promise<CHR<{ events: Event[] }>> {
+        if (!loggedInUser) return CommonResponse.UNAUTHORIZED;
+        if (!allPeople && typeof personIds != "string") return CommonResponse.BAD_REQUEST;
+
+        const graphOfUserId = loggedInUser.ownGraph ? loggedInUser.id : (loggedInUser.useGraphOfUserId!);
+        const people = await (async () => {
+            const people = await personDAO.findAll({ where: { ownerUserId: graphOfUserId } });
+            if (allPeople) {
+                return people;
+            }
+
+            const validPersonIds = new Set(personIds!.split(","));
+            return people.filter(p => validPersonIds.has(p.id));
+        })();
+        
+        if (!startDate || (typeof startDate != "string")) {
+            startDate = todayDate();
+        }
+        if (!endDate || (typeof endDate != "string")) {
+            endDate = datePlusDay(startDate, 366);
+        }
+
+        const events = extractEvents(startDate, endDate, people, eventTypes);
+
+        return {
+            data: { events },
+            status: 200
+        };
+    }
+
     return {
         getAllPeopleBaseInfo,
         getPersonDetailInfo,
@@ -596,6 +635,7 @@ export default function getPersonController(personDAO: IDAO<Person>) {
         deletePerson,
         updatePerson,
         statistic,
-        analyzeRelationship
+        analyzeRelationship,
+        getEvents
     };
 }

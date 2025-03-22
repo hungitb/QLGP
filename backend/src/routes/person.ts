@@ -16,5 +16,7 @@ router.get("/detail", wrapHandlerAdvance(personController, "getPersonDetailInfo"
 router.get("/tree", wrapHandlerAdvance(personController, "getFamilyTreeInfo", hasGraphGuard));
 router.get("/statistic", wrapHandlerAdvance(personController, "statistic", hasGraphGuard));
 router.get("/analyze_relationship", wrapHandlerAdvance(personController, "analyzeRelationship", hasGraphGuard));
+// Không dùng GET, vì nếu truy vấn theo person IDs có thể sẽ quá dài
+router.post("/events", wrapHandlerAdvance(personController, "getEvents", hasGraphGuard));
 
 export default router;

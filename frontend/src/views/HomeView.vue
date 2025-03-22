@@ -255,9 +255,8 @@
 import Vue from "vue";
 
 import { Gender, LifeStatus, Person } from "../../../backend/src/model/Person";
-import { eventApi } from "@/api/event";
 import { type Event } from "../../../backend/src/controller/event";
-import { allEventTypes } from "../../../backend/src/model/EventSetting";
+import { allEventTypes } from "../../../backend/src/controller/event";
 import {
   compareTwoDateString,
   transformDateString,
@@ -270,7 +269,8 @@ import {
   showDialogAddOrCreatePerson,
   showDialogPersonDetailInfo,
 } from "@/components/utilities";
-import { permissionMixin } from "@/utils";
+import { getEventSettingFromLocalStorage, permissionMixin } from "@/utils";
+import { personApi } from "@/api/person";
 
 export default Vue.extend({
   components: {
@@ -392,14 +392,19 @@ export default Vue.extend({
     },
     fetchEvents() {
       this.eventsLoading = true;
-      eventApi
+
+      const eventSetting = getEventSettingFromLocalStorage();
+      personApi
         .getEvents({
           startDate: todayDate(),
           endDate: datePlusDay(todayDate(), 7),
+          allPeople: eventSetting.allPeople,
+          personIds: eventSetting.personIds?.join(","),
+          eventTypes: eventSetting.eventTypes?.join(","),
         })
         .then(({ data }) => {
           const { events } = data;
-          this.events = events;
+          this.events = events || [];
         })
         .finally(() => {
           this.eventsLoading = false;

@@ -88,6 +88,37 @@ export function resizeImageSrc(imageSrc: string): Promise<string> {
   });
 }
 
+type EventSetting = {
+  allPeople: boolean;
+  eventTypes?: string[];
+  personIds?: string[];
+};
+
+export function getEventSettingFromLocalStorage(): EventSetting {
+  try {
+    const data = JSON.parse(localStorage.getItem("QLGP.eventSetting") || "{}");
+    return {
+      allPeople: data.allPeople !== false,
+      eventTypes: typeof data.eventTypes == "string" ? data.eventTypes.split(",").filter(et => et) : undefined,
+      personIds: typeof data.personIds == "string" ? data.personIds.split(",") : undefined
+    };
+  } catch (e) {
+    return {
+      allPeople: true
+    };
+  }
+}
+
+export function saveEventSettingToLocalStorage(setting: Partial<EventSetting>) {
+  setting = Object.assign(getEventSettingFromLocalStorage(), setting);
+
+  localStorage.setItem("QLGP.eventSetting", JSON.stringify({
+    allPeople: setting.allPeople,
+    eventTypes: setting.eventTypes?.join(","),
+    personIds: setting.personIds?.join(",")
+  }));
+}
+
 type PermissionMixinThis = {
   $store: typeof store;
 };

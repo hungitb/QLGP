@@ -1,6 +1,5 @@
 import { User } from "../../model/User";
 import { Person } from "../../model/Person";
-import { EventSetting } from "../../model/EventSetting";
 import { FieldDef } from "../../model/FieldDef";
 import { FieldVal } from "../../model/FieldVal";
 import { TableSchema } from "./TableSchema";
@@ -74,41 +73,6 @@ const personSchema = new TableSchema<Person>({
     }
 });
 
-const eventSettingSchema = new TableSchema<EventSetting>({
-    name: "event_setting",
-    fields: {
-        userId: {
-            type: userSchema,
-            primaryKey: true,
-            alias: "belongToUser"
-        },
-        targetType: {
-            type: "string",
-            allowNull: false
-        },
-        types: {
-            type: "string",
-            allowNull: false
-        },
-        specificPersonIds: {
-            type: "string",
-            allowNull: false
-        },
-        numGenerationsAbove: {
-            type: "int",
-            allowNull: false
-        },
-        numGenerationsBelow: {
-            type: "int",
-            allowNull: false
-        },
-        includePeopleEqualGeneration: {
-            type: "boolean",
-            allowNull: false
-        }
-    }
-});
-
 const shareSchema = new TableSchema<Share>({
     name: "share",
     fields: {
@@ -124,6 +88,5 @@ const shareSchema = new TableSchema<Share>({
 
 export const personDAO = personSchema.getDAO();
 export const userDAO = userSchema.getDAO();
-export const eventSettingDAO = eventSettingSchema.getDAO();
 export const shareDAO = shareSchema.getDAO();
 
