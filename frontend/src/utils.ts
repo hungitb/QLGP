@@ -99,12 +99,18 @@ export function getEventSettingFromLocalStorage(): EventSetting {
     const data = JSON.parse(localStorage.getItem("QLGP.eventSetting") || "{}");
     return {
       allPeople: data.allPeople !== false,
-      eventTypes: typeof data.eventTypes == "string" ? data.eventTypes.split(",").filter(et => et) : undefined,
-      personIds: typeof data.personIds == "string" ? data.personIds.split(",") : undefined
+      eventTypes:
+        typeof data.eventTypes == "string"
+          ? data.eventTypes.split(",").filter((et) => et)
+          : undefined,
+      personIds:
+        typeof data.personIds == "string"
+          ? data.personIds.split(",")
+          : undefined,
     };
   } catch (e) {
     return {
-      allPeople: true
+      allPeople: true,
     };
   }
 }
@@ -112,11 +118,14 @@ export function getEventSettingFromLocalStorage(): EventSetting {
 export function saveEventSettingToLocalStorage(setting: Partial<EventSetting>) {
   setting = Object.assign(getEventSettingFromLocalStorage(), setting);
 
-  localStorage.setItem("QLGP.eventSetting", JSON.stringify({
-    allPeople: setting.allPeople,
-    eventTypes: setting.eventTypes?.join(","),
-    personIds: setting.personIds?.join(",")
-  }));
+  localStorage.setItem(
+    "QLGP.eventSetting",
+    JSON.stringify({
+      allPeople: setting.allPeople,
+      eventTypes: setting.eventTypes?.join(","),
+      personIds: setting.personIds?.join(","),
+    })
+  );
 }
 
 type PermissionMixinThis = {

@@ -1,6 +1,9 @@
 <template>
   <v-container>
-    <v-list v-if="$route.path == '/utilities'" :three-line="$vuetify.breakpoint.xsOnly">
+    <v-list
+      v-if="$route.path == '/utilities'"
+      :three-line="$vuetify.breakpoint.xsOnly"
+    >
       <v-list-item
         v-for="item in items"
         :key="item.title"

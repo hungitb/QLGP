@@ -230,7 +230,11 @@ import {
 import CustomDialog from "@/components/CustomDialog.vue";
 import PersonInputGroup from "@/components/input/PersonInputGroup.vue";
 import { showSnackbar } from "@/components/utilities";
-import { getEventSettingFromLocalStorage, permissionMixin, saveEventSettingToLocalStorage } from "@/utils";
+import {
+  getEventSettingFromLocalStorage,
+  permissionMixin,
+  saveEventSettingToLocalStorage,
+} from "@/utils";
 import { personApi } from "@/api/person";
 
 export default defineComponent({
@@ -295,7 +299,7 @@ export default defineComponent({
         personIds: eventSetting.personIds?.join(","),
         eventTypes: eventSetting.eventTypes?.join(","),
       });
-      
+
       // Trong khi fetch thì dữ liệu đã bị thay đổi, vì thế sẽ bỏ qua
       if (this.value != backupValue) {
         return;
@@ -313,7 +317,16 @@ export default defineComponent({
         return result;
       }, {});
 
-      const items: any[] = [];
+      type ItemHeader = { header: string };
+      type ItemDivider = { divider: true };
+      type ItemEvent = {
+        person: Person;
+        type: string;
+        explain?: string;
+        originalDateExplain: string;
+      };
+
+      const items: (ItemHeader | ItemDivider | ItemEvent)[] = [];
       data.events.forEach(
         ({ type, personId, normalDate, explain }, index, events) => {
           if (lastDate != normalDate) {
@@ -391,7 +404,7 @@ export default defineComponent({
       if (this.eventTargetTypeSetting == "all") {
         saveEventSettingToLocalStorage({
           allPeople: true,
-          eventTypes: this.choosedEventTypes
+          eventTypes: this.choosedEventTypes,
         });
       } else if (this.eventTargetTypeSetting == "specific") {
         saveEventSettingToLocalStorage({
@@ -423,13 +436,20 @@ export default defineComponent({
       const eventSetting = getEventSettingFromLocalStorage();
 
       if (value) {
-        this.eventTargetTypeSetting = eventSetting.allPeople ? "all" : "specific";
+        this.eventTargetTypeSetting = eventSetting.allPeople
+          ? "all"
+          : "specific";
 
         this.eventTargetPersonIds = eventSetting.personIds
           ? eventSetting.personIds
           : [];
-        if (!eventSetting.eventTypes && !Array.isArray(eventSetting.eventTypes)) {
-          this.choosedEventTypes = allEventTypes.filter((et) => !et.default).map((et) => et.value);
+        if (
+          !eventSetting.eventTypes &&
+          !Array.isArray(eventSetting.eventTypes)
+        ) {
+          this.choosedEventTypes = allEventTypes
+            .filter((et) => !et.default)
+            .map((et) => et.value);
         } else {
           this.choosedEventTypes = eventSetting.eventTypes as EventType[];
         }

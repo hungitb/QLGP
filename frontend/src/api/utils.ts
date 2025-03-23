@@ -60,7 +60,9 @@ export function wrapAxiosCall(
 // Khi dùng fake API cho get, cần chuyển value sang dạng string cho nhất quán
 export function stringifyValuesOfObject<K extends Record<string, any>>(
   obj: K
-): { [attr in keyof K]: K[attr] extends NonNullable<K[attr]> ? string : undefined } {
+): {
+  [attr in keyof K]: K[attr] extends NonNullable<K[attr]> ? string : undefined;
+} {
   const newObj: Record<string, any> = {};
   Object.entries(obj).forEach(([k, v]) => {
     if (v?.toString) {

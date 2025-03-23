@@ -10,7 +10,10 @@ import getPersonController, {
 } from "../../../backend/src/controller/person";
 import type { Person } from "../../../backend/src/model/Person";
 import { personDAO, wrapApi } from "../../../backend/src/DAO/fake/FakeDAO";
-import { ControllerHandlerResult as CHR, PaginateParams } from "../../../backend/src/controller/utils";
+import {
+  ControllerHandlerResult as CHR,
+  PaginateParams,
+} from "../../../backend/src/controller/utils";
 import { Event } from "../../../backend/src/controller/event";
 
 const personController = getPersonController(personDAO);
@@ -100,7 +103,13 @@ export const personApi = wrapApi({
       await getLoggedInUserLocalStorage()
     );
   },
-  async getEvents(data: { startDate?: string; endDate?: string; allPeople: boolean; personIds?: string; eventTypes?: string }): Promise<CHR<{ events: Event[] }>> {
+  async getEvents(data: {
+    startDate?: string;
+    endDate?: string;
+    allPeople: boolean;
+    personIds?: string;
+    eventTypes?: string;
+  }): Promise<CHR<{ events: Event[] }>> {
     if (useBackend) {
       return await wrapAxiosCall(() => api.post("/person/events", data));
     }
