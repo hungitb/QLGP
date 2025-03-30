@@ -19,7 +19,7 @@ export async function getLoggedInUser(req: Request): Promise<DetailUser | null> 
     
     if (user.sessionExpiry - now < 0.8*sessionDurationMiliseconds) {
         user.sessionExpiry = now + sessionDurationMiliseconds;
-        userDAO.update({
+        await userDAO.update({
             sessionExpiry: user.sessionExpiry
         }, {
             where: { id: user.id }
