@@ -15,11 +15,11 @@ export async function getLoggedInUser(req: Request) {
     }
 
     user.sessionExpiry = Date.now() + parseInt(process.env.QLGP_SESSION_DURATION || "30")*60*1000;
-    userDAO.update({
+    await userDAO.update({
         sessionExpiry: user.sessionExpiry
     }, {
         where: { id: user.id }
-    })
+    });
 
     return user;
 }
