@@ -1,6 +1,9 @@
 <template>
   <div id="family-tree" class="d-flex justify-center align-center">
-    <template v-if="ancestor && !$store.state.isLoadingPeople">
+    <template v-if="!$store.state.idToTien && !subjectId">
+      <div class="text-h4">Chỗ này sau sửa</div>
+    </template>
+    <template v-else-if="ancestor && !$store.state.isLoadingPeople">
       <Viewer ref="viewer" :key="key">
         <FamilyCard
           ref="familyCard"
@@ -72,10 +75,11 @@
               <div class="d-flex flex-column align-center">
                 <span class="mb-1">Xem trước</span>
                 <PersonCard
+                  v-if="subjectId"
                   :person="
                     settingVModel.subjectId
                       ? $store.state.personMapping[settingVModel.subjectId]
-                      : $store.state.personStandForUser
+                      : $store.state.personMapping[subjectId]
                   "
                   viewOnly
                   :config="settingVModel"
@@ -218,7 +222,7 @@ export default Vue.extend({
       // Danh sách person id để focus, ưu tiên cuối
       focusPersonIds: [] as string[],
       disableButtons: false,
-      subjectId: null as string | null, // Id của chủ thể biểu đồ gia phả
+      subjectId: this.$store.state.idToTien, // Id của chủ thể biểu đồ gia phả
       config: getDefaultConfig(),
 
       dialogSetting: false,
@@ -295,57 +299,59 @@ export default Vue.extend({
       Promise.all([
         this[FETCH_PEOPLE](),
         personApi.getFamilyTreeInfo({
-          level: this.config.level,
+          level: this.config.level.toString(),
           subjectId: this.subjectId || undefined,
         }),
       ]).then(async ([_, familyTreeRespone]) => {
         const { data } = familyTreeRespone;
 
-        if (data.ancestor) {
-          this.ancestor = data.ancestor;
-          this.key = getUniqueID(); // Force recreate (Thường thì ko hiểu tại sao component ở đây khi set ancestor sẽ bị recreate, nhưng cứ chủ động force cho chắc)
+        if (!("ancestor" in data)) {
+          return;
+        }
 
-          await nextTick();
+        this.ancestor = data.ancestor;
+        this.key = getUniqueID(); // Force recreate (Thường thì ko hiểu tại sao component ở đây khi set ancestor sẽ bị recreate, nhưng cứ chủ động force cho chắc)
 
-          this.viewer = this.$refs.viewer;
-          this.resizeViewer();
-          setTimeout(this.resizeViewer, 100);
-          this.interval = setInterval(this.resizeViewer, 2000);
+        await nextTick();
 
-          const familyCard = this.$refs.familyCard as any;
-          if (!familyCard) {
-            return;
-          }
+        this.viewer = this.$refs.viewer;
+        this.resizeViewer();
+        setTimeout(this.resizeViewer, 100);
+        this.interval = setInterval(this.resizeViewer, 2000);
 
-          if (this.focusSubjectAfterFetched && data.subjectId) {
-            this.focusPersonIds.push(data.subjectId);
-          }
+        const familyCard = this.$refs.familyCard as any;
+        if (!familyCard) {
+          return;
+        }
 
-          let targetElement: any = null;
-          // Tìm id để focus, ưu tiên cuối cùng, nếu không được thì gần cuối, không được nữa thì thôi
-          let temp =
-            this.focusSubjectAfterFetched && data.subjectId
-              ? data.subjectId
-              : this.focusPersonIds[this.focusPersonIds.length - 1];
+        if (this.focusSubjectAfterFetched && data.subjectId) {
+          this.focusPersonIds.push(data.subjectId);
+        }
+
+        let targetElement: any = null;
+        // Tìm id để focus, ưu tiên cuối cùng, nếu không được thì gần cuối, không được nữa thì thôi
+        let temp =
+          this.focusSubjectAfterFetched && data.subjectId
+            ? data.subjectId
+            : this.focusPersonIds[this.focusPersonIds.length - 1];
+        if (temp) {
+          let temp2 = familyCard.findCardElementByPersonId(temp);
+          targetElement = temp2[0];
+        }
+        if (!targetElement) {
+          temp = this.focusPersonIds[this.focusPersonIds.length - 2];
           if (temp) {
             let temp2 = familyCard.findCardElementByPersonId(temp);
             targetElement = temp2[0];
           }
-          if (!targetElement) {
-            temp = this.focusPersonIds[this.focusPersonIds.length - 2];
-            if (temp) {
-              let temp2 = familyCard.findCardElementByPersonId(temp);
-              targetElement = temp2[0];
-            }
-          }
+        }
 
-          if (targetElement) {
-            (this.$refs.viewer as any).focusElement(targetElement);
-          }
+        if (targetElement) {
+          (this.$refs.viewer as any).focusElement(targetElement);
+        }
 
-          if (data.subjectId) {
-            this.focusPersonIds.push(data.subjectId);
-          }
+        if (data.subjectId) {
+          this.focusPersonIds.push(data.subjectId);
         }
       });
     },
@@ -377,7 +383,7 @@ export default Vue.extend({
       this.dialogSetting = true;
       const cf = this.config;
       this.settingVModel = {
-        subjectId: this.subjectId || this.$store.state.personStandForUser.id,
+        subjectId: this.subjectId,
         level: cf.level,
         show: {
           image: cf.show.image,
@@ -393,13 +399,12 @@ export default Vue.extend({
     },
     async applySetting() {
       const isSubjectChanged =
-        (this.subjectId || this.$store.state.personStandForUser.id) !=
-        (this.settingVModel.subjectId ||
-          this.$store.state.personStandForUser.id);
+        this.settingVModel.subjectId &&
+        this.settingVModel.subjectId != this.subjectId;
       const isLevelChanged = this.config.level != this.settingVModel.level;
 
       const st = this.settingVModel;
-      this.subjectId = st.subjectId;
+      this.subjectId = st.subjectId || this.subjectId;
       this.config = {
         level: st.level,
         show: {
@@ -438,7 +443,9 @@ export default Vue.extend({
     },
   },
   mounted() {
-    this.loadData();
+    if (this.subjectId) {
+      this.loadData();
+    }
   },
   beforeDestroy() {
     if (this.interval) {

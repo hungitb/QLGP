@@ -238,8 +238,12 @@ export default defineComponent({
     };
   },
   async mounted() {
-    const { data } = await personApi.statistic();
+    const { data } = await personApi.statistic({});
     this.isLoading = false;
+
+    if (!("gender" in data)) {
+      return;
+    }
 
     this.dataGender = {
       labels: ["Nam", "Nữ"],

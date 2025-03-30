@@ -1,126 +1,122 @@
 import { v4 as uuidv4 } from "uuid";
 import { IDAO } from "../model/IDAO";
-import { Share } from "../model/Share";
 import { User } from "../model/User";
-import { DetailUser, ControllerHandlerResult as CHR, CommonResponse, badRequetWithMsg } from "./utils";
+import { ControllerHandlerResult as CHR, CommonResponse, IsAdminGuard, SafeOmit, UserInfo, applyUserGuards, badRequetWithMsg } from "./utils";
+import { DEFAUT_ADMIN_USERNAME } from "./auth";
 
-export default function getShareController(shareDAO: IDAO<Share>, userDAO: IDAO<User>) {
-    async function searchUser({ username }: { username: string }, loggedInUser: DetailUser | null): Promise<CHR<{ usernames: string[] }>> {
-        if (!loggedInUser) return CommonResponse.UNAUTHORIZED;
-        if (typeof username != "string") return CommonResponse.BAD_REQUEST;
+export type SharedUserInfo = SafeOmit<User, "sessionToken" | "sessionExpiry" | "password">;
 
-        if (username.length < 4) {
-            return {
-                data: {
-                    usernames: []
-                },
-                status: 200
-            };
+export default function getShareController(userDAO: IDAO<User>) {
+    const shared = applyUserGuards<
+        {},
+        {},
+        {
+            users: SharedUserInfo[]
         }
-
-        const allUsers = await userDAO.findAll();
-        const usernames = allUsers
-            .map(user => user.username)
-            .filter(username => username != loggedInUser.username)
-            .filter(_username => _username.includes(username))
-            .sort((a, b) => a.length - b.length)
-            .filter((_, i) => i < 4);
-
-        return {
-            data: { usernames },
-            status: 200
-        };
-    }
-
-    async function shared(data: {}, loggedInUser: DetailUser | null): Promise<CHR<{ users: (User & { perm: "read" | "write" })[] }>> {
-        if (!loggedInUser) return CommonResponse.UNAUTHORIZED;
-        if (!loggedInUser.ownGraph) return CommonResponse.FORBIDDEN;
-
-        const shares = await shareDAO.findAll({ where: { from: loggedInUser.id } });
-
-        const result = await Promise.all(shares.map(async ({ to, perm }) => {
-            const user = (await userDAO.findByPk(to))!;
-            return Object.assign(user, { perm });
-        }));
+    >(async () => {
+        const users = await userDAO.findAll();
 
         return {
             data: {
-                users: result
+                users: users.filter(user => user.username != DEFAUT_ADMIN_USERNAME).map(user => ({
+                    id: user.id,
+                    username: user.username,
+                    permission: user.permission,
+                    note: user.note
+                }))
             },
             status: 200
         };
-    }
+    }, IsAdminGuard);
 
-    async function addShare({ username, perm }: { username: string, perm: "read" | "write" }, loggedInUser: DetailUser | null): Promise<CHR> {
-        if (!loggedInUser) return CommonResponse.UNAUTHORIZED;
-        if (!loggedInUser.ownGraph) return CommonResponse.FORBIDDEN;
-        
-        if (loggedInUser.username == username) {
-            return badRequetWithMsg("Không thể chia sẻ cho bản thân!");
-        }
+    const addShare = applyUserGuards<
+        {
+            username: string,
+            perm: "read" | "write",
+            password: string,
+            note: string
+        },
+        {},
+        {}
+    >(async ({ body: { username, perm, password, note } }) => {
+        const existed = await userDAO.findOne({ where: { username } });
+        if (existed) return badRequetWithMsg("Tên người dùng đã tồn tại!");
 
-        const user = await userDAO.findOne({ where: { username } });
-        if (!user) return CommonResponse.BAD_REQUEST;
+        perm = perm == "write" ? "write" : "read";
 
-        if (user.ownGraph) {
-            return badRequetWithMsg(`Không thể chia sẻ do ${username} đã có gia phả của riêng họ!`);
-        }
-
-        const existsShare = await shareDAO.findOne({ where: { to: user.id } });
-        if (existsShare) {
-            if (existsShare.from == loggedInUser.id) {
-                return badRequetWithMsg("Bạn đã chia sẻ với người này rồi!");
-            }
-            return badRequetWithMsg(`Không thể chia sẻ do ${username} đã được người khác chia sẻ trước rồi!`);
-        }
-
-        await shareDAO.create({
+        await userDAO.create({
             id: uuidv4(),
-            from: loggedInUser.id,
-            to: user.id,
-            perm
+            username,
+            password,
+            permission: perm,
+            sessionToken: null,
+            sessionExpiry: null,
+            note
         });
 
         return {
             data: {},
             status: 200
         };
-    }
+    }, IsAdminGuard);
 
-    async function changePerm({ userId, perm }: { userId: string, perm: "read" | "write" }, loggedInUser: DetailUser | null): Promise<CHR> {
-        if (!loggedInUser) return CommonResponse.UNAUTHORIZED;
-        if (!loggedInUser.ownGraph) return CommonResponse.FORBIDDEN;
+    const updateShare = applyUserGuards<
+        { userId: string, permission?: "read" | "write", note?: string },
+        {},
+        {}
+    >(async ({ body: { userId, permission, note } }) => {
+        if (!permission && !note) return CommonResponse.BAD_REQUEST;
+        if (typeof userId != "string") return CommonResponse.BAD_REQUEST;
+        if (permission && (permission != "read" && permission != "write")) return CommonResponse.BAD_REQUEST;
+        if (note && typeof note != "string") return CommonResponse.BAD_REQUEST;
 
-        const existsShare = await shareDAO.findOne({ where: { from: loggedInUser.id, to: userId } });
+        const existsShare = await userDAO.findOne({ where: { id: userId } });
         if (!existsShare) {
             return CommonResponse.BAD_REQUEST;
         }
-
-        perm = perm == "write" ? "write" : "read";
-
-        if (existsShare.perm != perm) {
-            await shareDAO.update({ perm }, { where: { id: existsShare.id } });
+        if (existsShare.username == DEFAUT_ADMIN_USERNAME) {
+            return CommonResponse.BAD_REQUEST;
         }
 
-        return {
-            data: {},
-            status: 200
+        const updateObj: Partial<User> = {
+            ...(permission ? { permission: permission == "write" ? "write" : "read" } : {}),
+            ...(note ? { note } : {})
         };
-    }
 
-    async function deleteShare({ userId }: { userId: string }, loggedInUser: DetailUser | null): Promise<CHR> {
-        if (!loggedInUser) return CommonResponse.UNAUTHORIZED;
-        if (!loggedInUser.ownGraph) return CommonResponse.FORBIDDEN;
-
-        await shareDAO.destroy({ where: { from: loggedInUser.id, to: userId } });
+        await userDAO.update(updateObj, { where: { id: userId } });
 
         return {
             data: {},
             status: 200
         };
-    }
+    }, IsAdminGuard);
+
+    const deleteShare = applyUserGuards<
+        {},
+        { userId: string },
+        {}
+    >(async ({ query: { userId } }) => {
+        if (!userId) {
+            return CommonResponse.BAD_REQUEST;
+        }
+
+        const existsShare = await userDAO.findOne({ where: { id: userId } });
+        if (!existsShare) {
+            return CommonResponse.BAD_REQUEST;
+        }
+        if (existsShare.username == DEFAUT_ADMIN_USERNAME) {
+            return CommonResponse.BAD_REQUEST;
+        }
+        
+        await userDAO.destroy({ where: { id: userId } });
+
+        return {
+            data: {},
+            status: 200
+        };
+    }, IsAdminGuard);
 
     return {
-        searchUser, shared, addShare, changePerm, deleteShare
+        shared, addShare, updateShare, deleteShare
     };
 }

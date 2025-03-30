@@ -222,7 +222,7 @@ export class TableSchema<Model extends ValidModel> {
             .reduce((result, [key, value]) => {
                 result[key as keyof Model] = value;
                 return result;
-            }, {} as Partial<Model>);
+            }, {} as PartialNonNullable<Model>);
     }
 
     private tripleObjectRepr(field: Key<Model>, value: any) {
@@ -336,12 +336,16 @@ export class TableSchema<Model extends ValidModel> {
             return [];
         }
 
-        const triples: Triple[] = match ? this.entriesPartialModel(match).map(([k, v]) => {
-            return ["?s", `${this.name}:${k}`, this.tripleObjectRepr(k, v)] as Triple;
-        }) : [["?s", "?p", "?o"]];
+        match = this.filterInvalidProps(match || {});
+
+        const triples: Triple[] = (match && Object.keys(match).length > 0)
+            ? this.entriesPartialModel(match).map(([k, v]) => {
+                return ["?s", `${this.name}:${k}`, this.tripleObjectRepr(k, v)] as Triple;
+            })
+            : [];
 
         const response = await Fuseki.execSelectQuery<"s">(`
-            SELECT ?s
+            SELECT DISTINCT ?s
             WHERE {
                 ?s a :${this.name} .
                 ${this.tripleQueryRepr(triples)}
@@ -357,6 +361,10 @@ export class TableSchema<Model extends ValidModel> {
         const triples: Triple[] = [];
 
         const ids = await this.filter(where);
+        if (ids.length == 0) {
+            return;
+        }
+        
         ids.forEach(id => {
             this.keys(data).forEach(field => {
                 if (!data[field]) {
@@ -375,10 +383,8 @@ export class TableSchema<Model extends ValidModel> {
                 ?s ?p ?o .
                 FILTER (?s IN (${ids.map(id => `${this.name}:${id}`).join(", ")}))
                 FILTER (?p IN (${this.keys(data).map(k => `${this.name}:${k}`).join(", ")}))
-            }
-        `);
+            };
 
-        await Fuseki.execPostQuery(`
             INSERT DATA {
                 ${this.tripleQueryRepr(triples)}
             }
@@ -394,6 +400,10 @@ export class TableSchema<Model extends ValidModel> {
         await TableSchema.sync();
 
         const ids = await this.filter(match ? match.where : undefined);
+        if (ids.length == 0) {
+            return [];
+        }
+
         const response = await Fuseki.execSelectQuery<"s" | "p" | "o">(`
             SELECT ?s ?p ?o
             WHERE {
@@ -417,6 +427,10 @@ export class TableSchema<Model extends ValidModel> {
         await TableSchema.sync();
 
         const ids = await this.filter(where);
+        if (ids.length == 0) {
+            return;
+        }
+
         const idsRepr = ids.map(id => `${this.name}:${id}`).join(", ");
 
         await Fuseki.execPostQuery(`

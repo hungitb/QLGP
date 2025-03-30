@@ -1,17 +1,37 @@
-import { User } from "../model/User";
+import { IDAO } from "../model/IDAO";
+import { ThongTinGiaPha, User } from "../model/User";
+import { DEFAUT_ADMIN_USERNAME } from "./auth";
 
-export type ControllerHandlerResult<K extends object = {}> = {
-    data: {
-      [attr in keyof K]?: K[attr];
-    } & { msg?: string };
+type RequestInputQuery = Record<string, string>;
+type RequestInputBody = Record<string, any>;
+
+export type SafeOmit<T, K extends keyof T> = Omit<T, K>;
+
+export type UserInfo = SafeOmit<User, "sessionToken" | "sessionExpiry" | "password" | "note"> & {
+    thongTinGiaPha: ThongTinGiaPha;
+};
+
+export interface RequestInput<Body extends RequestInputBody, Query extends RequestInputQuery, UserCanNull extends boolean> {
+    user: UserCanNull extends true ? User | null : User;
+    query: {
+        [key in keyof Query]: Query[key] | undefined;
+    };
+    body: Body;
+};
+
+export type ControllerHandlerResult<K extends object> = {
+    data: K | { msg: string };
     status: number;
 };
 
-export type DetailUser = User & (
-    { ownGraph: true } |
-    { ownGraph: false, useGraphOfUserId: undefined } |
-    { ownGraph: false, useGraphOfUserId: string, perm: "read" | "write" }
-);
+export type ControllerHandler<
+    Body extends RequestInputBody = {},
+    Query extends RequestInputQuery = {},
+    Output extends object = {},
+    UserCanNull extends boolean = true
+> = (input: RequestInput<Body, Query, UserCanNull>) => Promise<ControllerHandlerResult<Output>>;
+
+export type Controller = Record<string, ControllerHandler<any, any, any>>;
 
 export type PaginateParams = {
     sortBy?: string,
@@ -132,3 +152,110 @@ export function badRequetWithMsg(msg: string) {
         status: 400
     };
 }
+
+type UserGuard = {
+    type: "UserGuard",
+    handler: (input: RequestInput<any, any, any>) => Promise<ControllerHandlerResult<{ msg: string }> | void>;
+};
+
+export const CanReadGuard: UserGuard = {
+    type: "UserGuard",
+    handler: async (input) => {
+        if (!input.user) return CommonResponse.UNAUTHORIZED;
+        if (
+            input.user.permission != "admin" &&
+            input.user.permission != "read"
+        ) {
+            return CommonResponse.FORBIDDEN;
+        }
+    }
+};
+
+export const CanWriteGuard: UserGuard = {
+    type: "UserGuard",
+    handler: async (input) => {
+        if (!input.user) return CommonResponse.UNAUTHORIZED;
+        if (
+            input.user.permission != "admin" &&
+            input.user.permission != "write"
+        ) {
+            return CommonResponse.FORBIDDEN;
+        }
+    }
+};
+
+export const IsAdminGuard: UserGuard = {
+    type: "UserGuard",
+    handler: async (input) => {
+        if (!input.user) return CommonResponse.UNAUTHORIZED;
+        if (input.user.permission != "admin") return CommonResponse.FORBIDDEN;
+    }
+};
+
+export function applyUserGuards<
+    Body extends RequestInputBody,
+    Query extends RequestInputQuery,
+    Output extends object = {}
+>(handler: ControllerHandler<Body, Query, Output, false>, ...guards: UserGuard[]) {
+    const newHandler: ControllerHandler<Body, Query, Output | { msg: string }, true> = async (input: RequestInput<Body, Query, true>) => {
+        if (!input.user) return CommonResponse.UNAUTHORIZED;
+        
+        for (const g of guards) {
+            const result = await g.handler(input);
+            if (result) return result;
+        }
+        return handler(input as RequestInput<Body, Query, any> as RequestInput<Body, Query, false>);
+    };
+
+    return newHandler;
+}
+
+export function wrapControllerWithInitialScript<T extends Controller>(controller: T, script: () => Promise<void>): T {
+    let initialDone = false;
+    let rejectedException: any;
+
+    script()
+    .then(() => {
+        initialDone = true;
+    }).catch((e) => {
+        rejectedException = e;
+    });
+
+    const waitInitial = () => new Promise<void>(resolve => {
+        const check = () => {
+            if (initialDone) {
+                resolve();
+            } else if (rejectedException) {
+                throw rejectedException;
+            } else {
+                setTimeout(check, 10);
+            }
+        }
+        check();
+    });
+
+    Object.entries(controller).forEach(([handlerName, handler]) => {
+        (controller as any)[handlerName] = async (...data: any[]) => {
+            await waitInitial();
+
+            return await handler(...(data as [any]));
+        };
+    });
+
+    return controller;
+}
+
+export async function getThongTinGiaPha(userDAO: IDAO<User>) {
+    const user = await userDAO.findOne({ where: { username: DEFAUT_ADMIN_USERNAME } });
+    if (!user) throw new Error("User admin not found");
+    
+    return JSON.parse(user.note) as ThongTinGiaPha;
+}
+
+export const usernamePasswordRules = [
+    (v: string) => !!v || "Không được để trống",
+    (v: string) =>
+      (5 <= v.length && v.length <= 12) || "Độ dài phải từ 5 đến 12 ký tự",
+    (v: string) =>
+      /^[a-zA-Z0-9]+$/.test(v) || "Chỉ được chứa a-z, A-Z và 0-9",
+];

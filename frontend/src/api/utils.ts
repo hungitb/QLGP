@@ -1,16 +1,17 @@
 import { type AxiosResponse } from "axios";
 
-import { userDAO, shareDAO } from "../../../backend/src/DAO/fake/FakeDAO";
+import { userDAO } from "../../../backend/src/DAO/fake/FakeDAO";
 import {
-  DetailUser,
+  ControllerHandler,
   type ControllerHandlerResult as CHR,
 } from "../../../backend/src/controller/utils";
+import { User } from "../../../backend/src/model/User";
 
 export const sessionTokenKeyStoreLoggedInUserInLocalStorage =
   "QLGP.sessionToken";
 export const useBackend = process.env.QLGP_USE_BACKEND == "true";
 
-export async function getLoggedInUserLocalStorage(): Promise<DetailUser | null> {
+export async function getLoggedInUserLocalStorage(): Promise<User | null> {
   const sessionToken = localStorage.getItem(
     sessionTokenKeyStoreLoggedInUserInLocalStorage
   );
@@ -19,30 +20,24 @@ export async function getLoggedInUserLocalStorage(): Promise<DetailUser | null> 
   }
 
   const user = await userDAO.findOne({ where: { sessionToken } });
-  if (!user) {
-    return null;
-  }
+  return user;
+}
 
-  if (user.ownGraph) return Object.assign(user, { ownGraph: true } as const);
+export function wrapGetApi<T extends ControllerHandler<any, any, any>>(
+  handler: (data: Parameters<T>[0]["query"]) => ReturnType<T>
+) {
+  return handler;
+}
 
-  const share = await shareDAO.findOne({ where: { to: user.id } });
-  if (!share) {
-    return Object.assign(user, {
-      ownGraph: false,
-      useGraphOfUserId: undefined,
-    } as const);
-  }
-
-  return Object.assign(user, {
-    ownGraph: false,
-    useGraphOfUserId: share.from,
-    perm: share.perm,
-  } as const);
+export function wrapPostApi<T extends ControllerHandler<any, any, any>>(
+  handler: (data: Parameters<T>[0]["body"]) => ReturnType<T>
+) {
+  return handler;
 }
 
 export function wrapAxiosCall(
   callback: () => Promise<AxiosResponse>
-): Promise<CHR<Record<string, any>>> {
+): Promise<CHR<any>> {
   return new Promise((resolve) => {
     callback()
       .then((response) =>

@@ -45,7 +45,7 @@ export default defineComponent({
   },
   data() {
     return {
-      id1: this.$store.state.personStandForUser.id as string | null,
+      id1: null as string | null,
       id2: null as string | null,
       isLoading: false,
       calls: null as [string, string] | null,
@@ -75,7 +75,13 @@ export default defineComponent({
         id1: this.id1,
         id2: this.id2,
       });
-      this.calls = data.data;
+
+      if ("data" in data) {
+        this.calls = data.data;
+      } else {
+        const msg = `Lỗi: ${data.msg}`;
+        this.calls = [msg, msg];
+      }
 
       this.isLoading = false;
     },

@@ -26,6 +26,14 @@ export default function getUserTable (sequelize: Sequelize) {
             type: DataTypes.BIGINT,
             defaultValue: null
         },
+        permission: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
+        note: {
+            type: DataTypes.STRING,
+            allowNull: false
+        }
     } as SequlizeTableDefineColumns<User>,
     {
         tableName: 'users'

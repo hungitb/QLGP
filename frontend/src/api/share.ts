@@ -3,68 +3,57 @@ import {
   useBackend,
   wrapAxiosCall,
   getLoggedInUserLocalStorage,
-  stringifyValuesOfObject,
+  wrapGetApi,
+  wrapPostApi,
 } from "./utils";
 import getShareController from "../../../backend/src/controller/share";
-import {
-  shareDAO,
-  userDAO,
-  wrapApi,
-} from "../../../backend/src/DAO/fake/FakeDAO";
+import { userDAO, wrapApi } from "../../../backend/src/DAO/fake/FakeDAO";
 
-const shareController = getShareController(shareDAO, userDAO);
+const shareController = getShareController(userDAO);
 
 export const shareApi = wrapApi({
-  async searchUser(data: { username: string }) {
-    if (useBackend) {
-      return await wrapAxiosCall(() =>
-        api.get("/share/search", { params: data })
-      );
-    }
-
-    return await shareController.searchUser(
-      stringifyValuesOfObject(data) as { username: string },
-      await getLoggedInUserLocalStorage()
-    );
-  },
-  async shared() {
+  shared: wrapGetApi<typeof shareController.shared>(async (data) => {
     if (useBackend) {
       return await wrapAxiosCall(() => api.get("/share"));
     }
 
-    return await shareController.shared(
-      {},
-      await getLoggedInUserLocalStorage()
-    );
-  },
-  async addShare(data: { username: string; perm: "read" | "write" }) {
+    return await shareController.shared({
+      body: {},
+      query: data,
+      user: await getLoggedInUserLocalStorage(),
+    });
+  }),
+  addShare: wrapPostApi<typeof shareController.addShare>(async (data) => {
     if (useBackend) {
       return await wrapAxiosCall(() => api.post("/share", data));
     }
 
-    return await shareController.addShare(
-      data,
-      await getLoggedInUserLocalStorage()
-    );
-  },
-  async changePerm(data: { userId: string; perm: "read" | "write" }) {
+    return await shareController.addShare({
+      body: data,
+      query: {},
+      user: await getLoggedInUserLocalStorage(),
+    });
+  }),
+  updateShare: wrapPostApi<typeof shareController.updateShare>(async (data) => {
     if (useBackend) {
       return await wrapAxiosCall(() => api.patch("/share", data));
     }
 
-    return await shareController.changePerm(
-      data,
-      await getLoggedInUserLocalStorage()
-    );
-  },
-  async deleteShare(data: { userId: string }) {
+    return await shareController.updateShare({
+      body: data,
+      query: {},
+      user: await getLoggedInUserLocalStorage(),
+    });
+  }),
+  deleteShare: wrapGetApi<typeof shareController.deleteShare>(async (data) => {
     if (useBackend) {
       return await wrapAxiosCall(() => api.delete("/share", { params: data }));
     }
 
-    return await shareController.deleteShare(
-      data,
-      await getLoggedInUserLocalStorage()
-    );
-  },
+    return await shareController.deleteShare({
+      body: {},
+      query: data,
+      user: await getLoggedInUserLocalStorage(),
+    });
+  }),
 });

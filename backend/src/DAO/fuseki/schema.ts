@@ -3,7 +3,6 @@ import { Person } from "../../model/Person";
 import { FieldDef } from "../../model/FieldDef";
 import { FieldVal } from "../../model/FieldVal";
 import { TableSchema } from "./TableSchema";
-import { Share } from "../../model/Share";
 
 const userSchema = new TableSchema<User>({
     name: "user",
@@ -26,7 +25,14 @@ const userSchema = new TableSchema<User>({
         sessionExpiry: {
             type: "int"
         },
-        ownGraph: "boolean"
+        permission: {
+            type: "string",
+            allowNull: false
+        },
+        note: {
+            type: "string",
+            allowNull: false
+        }
     }
 });
 
@@ -36,15 +42,6 @@ const personSchema = new TableSchema<Person>({
         id: {
             type: "string",
             primaryKey: true
-        },
-        ownerUserId: {
-            type: userSchema,
-            allowNull: false,
-            alias: "belongToUser"
-        },
-        isStandForUser: {
-            type: "boolean",
-            allowNull: false
         },
         callname: {
             type: "string",
@@ -73,20 +70,6 @@ const personSchema = new TableSchema<Person>({
     }
 });
 
-const shareSchema = new TableSchema<Share>({
-    name: "share",
-    fields: {
-        id: {
-            type: "string",
-            primaryKey: true
-        },
-        from: userSchema,
-        to: userSchema,
-        perm: "string"
-    }
-});
-
 export const personDAO = personSchema.getDAO();
 export const userDAO = userSchema.getDAO();
-export const shareDAO = shareSchema.getDAO();
 

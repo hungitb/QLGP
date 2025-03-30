@@ -3,7 +3,8 @@ import Vuex from "vuex";
 
 import { Person } from "../../../backend/src/model/Person";
 import { personApi } from "@/api/person";
-import { DetailUser } from "../../../backend/src/controller/utils";
+import { ThongTinGiaPha, User } from "../../../backend/src/model/User";
+import { UserInfo } from "../../../backend/src/controller/utils";
 
 Vue.use(Vuex);
 
@@ -11,29 +12,42 @@ export const SET_USER = "SET_USER";
 const SET_PEOPLE = "SET_PEOPLE";
 const SET_PERSON_MAPPING = "SET_PERSON_MAPPING";
 const SET_IS_LOADING_PEOPLE = "SET_IS_LOADING_PEOPLE";
-const SET_PERSON_STAND_FOR_USER = "SET_PERSON_STAND_FOR_USER";
+const SET_ID_TO_TIEN = "SET_ID_TO_TIEN";
 const CLEAR_ALL_STATE_DATA = "CLEAR_ALL_STATE_DATA";
 
 export const UPDATE_USER = "UPDATE_USER";
 export const FETCH_PEOPLE = "FETCH_PEOPLE";
 export const CLEAR_STORE = "CLEAR_STORE";
 
-export function getDefaultState() {
+type StoreState = {
+  user: UserInfo;
+  idToTien: UserInfo["thongTinGiaPha"]["idToTien"];
+  isLoadingPeople: boolean;
+  people: Person[];
+  personMapping: Record<string, Person>;
+};
+
+export function getDefaultState(): StoreState {
   return {
-    user: null as unknown as DetailUser,
+    user: null as unknown as UserInfo,
+    idToTien: null,
     isLoadingPeople: false,
-    people: [] as Person[],
-    personMapping: {} as Record<string, Person>,
-    personStandForUser: null as unknown as Person,
+    people: [],
+    personMapping: {},
   };
 }
 
 export default new Vuex.Store({
   state: getDefaultState(),
-  getters: {},
+  getters: {
+    idToTien: (state) => state.user.thongTinGiaPha.idToTien,
+  },
   mutations: {
     [SET_USER](state, { user }) {
       state.user = user;
+    },
+    [SET_ID_TO_TIEN](state, { idToTien }) {
+      state.idToTien = idToTien;
     },
     [SET_PEOPLE](state, { people }) {
       state.people = people;
@@ -44,35 +58,37 @@ export default new Vuex.Store({
     [SET_PERSON_MAPPING](state, { personMapping }) {
       state.personMapping = personMapping;
     },
-    [SET_PERSON_STAND_FOR_USER](state, { personStandForUser }) {
-      state.personStandForUser = personStandForUser;
-    },
     [CLEAR_ALL_STATE_DATA](state) {
       Object.assign(state, getDefaultState());
     },
   },
   actions: {
-    [UPDATE_USER](context, { user }) {
+    [UPDATE_USER](context, { user }: { user: StoreState["user"] }) {
       context.commit(SET_USER, { user });
+      if (user) {
+        context.commit(SET_ID_TO_TIEN, {
+          idToTien: user.thongTinGiaPha.idToTien,
+        });
+      } else {
+        context.commit(SET_ID_TO_TIEN, { idToTien: null });
+      }
     },
     async [FETCH_PEOPLE](context) {
       context.commit(SET_IS_LOADING_PEOPLE, { isLoadingPeople: true });
       try {
-        const { data } = await personApi.getAllPeopleBaseInfo();
-        if (data.people) {
+        const { data } = await personApi.getAllPeopleBaseInfo({});
+        if ("people" in data) {
           const personMapping: Record<string, Person> = {};
-          let personStandForUser = null;
 
           data.people.forEach((person) => {
             personMapping[person.id] = person;
-            if (person.isStandForUser) {
-              personStandForUser = person;
-            }
           });
 
           context.commit(SET_PEOPLE, { people: data.people });
           context.commit(SET_PERSON_MAPPING, { personMapping });
-          context.commit(SET_PERSON_STAND_FOR_USER, { personStandForUser });
+        } else {
+          context.commit(SET_PEOPLE, { people: [] });
+          context.commit(SET_PERSON_MAPPING, { personMapping: {} });
         }
       } finally {
         context.commit(SET_IS_LOADING_PEOPLE, { isLoadingPeople: false });

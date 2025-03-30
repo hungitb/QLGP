@@ -1,10 +1,10 @@
 import type { IDAO } from "../../model/IDAO";
-import type { User } from "../../model/User";
+import type { ThongTinGiaPha, User } from "../../model/User";
 import type { Person } from "../../model/Person";
 import { Gender, LifeStatus } from "../../model/Person";
 import type { FieldDef } from "../../model/FieldDef";
 import type { FieldVal } from "../../model/FieldVal";
-import { Share } from "../../model/Share";
+import { DEFAUT_ADMIN_PASSWORD, DEFAUT_ADMIN_USERNAME } from "../../controller/auth";
 
 const isWeb = typeof window != "undefined" && typeof document != "undefined";
 
@@ -16,7 +16,7 @@ const GENERATE_FAKE_DATA =
 const DELAY = 100;
 
 type Dict = { [key: string]: any };
-type AllTableTypes = [User[], Person[], FieldDef[], FieldVal[], Share[]];
+type AllTableTypes = [User[], Person[], FieldDef[], FieldVal[]];
 type Storage = {
   startOperations: () => Promise<void>;
   endOperations: () => Promise<void>;
@@ -355,22 +355,28 @@ function generateFakeData(): AllTableTypes {
   }
 
   const fakseUserId = randomId();
+  const noteObj: ThongTinGiaPha = {
+    idToTien: null,
+    tenDongHo: "",
+    thongTinKhac: "",
+    type: "phaHe"
+  };
+
   const fakeUsers: User[] = [
     {
       id: fakseUserId,
-      username: "qlgp1234",
-      password: "qlgp1234",
-      sessionToken: "qlgp1234",
+      username: DEFAUT_ADMIN_USERNAME,
+      password: DEFAUT_ADMIN_PASSWORD,
+      sessionToken: null,
       sessionExpiry: null,
-      ownGraph: true,
+      permission: "admin",
+      note: JSON.stringify(noteObj),
     },
   ];
 
   const fakePeople: Person[] = [
     {
       id: randomId(),
-      ownerUserId: fakseUserId,
-      isStandForUser: true,
       callname: "Tôi",
       gender: Gender.MALE,
       birthdate: "9/9/2003",
@@ -426,8 +432,6 @@ function generateFakeData(): AllTableTypes {
 
     fakePeople.push({
       id: randomId(),
-      ownerUserId: fakseUserId,
-      isStandForUser: false,
       callname: [
         sampleOne(["Nguyễn", "Lê", "Đinh", "Phạm"]),
         gender == Gender.MALE ? "Văn" : "Thị",
@@ -488,8 +492,7 @@ function generateFakeData(): AllTableTypes {
     fakeUsers,
     fakePeople,
     [] as FieldDef[],
-    [] as FieldVal[],
-    [] as Share[]
+    [] as FieldVal[]
   ];
 }
 
@@ -503,8 +506,7 @@ function getData(): Promise<Dict[]>[] {
     "users",
     "people",
     "fieldDefs",
-    "fieldVals",
-    "shares"
+    "fieldVals"
   ] as const;
 
   let _cache: Dict[][] | null = null;
@@ -515,11 +517,11 @@ function getData(): Promise<Dict[]>[] {
       tableNames.map((name) => storage.getItem(`QLGP.${name}`))
     )) as AllTableTypes;
 
-    const [users, people, fieldDefs, fieldVals, shares] = tableDatas;
+    const [users, people, fieldDefs, fieldVals] = tableDatas;
     const x: (typeof tableNames)["length"] extends AllTableTypes["length"] ? number : never = 1; // Trick
     await storage.setItem("QLGP.metadata", [{ dataVersion }]);
 
-    _cache = [users, people, fieldDefs, fieldVals, shares];
+    _cache = [users, people, fieldDefs, fieldVals];
     return _cache;
   }
   getDataFromStorage();
@@ -532,7 +534,7 @@ function getData(): Promise<Dict[]>[] {
   );
 }
 
-const [users, people, fieldDefs, fieldVals, shares] = getData();
+const [users, people, fieldDefs, fieldVals] = getData();
 
 export const userDAO: IDAO<User> = createDAO(
   "QLGP.users",
@@ -554,11 +556,6 @@ export const fieldValDAO: IDAO<FieldVal> = createDAO(
   "id",
   fieldVals
 ) as unknown as IDAO<FieldVal>;
-export const shareDAO: IDAO<Share> = createDAO(
-  "QLGP.shares",
-  "id",
-  shares
-);
 
 if (process.env.NODE_ENV == "development" && isWeb) {
   (window as any).userDAO = userDAO;

@@ -403,8 +403,11 @@ export default Vue.extend({
           eventTypes: eventSetting.eventTypes?.join(","),
         })
         .then(({ data }) => {
-          const { events } = data;
-          this.events = events || [];
+          if ("events" in data) {
+            this.events = data.events;
+          } else {
+            this.events = [];
+          }
         })
         .finally(() => {
           this.eventsLoading = false;

@@ -3,7 +3,6 @@ import VueRouter, { RouteConfig } from "vue-router";
 
 import AuthLayout from "@/views/AuthLayout.vue";
 import LoginView from "@/views/LoginView.vue";
-import RegisterView from "@/views/RegisterView.vue";
 
 import LoggedInLayout from "@/views/LoggedInLayout.vue";
 import HomeView from "@/views/HomeView.vue";
@@ -28,11 +27,6 @@ const routes: Array<RouteConfig> = [
         path: "login",
         name: "login",
         component: LoginView,
-      },
-      {
-        path: "register",
-        name: "register",
-        component: RegisterView,
       },
     ],
   },

@@ -305,7 +305,7 @@ export default defineComponent({
         return;
       }
 
-      if (!data.events) {
+      if (!("events" in data)) {
         this.isLoading = false;
         return;
       }

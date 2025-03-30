@@ -356,6 +356,16 @@ export default defineComponent({
             : undefined,
         });
 
+        this.isLoading = false;
+
+        if (!("createdPersonId" in data)) {
+          showSnackbar({
+            msg: "Có lỗi xảy ra",
+            type: "error",
+          });
+          return;
+        }
+
         addedOrCreatedPersonId = data.createdPersonId;
         if (this.role) {
           const roleMapping: Record<string, string> = {
@@ -376,8 +386,6 @@ export default defineComponent({
           });
         }
       }
-
-      this.isLoading = false;
 
       this[FETCH_PEOPLE]();
       this.dialog = false;

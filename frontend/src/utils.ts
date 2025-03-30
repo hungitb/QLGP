@@ -134,15 +134,12 @@ type PermissionMixinThis = {
 
 export const permissionMixin = {
   methods: {
-    ownGraph(this: PermissionMixinThis) {
-      return this.$store.state.user.ownGraph;
+    isAdmin(this: PermissionMixinThis) {
+      return this.$store.state.user.permission === "admin";
     },
     canWrite(this: PermissionMixinThis) {
       const user = this.$store.state.user;
-      return !!(
-        user.ownGraph ||
-        (user.useGraphOfUserId && user.perm == "write")
-      );
+      return user.permission == "admin" || user.permission == "write";
     },
   },
 };
