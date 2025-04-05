@@ -21,3 +21,12 @@ export type Person = {
     fatherId: string | null;
     motherId: string | null;
 };
+
+export type PersonFuseki = Person & {
+    birthdateHasDayMonthYear: boolean;
+    birthdateHasMonthYear: boolean;
+    birthdateHasYear: boolean;
+    birthdateDayMonthYearRepr: number | null;
+    birthdateMonthYearRepr: number | null;
+    birthdateYearRepr: number | null;
+};

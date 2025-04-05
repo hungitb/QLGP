@@ -24,12 +24,13 @@ const allPrefixes: Record<string, string> = {
 
 function registerPrefix(prefix: string, url: string) {
     allPrefixes[prefix] = url;
-    fusekiQueryPrefix = undefined
+    fusekiQueryPrefix = undefined;
 }
 
 function execQuery<TFields extends string>(query: string, method: "get"): Promise<FusekiGetResponse<TFields>>;
 function execQuery(query: string, method: "post"): Promise<any>;
 async function execQuery<TFields extends string = any>(query: string, method: "post" | "get") {
+    console.log("=====================================================================\n", query);
     const fusekiUrl = process.env.QLGP_FUSEKI_URL || "localhost:3030";
 
     if (!fusekiQueryPrefix) {
@@ -63,12 +64,10 @@ async function execQuery<TFields extends string = any>(query: string, method: "p
 }
 
 async function execSelectQuery<TFields extends string>(query: string) {
-    console.log("=====================================================================\n", query);
     return await execQuery<TFields>(query, "get");
 }
 
 async function execPostQuery(query: string) {
-    console.log("=====================================================================\n", query);
     return await execQuery(query, "post");
 }
 

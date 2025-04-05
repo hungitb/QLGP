@@ -79,6 +79,10 @@ export class TableSchema<Model extends ValidModel> {
         name: string,
         fields: TableSchemaFieldDefs<Model>
     }) {
+        if (TableSchema.syncing || TableSchema.synced) {
+            throw Error("It's too late to create a schema");
+        }
+
         this.__type__ = "TableSchema";
         this.name = name;
         this.urlBase = TableSchema.getBaseUrl(name);
@@ -148,13 +152,25 @@ export class TableSchema<Model extends ValidModel> {
         Fuseki.registerPrefix(this.name, this.urlBase);
         TableSchema.initialTriples.push([`:${this.name}`, "a", "owl:Class"]);
 
-        // this.entrieFields().forEach(([field, typeDef]) => {
-        //     const type = this.inferType(typeDef);
+        this.entrieFields().forEach(([field, typeDef]) => {
+            const type = this.inferType(typeDef);
 
-        //     TableSchema.initialTriples.push(
-        //         [`:${this.convertField(field)}`, "a", this.isLiteralType(type) ? "owl:DataProperty" : "owl:ObjectProperty"]
-        //     );
-        // });
+            const typeAsSubject = `${this.name}:${field}`;
+
+            if (this.isLiteralType(type)) {
+                TableSchema.initialTriples.push(
+                    [typeAsSubject, "a", "owl:DataProperty"],
+                    [typeAsSubject, "rdfs:domain", `:${this.name}`],
+                    [typeAsSubject, "rdfs:range", this.dataType(type)]
+                );
+            } else {
+                TableSchema.initialTriples.push(
+                    [typeAsSubject, "a", "owl:ObjectProperty"],
+                    [typeAsSubject, "rdfs:domain", `:${this.name}`],
+                    [typeAsSubject, "rdfs:range", `:${this.getSchemaName(type)}`]
+                );
+            }
+        });
     }
 
     private entrieFields() {
@@ -195,6 +211,7 @@ export class TableSchema<Model extends ValidModel> {
             return "xsd:decimal";
         } else {
             const x: never = type; // Typescript trick
+            throw Error(`Unknown data type of type ${type}`);
         }
     }
 
@@ -441,10 +458,9 @@ export class TableSchema<Model extends ValidModel> {
             WHERE {
                 ?s ?p ?o .
                 FILTER (
-                    ?s in (${idsRepr}) ||
-                    ?o in (${idsRepr})
+                    ?s in (${idsRepr})
                 )
-            }    
+            }
         `);
     }
 

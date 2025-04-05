@@ -50,7 +50,7 @@
       {{ loginErrorMessage }}
     </v-alert>
 
-    <div class="mt-5">
+    <div>
       <v-btn block color="primary" @click="login" :disabled="isLoadingLogin">
         <v-progress-circular
           color="primary"
