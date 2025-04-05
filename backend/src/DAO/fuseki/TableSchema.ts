@@ -153,6 +153,10 @@ export class TableSchema<Model extends ValidModel> {
         TableSchema.initialTriples.push([`:${this.name}`, "a", "owl:Class"]);
 
         this.entrieFields().forEach(([field, typeDef]) => {
+            if (field == this.primaryKey) {
+                return;
+            }
+
             const type = this.inferType(typeDef);
 
             const typeAsSubject = `${this.name}:${field}`;
