@@ -147,6 +147,14 @@ export class TableSchema<Model extends ValidModel> {
         this.registerItSelf();
     }
 
+    private convertModelFieldToFusekiField(field: Key<Model>): string {
+        return this.fieldMapping[field];
+    }
+
+    private convertFusekiFieldToModelField(field: string): Key<Model> {
+        return this.aliasMapping[field];
+    }
+
     private registerItSelf() {
         TableSchema.allSchemas.push(this);
         Fuseki.registerPrefix(this.name, this.urlBase);
@@ -159,7 +167,7 @@ export class TableSchema<Model extends ValidModel> {
 
             const type = this.inferType(typeDef);
 
-            const typeAsSubject = `${this.name}:${field}`;
+            const typeAsSubject = `${this.name}:${this.convertModelFieldToFusekiField(field)}`;
 
             if (this.isLiteralType(type)) {
                 TableSchema.initialTriples.push(
@@ -191,8 +199,8 @@ export class TableSchema<Model extends ValidModel> {
 
     private inferType(typeDef: TableSchema<any>["fields"][string]): FieldType {
         return typeof typeDef == "object" && "type" in typeDef
-        ? typeDef.type
-        : typeDef;
+            ? typeDef.type
+            : typeDef;
     }
 
     private removeSelfPrefix(s: string) {
@@ -270,12 +278,20 @@ export class TableSchema<Model extends ValidModel> {
         const triples: Triple[] = [[`${this.name}:${id}`, "a", `:${this.name}`]];
         const primaryKeyType = this.inferType(this.fields[this.primaryKey]);
         if (!this.isLiteralType(primaryKeyType)) {
-            triples.push([`${this.name}:${id}`, `${this.name}:${this.primaryKey}`, `${this.getSchemaName(primaryKeyType)}:${id}`]);
+            triples.push([
+                `${this.name}:${id}`,
+                `${this.name}:${this.convertModelFieldToFusekiField(this.primaryKey)}`,
+                `${this.getSchemaName(primaryKeyType)}:${id}`
+            ]);
         }
         Object.entries(data).forEach(([_key, value]) => {
             const key = _key as Key<Model>;
 
-            triples.push([`${this.name}:${id}`, `${this.name}:${key}`, this.tripleObjectRepr(key, value)]);
+            triples.push([
+                `${this.name}:${id}`,
+                `${this.name}:${this.convertModelFieldToFusekiField(key)}`,
+                this.tripleObjectRepr(key, value)
+            ]);
         });
 
         await Fuseki.execPostQuery(`
@@ -307,7 +323,7 @@ export class TableSchema<Model extends ValidModel> {
                 } as Model;
             }
 
-            const field = this.removeSelfPrefix(p) as Key<Model>;
+            const field = this.convertFusekiFieldToModelField(this.removeSelfPrefix(p));
             const type = this.inferType(this.fields[field]);
 
             objs[id][field] = this.isLiteralType(type)
@@ -361,7 +377,11 @@ export class TableSchema<Model extends ValidModel> {
 
         const triples: Triple[] = (match && Object.keys(match).length > 0)
             ? this.entriesPartialModel(match).map(([k, v]) => {
-                return ["?s", `${this.name}:${k}`, this.tripleObjectRepr(k, v)] as Triple;
+                return [
+                    "?s",
+                    `${this.name}:${this.convertModelFieldToFusekiField(k)}`,
+                    this.tripleObjectRepr(k, v)
+                ];
             })
             : [];
 
@@ -385,13 +405,19 @@ export class TableSchema<Model extends ValidModel> {
         if (ids.length == 0) {
             return;
         }
+
+        const dataValidKeys = this.keys(data).filter(key => key != this.primaryKey);
         
         ids.forEach(id => {
-            this.keys(data).forEach(field => {
+            dataValidKeys.forEach(field => {
                 if (!data[field]) {
                     return;
                 }
-                triples.push([`${this.name}:${id}`, `${this.name}:${field}`, this.tripleObjectRepr(field, data[field])]);
+                triples.push([
+                    `${this.name}:${id}`,
+                    `${this.name}:${this.convertModelFieldToFusekiField(field)}`,
+                    this.tripleObjectRepr(field, data[field])
+                ]);
             });
         });
 
@@ -403,7 +429,11 @@ export class TableSchema<Model extends ValidModel> {
             WHERE {
                 ?s ?p ?o .
                 FILTER (?s IN (${ids.map(id => `${this.name}:${id}`).join(", ")}))
-                FILTER (?p IN (${this.keys(data).map(k => `${this.name}:${k}`).join(", ")}))
+                FILTER (?p IN (${
+                    dataValidKeys.map(
+                        k => `${this.name}:${this.convertModelFieldToFusekiField(k)}`
+                    ).join(", ")
+                }))
             };
 
             INSERT DATA {

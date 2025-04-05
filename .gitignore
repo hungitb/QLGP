@@ -5,6 +5,7 @@ dist
 .env
 qlgp.exe
 app-data
+*.debug.log
 
 ## Frontend
 .DS_Store

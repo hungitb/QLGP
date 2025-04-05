@@ -356,8 +356,6 @@ export default defineComponent({
             : undefined,
         });
 
-        this.isLoading = false;
-
         if (!("createdPersonId" in data)) {
           showSnackbar({
             msg: "Có lỗi xảy ra",
@@ -387,6 +385,7 @@ export default defineComponent({
         }
       }
 
+      this.isLoading = false;
       this[FETCH_PEOPLE]();
       this.dialog = false;
 

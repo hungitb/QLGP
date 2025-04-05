@@ -1,7 +1,7 @@
 
 export type ThongTinGiaPha = {
     idToTien: string | null;
-    tenDongHo: string;
+    tenDongHo: string | null;
     thongTinKhac: string;
     type: "phaHe" | "mauHe";
 };

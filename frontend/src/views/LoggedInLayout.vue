@@ -283,6 +283,7 @@ export default Vue.extend({
     $route: "updateSelectedItemFromRoute",
     dialogChangePassword(value) {
       if (value) {
+        (this.$refs.formChangePassword as any).resetValidation();
         this.changePasswordForm = initChangePasswordForm();
       }
     },
