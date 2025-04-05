@@ -13,6 +13,7 @@ import getPersonController, {
 import type { Person } from "../../../backend/src/model/Person";
 import {
   personDAO,
+  ttgpDASO,
   userDAO,
   wrapApi,
 } from "../../../backend/src/DAO/fake/FakeDAO";
@@ -22,7 +23,7 @@ import {
 } from "../../../backend/src/controller/utils";
 import { Event } from "../../../backend/src/controller/event";
 
-const personController = getPersonController(personDAO, userDAO);
+const personController = getPersonController(personDAO, userDAO, ttgpDASO);
 
 export const personApi = wrapApi({
   getAllPeopleBaseInfo: wrapGetApi<

@@ -11,14 +11,14 @@ import {
   userDAO,
   personDAO,
   wrapApi,
+  ttgpDASO,
 } from "../../../backend/src/DAO/fake/FakeDAO";
 import { Gender } from "../../../backend/src/model/Person";
 import {
   ControllerHandlerResult as CHR,
-  getThongTinGiaPha,
   UserInfo,
 } from "../../../backend/src/controller/utils";
-import { ThongTinGiaPha, User } from "../../../backend/src/model/User";
+import { User } from "../../../backend/src/model/User";
 
 const authController = getAuthController(userDAO);
 
@@ -36,7 +36,7 @@ export const authApi = wrapApi({
         id: user.id,
         username: user.username,
         permission: user.permission,
-        thongTinGiaPha: await getThongTinGiaPha(userDAO),
+        thongTinGiaPha: await ttgpDASO.get(),
       };
     }
 

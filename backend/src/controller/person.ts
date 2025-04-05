@@ -2,11 +2,12 @@ import { v4 as uuid } from "uuid";
 
 import { compareTwoDateString, datePlusDay, lunarDateToNormalDate, normalDateToLunarDate, shortenDateString, todayDate } from "../utils/DateUtils";
 import { isStringPureInterger } from "../utils/ValidationUtils";
-import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR, Controller, ControllerHandler, applyUserGuards, CanReadGuard, getThongTinGiaPha, CanWriteGuard } from "./utils";
+import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR, Controller, ControllerHandler, applyUserGuards, CanReadGuard, CanWriteGuard } from "./utils";
 import { LifeStatus, Gender, type Person } from "../model/Person";
-import type { ThongTinGiaPha, User } from "../model/User";
-import type { IDAO } from "../model/IDAO";
+import type { User } from "../model/User";
+import type { IDAO, IDASO } from "../model/IDAO";
 import { extractEvents, type Event } from "./event";
+import { ThongTinGiaPha } from "../model/ThongTinGiaPha";
 
 export type ExtendedPerson = Person & {
     children: {
@@ -111,7 +112,7 @@ export function filterPeople(people: Person[], search: string, searchFieldsAsStr
     return people;
 }
 
-export default function getPersonController(personDAO: IDAO<Person>, userDAO: IDAO<User>) {
+export default function getPersonController(personDAO: IDAO<Person>, userDAO: IDAO<User>, TTGP: IDASO<ThongTinGiaPha>) {
     const getAllPeopleBaseInfo = applyUserGuards<
         {},
         PaginateParams,
@@ -211,7 +212,7 @@ export default function getPersonController(personDAO: IDAO<Person>, userDAO: ID
         if (isNaN(levelInt)) return CommonResponse.BAD_REQUEST;
         
         if (!subjectId) {
-            const thongTinGiaPha = await getThongTinGiaPha(userDAO);
+            const thongTinGiaPha = await TTGP.get();
 
             if (!thongTinGiaPha.idToTien) {
                 return CommonResponse.BAD_REQUEST;

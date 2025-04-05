@@ -3,7 +3,7 @@ import type { Request, Response, NextFunction } from "express";
 
 import { userDAO } from "../DAO";
 import {  ControllerHandler, UserInfo } from "../controller/utils";
-import type { ThongTinGiaPha, User } from "../model/User";
+import type { User } from "../model/User";
 
 export async function getLoggedInUser(req: Request): Promise<User | null> {
     const sessionToken = req.cookies?.sessionToken;

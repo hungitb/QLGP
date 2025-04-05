@@ -1,5 +1,6 @@
 import { IDAO } from "../model/IDAO";
-import { ThongTinGiaPha, User } from "../model/User";
+import { ThongTinGiaPha } from "../model/ThongTinGiaPha";
+import { User } from "../model/User";
 import { DEFAUT_ADMIN_USERNAME } from "./auth";
 
 type RequestInputQuery = Record<string, string>;
@@ -243,13 +244,6 @@ export function wrapControllerWithInitialScript<T extends Controller>(controller
     });
 
     return controller;
-}
-
-export async function getThongTinGiaPha(userDAO: IDAO<User>) {
-    const user = await userDAO.findOne({ where: { username: DEFAUT_ADMIN_USERNAME } });
-    if (!user) throw new Error("User admin not found");
-    
-    return JSON.parse(user.note) as ThongTinGiaPha;
 }
 
 export const usernamePasswordRules = [

@@ -1,11 +1,11 @@
 
 import { Router } from "express";
 
-import { personDAO, userDAO } from "../DAO";
+import { personDAO, ttgpDASO, userDAO } from "../DAO";
 import getPersonController from "../controller/person";
 import { wrapHandlerAdvance } from "./utils";
 const router = Router();
-const personController = getPersonController(personDAO, userDAO);
+const personController = getPersonController(personDAO, userDAO, ttgpDASO);
 
 router.post("", wrapHandlerAdvance(personController.createPerson));
 router.delete("", wrapHandlerAdvance(personController.deletePerson));

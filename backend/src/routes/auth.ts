@@ -1,11 +1,10 @@
 
 import { Router } from "express";
 
-import { personDAO, userDAO } from "../DAO";
+import { personDAO, ttgpDASO, userDAO } from "../DAO";
 import { getLoggedInUser, wrapHandlerAdvance, wrapHandlerSimple } from "./utils";
 import getAuthController from "../controller/auth";
-import { getThongTinGiaPha, UserInfo } from "../controller/utils";
-import { ThongTinGiaPha } from "../model/User";
+import { UserInfo } from "../controller/utils";
 
 const router = Router();
 const authController = getAuthController(userDAO);
@@ -19,7 +18,7 @@ router.get("/me", wrapHandlerSimple(async (req, res) => {
             id: user.id,
             username: user.username,
             permission: user.permission,
-            thongTinGiaPha: await getThongTinGiaPha(userDAO)
+            thongTinGiaPha: await ttgpDASO.get()
         };
     }
 

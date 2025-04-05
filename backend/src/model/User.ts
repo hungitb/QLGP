@@ -1,11 +1,3 @@
-
-export type ThongTinGiaPha = {
-    idToTien: string | null;
-    tenDongHo: string | null;
-    thongTinKhac: string;
-    type: "phaHe" | "mauHe";
-};
-
 export type User = {
     id: string;
     username:  string;

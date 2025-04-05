@@ -3,7 +3,7 @@ import Vuex from "vuex";
 
 import { Person } from "../../../backend/src/model/Person";
 import { personApi } from "@/api/person";
-import { ThongTinGiaPha, User } from "../../../backend/src/model/User";
+import { User } from "../../../backend/src/model/User";
 import { UserInfo } from "../../../backend/src/controller/utils";
 
 Vue.use(Vuex);

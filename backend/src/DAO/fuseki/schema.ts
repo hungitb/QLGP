@@ -2,7 +2,8 @@ import { User } from "../../model/User";
 import { Person } from "../../model/Person";
 import { FieldDef } from "../../model/FieldDef";
 import { FieldVal } from "../../model/FieldVal";
-import { TableSchema } from "./TableSchema";
+import { TableSchema, TableSchemaSingleRow } from "./TableSchema";
+import { defaultThongTinGiaPhaValue, ThongTinGiaPha } from "../../model/ThongTinGiaPha";
 
 const userSchema = new TableSchema<User>({
     name: "user",
@@ -70,6 +71,18 @@ const personSchema = new TableSchema<Person>({
     }
 });
 
+const ttgpSchema = new TableSchemaSingleRow<ThongTinGiaPha>({
+    name: "thongTinGiaPha",
+    fields: {
+        idToTien: "string",
+        thongTinKhac: "string",
+        tenDongHo: "string",
+        type: "string"
+    },
+    initValue: defaultThongTinGiaPhaValue
+});
+
 export const personDAO = personSchema.getDAO();
 export const userDAO = userSchema.getDAO();
+export const ttgpDASO = ttgpSchema.getDASO();
 

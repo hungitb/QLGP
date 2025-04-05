@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { CommonMessages, AuthMessages, generateSessionToken, CommonResponse, wrapControllerWithInitialScript, applyUserGuards } from "./utils";
 import type { Controller, ControllerHandler } from "./utils";
-import type { ThongTinGiaPha, User } from "../model/User";
+import type { User } from "../model/User";
 import type { IDAO } from "../model/IDAO";
 
 export const DEFAUT_ADMIN_USERNAME = "admin";
@@ -12,13 +12,6 @@ export default function getAuthController(userDAO: IDAO<User>) {
     const initialScript = async () => {
         const user = await userDAO.findOne({ where: { username: DEFAUT_ADMIN_USERNAME } });
         if (!user) {
-            const noteObj: ThongTinGiaPha = {
-                idToTien: null,
-                tenDongHo: "",
-                thongTinKhac: "",
-                type: "phaHe"
-            };
-
             await userDAO.create({
                 id: uuidv4(),
                 username: DEFAUT_ADMIN_USERNAME,
@@ -26,7 +19,7 @@ export default function getAuthController(userDAO: IDAO<User>) {
                 permission: "admin",
                 sessionToken: null,
                 sessionExpiry: null,
-                note: JSON.stringify(noteObj)
+                note: ""
             });
         }
     };
