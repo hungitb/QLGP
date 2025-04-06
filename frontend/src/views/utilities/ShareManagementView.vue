@@ -1,32 +1,52 @@
 <template>
   <div>
     <v-row>
-      <v-col cols="12" md="6">
+      <v-col cols="12" lg="4">
         <v-card :loading="loadingAddShare">
-          <v-card-title>Thêm người chia sẻ</v-card-title>
+          <v-card-title style="word-break: initial"
+            >Tạo tài khoản cho người thân sử dụng</v-card-title
+          >
           <v-card-text>
-            <v-autocomplete
-              v-model="choosedUsername"
-              :loading="isLoadingItems"
-              :items="items"
-              :search-input.sync="search"
-              hide-no-data
-              :disabled="loadingAddShare"
-              :hint="
-                seachLengthEnough ? undefined : 'Ít nhất 4 ký tự để xem gợi ý'
-              "
-              outlined
-              label="Tên người dùng"
-            ></v-autocomplete>
+            <v-form ref="form" class="mt-5">
+              <v-text-field
+                v-model="newUserUsername"
+                label="Tên đăng nhập"
+                :disabled="loadingAddShare"
+                :rules="usernamePasswordRules"
+                outlined
+                append-icon="mdi-dice-6-outline"
+                @click:append="radomUsername"
+                validate-on-blur
+              ></v-text-field>
 
-            <div>Quyền</div>
-            <v-radio-group
-              v-model="newUserPermission"
-              :disabled="loadingAddShare"
-            >
-              <v-radio label="Chỉ xem" value="read"></v-radio>
-              <v-radio label="Xem và chỉnh sửa" value="write"></v-radio>
-            </v-radio-group>
+              <v-text-field
+                v-model="newUserPassword"
+                label="Mật khẩu"
+                :disabled="loadingAddShare"
+                :rules="usernamePasswordRules"
+                hint="Mật khẩu tạm thời, sau này người sử dụng có thể tự đổi lại"
+                outlined
+                append-icon="mdi-dice-6-outline"
+                @click:append="radomPassword"
+                validate-on-blur
+              ></v-text-field>
+
+              <v-text-field
+                v-model="newUserNote"
+                label="Ghi chú"
+                :disabled="loadingAddShare"
+                outlined
+              ></v-text-field>
+
+              <div>Quyền</div>
+              <v-radio-group
+                v-model="newUserPermission"
+                :disabled="loadingAddShare"
+              >
+                <v-radio label="Chỉ xem" value="read"></v-radio>
+                <v-radio label="Xem và chỉnh sửa" value="write"></v-radio>
+              </v-radio-group>
+            </v-form>
           </v-card-text>
 
           <v-card-actions>
@@ -36,21 +56,21 @@
               color="primary"
               @click="addShare"
               :disabled="loadingAddShare"
-              >Chia sẻ</v-btn
+              >Tạo tài khoản</v-btn
             >
           </v-card-actions>
         </v-card>
       </v-col>
-      <v-col cols="12" md="6">
+      <v-col cols="12" lg="8">
         <v-card>
-          <v-card-title>Những người đã được chia sẻ</v-card-title>
+          <v-card-title>Những tài khoản đã tạo</v-card-title>
           <v-card-text>
             <v-data-table
               :items="sharedUsers"
               :loading="loadingSharedUsers"
               :headers="sharedTableHeaders"
             >
-              <template v-slot:item.perm="{ item, value }">
+              <template v-slot:item.permission="{ item, value }">
                 <div style="width: 160px">
                   <v-select
                     :items="[
@@ -67,11 +87,41 @@
               </template>
 
               <template v-slot:item.actions="{ item }">
+                <v-icon class="mr-4" @click.stop="showEditShareDialog(item)">
+                  mdi-pencil
+                </v-icon>
+
                 <v-icon color="error" @click.stop="deleteShare(item)">
                   mdi-delete
                 </v-icon>
               </template>
             </v-data-table>
+
+            <CustomDialog
+              v-if="editShareDialogTarget"
+              v-model="editShareDialog"
+              max-width="500"
+              header="Chỉnh sửa tài khoản"
+              buttonText
+              :buttons="[
+                {
+                  text: 'Lưu',
+                  click: saveEditShare,
+                },
+              ]"
+            >
+              <v-text-field
+                :value="editShareDialogTarget.username"
+                label="Tên đăng nhập"
+                outlined
+                disabled
+              ></v-text-field>
+              <v-text-field
+                v-model="editShareDialogNote"
+                label="Ghi chú"
+                outlined
+              ></v-text-field>
+            </CustomDialog>
           </v-card-text>
         </v-card>
       </v-col>
@@ -87,60 +137,79 @@ import { User } from "../../../../backend/src/model/User";
 import { showSnackbar } from "@/components/utilities/ShowSnackbar.vue";
 import { showDialogConfirm } from "@/components/utilities";
 import { permissionMixin } from "@/utils";
+import { SharedUserInfo } from "../../../../backend/src/controller/share";
+import { usernamePasswordRules } from "../../../../backend/src/controller/utils";
+import CustomDialog from "@/components/CustomDialog.vue";
 
 export default defineComponent({
   mixins: [permissionMixin],
+  components: {
+    CustomDialog,
+  },
   data() {
     return {
-      search: "",
-      choosedUsername: null as string | null,
-      items: [] as string[],
-      isLoadingItems: false,
+      usernamePasswordRules,
+      newUserUsername: "",
+      newUserPassword: "",
+      newUserNote: "",
       newUserPermission: "read" as "read" | "write",
       loadingAddShare: false,
 
       loadingSharedUsers: true,
       sharedTableHeaders: [
-        { text: "Người dùng", value: "username", sortable: false },
-        { text: "Quyền", value: "perm", sortable: false },
+        { text: "Tên đăng nhập", value: "username" },
+        { text: "Quyền", value: "permission" },
+        { text: "Ghi chú", value: "note" },
         { text: "", value: "actions", sortable: false },
       ],
-      sharedUsers: [] as (User & { perm: "read" | "write" })[],
+      sharedUsers: [] as SharedUserInfo[],
+      editShareDialog: false,
+      editShareDialogTarget: null as SharedUserInfo | null,
+      editShareDialogNote: "",
     };
   },
-  computed: {
-    seachLengthEnough() {
-      const search = (this as any).search as string;
-      if (!search) return false;
-      return search.length >= 4;
-    },
-  },
-  watch: {
-    async search(v) {
-      if (!this.seachLengthEnough) {
-        this.isLoadingItems = false;
-        this.items = [];
-        return;
-      }
-
-      this.isLoadingItems = true;
-      this.items = [];
-      const { data } = await shareApi.searchUser({ username: v });
-      if (data.usernames) {
-        this.items = data.usernames;
-      }
-
-      this.isLoadingItems = false;
-    },
-  },
   methods: {
-    async onPermChange(target: User, perm: "write" | "read") {
+    randInt() {
+      return Math.round(1000 + Math.random() * 9000);
+    },
+    radomUsername() {
+      this.newUserUsername = `qlgp${this.randInt()}`;
+    },
+    radomPassword() {
+      this.newUserPassword = `pass${this.randInt()}`;
+    },
+    async saveEditShare() {
+      this.editShareDialog = false;
+      if (!this.editShareDialogTarget) return;
+
+      this.loadingSharedUsers = true;
+      const { status } = await shareApi.updateShare({
+        userId: this.editShareDialogTarget.id,
+        note: this.editShareDialogNote,
+      });
+      this.loadingSharedUsers = false;
+
+      if (status == 0 || status >= 400) {
+        showSnackbar({
+          msg: "Có lỗi xảy ra",
+          type: "error",
+        });
+      } else {
+        const targetIndex = this.sharedUsers.findIndex(
+          (u) => u.id == this.editShareDialogTarget!.id
+        );
+        if (targetIndex != -1) {
+          this.sharedUsers[targetIndex].note = this.editShareDialogNote;
+        }
+      }
+    },
+    async onPermChange(target: SharedUserInfo, perm: "write" | "read") {
       this.loadingSharedUsers = true;
       perm = perm == "write" ? "write" : "read";
 
-      const { status } = await shareApi.changePerm({
+      const { status } = await shareApi.updateShare({
         userId: target.id,
-        perm,
+        permission: perm,
       });
 
       if (status == 0 || status >= 400) {
@@ -153,16 +222,21 @@ export default defineComponent({
           (u) => u.id == target.id
         );
         if (targetIndex != -1) {
-          this.sharedUsers[targetIndex].perm = perm;
+          this.sharedUsers[targetIndex].permission = perm;
         }
       }
 
       this.loadingSharedUsers = false;
     },
-    async deleteShare(target: User) {
+    showEditShareDialog(target: SharedUserInfo) {
+      this.editShareDialogTarget = target;
+      this.editShareDialogNote = target.note;
+      this.editShareDialog = true;
+    },
+    async deleteShare(target: SharedUserInfo) {
       showDialogConfirm({
-        header: `Bạn có chắc chắn muốn hủy chia sẻ không?`,
-        info: `Không chia sẻ cho ${target.username} nữa`,
+        header: `Bạn có chắc chắn muốn xóa tài khoản này không?`,
+        info: `Tài khoản ${target.username} sẽ không còn quyền truy cập vào gia phả nữa`,
         confirmText: "Chắc chắn",
         confirmColor: "red",
         notAwaitOnConfirmed: true,
@@ -191,25 +265,28 @@ export default defineComponent({
     },
     async loadSharedUsers() {
       this.loadingSharedUsers = true;
-      const { data } = await shareApi.shared();
-      if (data.users) {
+      const { data } = await shareApi.shared({});
+      if ("users" in data) {
         this.sharedUsers = data.users;
       }
       this.loadingSharedUsers = false;
     },
     async addShare() {
-      if (!this.choosedUsername) return;
+      const valid = (this.$refs.form as any).validate();
+      if (!valid) return;
 
       this.loadingAddShare = true;
 
       const { data, status } = await shareApi.addShare({
-        username: this.choosedUsername,
+        username: this.newUserUsername,
+        password: this.newUserPassword,
+        note: this.newUserNote,
         perm: this.newUserPermission,
       });
       this.loadingAddShare = false;
 
-      if (status >= 400) {
-        const msg = data.msg || "Có lỗi xảy ra";
+      if (status >= 400 || "msg" in data) {
+        const msg = "msg" in data ? data.msg : "Có lỗi xảy ra";
         showSnackbar({
           msg,
           type: "error",
@@ -217,13 +294,16 @@ export default defineComponent({
         return;
       }
 
-      showSnackbar({ msg: `Chia sẻ cho ${this.choosedUsername} thành công` });
+      showSnackbar({ msg: `Tạo tài khoản ${this.newUserUsername} thành công` });
       this.loadSharedUsers();
-      this.choosedUsername = null;
+      this.newUserUsername = "";
+      this.newUserPassword = "";
+      this.newUserNote = "";
+      this.newUserPermission = "read";
     },
   },
   beforeMount() {
-    if (!this.ownGraph()) {
+    if (!this.isAdmin()) {
       this.$router.push("/");
     }
   },

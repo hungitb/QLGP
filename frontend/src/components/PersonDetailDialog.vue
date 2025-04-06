@@ -49,7 +49,7 @@
                 Sửa thông tin
               </v-btn>
             </v-col>
-            <v-col cols="12" sm="6" v-if="!person.isStandForUser">
+            <v-col cols="12" sm="6">
               <v-btn block color="red" outlined @click="deletePerson">
                 <v-icon left>mdi-delete</v-icon>
                 Xóa người thân
@@ -190,8 +190,11 @@ export default defineComponent({
       const { data } = await personApi.getPersonDetailInfo({
         id: this.internalPersonId,
       });
-      const person = data.person;
       this.isLoadingDetailInfo = false;
+
+      if (!("person" in data)) return;
+
+      const person = data.person;
       if (!person) return;
 
       if (person.fatherId) {

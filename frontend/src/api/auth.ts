@@ -4,41 +4,62 @@ import {
   wrapAxiosCall,
   sessionTokenKeyStoreLoggedInUserInLocalStorage,
   getLoggedInUserLocalStorage,
+  wrapPostApi,
 } from "./utils";
 import getAuthController from "../../../backend/src/controller/auth";
 import {
   userDAO,
   personDAO,
   wrapApi,
+  ttgpDASO,
 } from "../../../backend/src/DAO/fake/FakeDAO";
 import { Gender } from "../../../backend/src/model/Person";
 import {
   ControllerHandlerResult as CHR,
-  DetailUser,
+  UserInfo,
 } from "../../../backend/src/controller/utils";
+import { User } from "../../../backend/src/model/User";
 
-const authController = getAuthController(userDAO, personDAO);
+const authController = getAuthController(userDAO);
 
 export const authApi = wrapApi({
-  getLoggedInUser: async (): Promise<CHR<{ user: DetailUser | null }>> => {
+  getLoggedInUser: async (): Promise<CHR<{ user: UserInfo | null }>> => {
     if (useBackend) {
       return await wrapAxiosCall(() => api.get("/auth/me"));
     }
 
+    const user = await getLoggedInUserLocalStorage();
+    let userInfo: UserInfo | null = null;
+
+    if (user) {
+      userInfo = {
+        id: user.id,
+        username: user.username,
+        permission: user.permission,
+        thongTinGiaPha: await ttgpDASO.get(),
+      };
+    }
+
     return {
-      data: { user: await getLoggedInUserLocalStorage() },
+      data: { user: userInfo },
       status: 200,
     };
   },
-  login: async (data: { username: string; password: string }) => {
+  login: wrapPostApi<typeof authController.login>(async (data) => {
     if (useBackend) {
       return wrapAxiosCall(() => api.post("/auth/login", data));
     }
 
-    const response = await authController.login(data, null);
-    if (response.status == 200) {
+    const response = await authController.login({
+      body: data,
+      query: {},
+      user: null,
+    });
+
+    if (response.status == 200 && "sessionToken" in response.data) {
       const { sessionToken } = response.data;
-      delete response.data.sessionToken;
+      delete (response.data as any).sessionToken;
+
       localStorage.setItem(
         sessionTokenKeyStoreLoggedInUserInLocalStorage,
         sessionToken || ""
@@ -46,26 +67,30 @@ export const authApi = wrapApi({
     }
 
     return response;
-  },
-  register: async (data: {
-    username: string;
-    password: string;
-    fullname: string;
-    gender: Gender;
-    ownGraph: boolean;
-  }) => {
+  }),
+  logout: wrapPostApi<typeof authController.logout>(async (data) => {
     if (useBackend) {
-      return wrapAxiosCall(() => api.post("/auth/register", data));
-    }
-
-    return await authController.register(data, null);
-  },
-  logout: async () => {
-    if (useBackend) {
-      return wrapAxiosCall(() => api.post("/auth/logout"));
+      return wrapAxiosCall(() => api.post("/auth/logout", data));
     }
 
     localStorage.removeItem(sessionTokenKeyStoreLoggedInUserInLocalStorage);
-    return await authController.logout({}, null);
-  },
+    return await authController.logout({
+      body: data,
+      query: {},
+      user: await getLoggedInUserLocalStorage(),
+    });
+  }),
+  changePassword: wrapPostApi<typeof authController.changePassword>(
+    async (data) => {
+      if (useBackend) {
+        return wrapAxiosCall(() => api.post("/auth/change-password", data));
+      }
+
+      return await authController.changePassword({
+        body: data,
+        query: {},
+        user: await getLoggedInUserLocalStorage(),
+      });
+    }
+  ),
 });

@@ -1,5 +1,5 @@
 <template>
-  <v-snackbar v-model="snackbar" :color="color" app>
+  <v-snackbar v-model="snackbar" :color="color" :app="app ? true : undefined">
     {{ msg }}
 
     <template v-slot:action="{ attrs }">
@@ -23,6 +23,7 @@ export function showSnackbar(data: ShowSnackbarParams) {
 }
 
 export default defineComponent({
+  props: ["app"],
   data() {
     return {
       snackbar: false,

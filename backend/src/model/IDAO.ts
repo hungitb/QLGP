@@ -11,3 +11,8 @@ export interface IDAO<K> {
     destroy: ({ where }: { where: Where<K> }) => Promise<any>;
     update: (data: Reduced<K>, { where }: { where: Where<K> }) => Promise<any>;
 };
+
+export interface IDASO<K> {
+    get: () => Promise<K>;
+    update: (data: Reduced<K>) => Promise<any>;
+}

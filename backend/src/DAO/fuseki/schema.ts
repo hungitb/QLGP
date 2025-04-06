@@ -2,8 +2,8 @@ import { User } from "../../model/User";
 import { Person } from "../../model/Person";
 import { FieldDef } from "../../model/FieldDef";
 import { FieldVal } from "../../model/FieldVal";
-import { TableSchema } from "./TableSchema";
-import { Share } from "../../model/Share";
+import { TableSchema, TableSchemaSingleRow } from "./TableSchema";
+import { getDefaultThongTinGiaPhaValue, ThongTinGiaPha } from "../../model/ThongTinGiaPha";
 
 const userSchema = new TableSchema<User>({
     name: "user",
@@ -26,7 +26,14 @@ const userSchema = new TableSchema<User>({
         sessionExpiry: {
             type: "int"
         },
-        ownGraph: "boolean"
+        permission: {
+            type: "string",
+            allowNull: false
+        },
+        note: {
+            type: "string",
+            allowNull: false
+        }
     }
 });
 
@@ -36,15 +43,6 @@ const personSchema = new TableSchema<Person>({
         id: {
             type: "string",
             primaryKey: true
-        },
-        ownerUserId: {
-            type: userSchema,
-            allowNull: false,
-            alias: "belongToUser"
-        },
-        isStandForUser: {
-            type: "boolean",
-            allowNull: false
         },
         callname: {
             type: "string",
@@ -73,20 +71,19 @@ const personSchema = new TableSchema<Person>({
     }
 });
 
-const shareSchema = new TableSchema<Share>({
-    name: "share",
+const ttgpSchema = new TableSchemaSingleRow<ThongTinGiaPha>({
+    name: "thongTinGiaPha",
     fields: {
-        id: {
-            type: "string",
-            primaryKey: true
-        },
-        from: userSchema,
-        to: userSchema,
-        perm: "string"
-    }
+        idToTien: "string",
+        thongTinKhac: "string",
+        tenDongHo: "string",
+        type: "string",
+        soDoiCuaToTien: "int"
+    },
+    initValue: getDefaultThongTinGiaPhaValue()
 });
 
 export const personDAO = personSchema.getDAO();
 export const userDAO = userSchema.getDAO();
-export const shareDAO = shareSchema.getDAO();
+export const ttgpDASO = ttgpSchema.getDASO();
 

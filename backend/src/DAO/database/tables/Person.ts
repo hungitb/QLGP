@@ -10,14 +10,6 @@ export default function getPersonTable (sequelize: Sequelize) {
             type: DataTypes.STRING,
             primaryKey: true
         },
-        ownerUserId: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
-        isStandForUser: {
-            type: DataTypes.BOOLEAN,
-            allowNull: false
-        },
         callname: {
             type: DataTypes.STRING(4096),
             allowNull: false

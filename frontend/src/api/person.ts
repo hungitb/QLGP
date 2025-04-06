@@ -4,119 +4,155 @@ import {
   wrapAxiosCall,
   getLoggedInUserLocalStorage,
   stringifyValuesOfObject,
+  wrapGetApi,
+  wrapPostApi,
 } from "./utils";
 import getPersonController, {
   CreatePersonParams,
 } from "../../../backend/src/controller/person";
 import type { Person } from "../../../backend/src/model/Person";
-import { personDAO, wrapApi } from "../../../backend/src/DAO/fake/FakeDAO";
+import {
+  personDAO,
+  ttgpDASO,
+  userDAO,
+  wrapApi,
+} from "../../../backend/src/DAO/fake/FakeDAO";
 import {
   ControllerHandlerResult as CHR,
   PaginateParams,
 } from "../../../backend/src/controller/utils";
 import { Event } from "../../../backend/src/controller/event";
 
-const personController = getPersonController(personDAO);
+const personController = getPersonController(personDAO, userDAO, ttgpDASO);
 
 export const personApi = wrapApi({
-  async getAllPeopleBaseInfo(data: PaginateParams = {}) {
+  getAllPeopleBaseInfo: wrapGetApi<
+    typeof personController.getAllPeopleBaseInfo
+  >(async (data) => {
     if (useBackend) {
       return wrapAxiosCall(() => api.get("/person/all", { params: data }));
     }
 
-    return await personController.getAllPeopleBaseInfo(
-      stringifyValuesOfObject(data),
-      await getLoggedInUserLocalStorage()
-    );
-  },
-  async getPersonDetailInfo(data: { id: string }) {
-    if (useBackend) {
-      return wrapAxiosCall(() => api.get("/person/detail", { params: data }));
+    return await personController.getAllPeopleBaseInfo({
+      body: {},
+      query: stringifyValuesOfObject(data),
+      user: await getLoggedInUserLocalStorage(),
+    });
+  }),
+  getPersonDetailInfo: wrapGetApi<typeof personController.getPersonDetailInfo>(
+    async (data) => {
+      if (useBackend) {
+        return wrapAxiosCall(() => api.get("/person/detail", { params: data }));
+      }
+      return await personController.getPersonDetailInfo({
+        body: {},
+        query: stringifyValuesOfObject(data),
+        user: await getLoggedInUserLocalStorage(),
+      });
     }
-    return await personController.getPersonDetailInfo(
-      stringifyValuesOfObject(data) as { id: string },
-      await getLoggedInUserLocalStorage()
-    );
-  },
-  async getFamilyTreeInfo(data: { subjectId?: string; level: number }) {
-    if (useBackend) {
-      return wrapAxiosCall(() => api.get("/person/tree", { params: data }));
-    }
+  ),
+  getFamilyTreeInfo: wrapGetApi<typeof personController.getFamilyTreeInfo>(
+    async (data) => {
+      if (useBackend) {
+        return wrapAxiosCall(() => api.get("/person/tree", { params: data }));
+      }
 
-    return await personController.getFamilyTreeInfo(
-      stringifyValuesOfObject(data) as {
-        subjectId?: string;
-        level: string;
-      },
-      await getLoggedInUserLocalStorage()
-    );
-  },
-  async createPerson(data: CreatePersonParams) {
-    if (useBackend) {
-      return wrapAxiosCall(() => api.post("/person", data));
+      return await personController.getFamilyTreeInfo({
+        body: {},
+        query: stringifyValuesOfObject(data),
+        user: await getLoggedInUserLocalStorage(),
+      });
     }
+  ),
+  createPerson: wrapPostApi<typeof personController.createPerson>(
+    async (data) => {
+      if (useBackend) {
+        return wrapAxiosCall(() => api.post("/person", data));
+      }
 
-    return await personController.createPerson(
-      data,
-      await getLoggedInUserLocalStorage()
-    );
-  },
-  async deletePerson(data: { id: string }) {
-    if (useBackend) {
-      return wrapAxiosCall(() => api.delete("/person", { params: data }));
+      return await personController.createPerson({
+        body: data,
+        query: {},
+        user: await getLoggedInUserLocalStorage(),
+      });
     }
+  ),
+  deletePerson: wrapGetApi<typeof personController.deletePerson>(
+    async (data) => {
+      if (useBackend) {
+        return wrapAxiosCall(() => api.delete("/person", { params: data }));
+      }
 
-    return await personController.deletePerson(
-      data,
-      await getLoggedInUserLocalStorage()
-    );
-  },
-  async updatePerson(data: Partial<Person> & { id: string }) {
-    if (useBackend) {
-      return wrapAxiosCall(() => api.patch("/person", data));
+      return await personController.deletePerson({
+        body: {},
+        query: data,
+        user: await getLoggedInUserLocalStorage(),
+      });
     }
+  ),
+  updatePerson: wrapPostApi<typeof personController.updatePerson>(
+    async (data) => {
+      if (useBackend) {
+        return wrapAxiosCall(() => api.patch("/person", data));
+      }
 
-    return await personController.updatePerson(
-      data,
-      await getLoggedInUserLocalStorage()
-    );
-  },
-  async statistic() {
+      return await personController.updatePerson({
+        body: data,
+        query: {},
+        user: await getLoggedInUserLocalStorage(),
+      });
+    }
+  ),
+  statistic: wrapGetApi<typeof personController.statistic>(async () => {
     if (useBackend) {
       return wrapAxiosCall(() => api.get("/person/statistic"));
     }
 
-    return await personController.statistic(
-      {},
-      await getLoggedInUserLocalStorage()
-    );
-  },
-  async analyzeRelationship(data: { id1: string; id2: string }) {
-    if (useBackend) {
-      return wrapAxiosCall(() =>
-        api.get("/person/analyze_relationship", { params: data })
-      );
-    }
+    return await personController.statistic({
+      body: {},
+      query: {},
+      user: await getLoggedInUserLocalStorage(),
+    });
+  }),
+  analyzeRelationship: wrapGetApi<typeof personController.analyzeRelationship>(
+    async (data) => {
+      if (useBackend) {
+        return wrapAxiosCall(() =>
+          api.get("/person/analyze_relationship", { params: data })
+        );
+      }
 
-    return await personController.analyzeRelationship(
-      data,
-      await getLoggedInUserLocalStorage()
-    );
-  },
-  async getEvents(data: {
-    startDate?: string;
-    endDate?: string;
-    allPeople: boolean;
-    personIds?: string;
-    eventTypes?: string;
-  }): Promise<CHR<{ events: Event[] }>> {
+      return await personController.analyzeRelationship({
+        body: {},
+        query: stringifyValuesOfObject(data),
+        user: await getLoggedInUserLocalStorage(),
+      });
+    }
+  ),
+  getEvents: wrapPostApi<typeof personController.getEvents>(async (data) => {
     if (useBackend) {
       return await wrapAxiosCall(() => api.post("/person/events", data));
     }
 
-    return await personController.getEvents(
-      data,
-      await getLoggedInUserLocalStorage()
-    );
-  },
+    return await personController.getEvents({
+      body: data,
+      query: {},
+      user: await getLoggedInUserLocalStorage(),
+    });
+  }),
+  updateThongTinGiaPha: wrapPostApi<
+    typeof personController.updateThongTinGiaPha
+  >(async (data) => {
+    if (useBackend) {
+      return await wrapAxiosCall(() =>
+        api.post("/person/thong_tin_gia_pha", data)
+      );
+    }
+
+    return await personController.updateThongTinGiaPha({
+      body: data,
+      query: {},
+      user: await getLoggedInUserLocalStorage(),
+    });
+  }),
 });

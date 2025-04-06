@@ -12,7 +12,7 @@
     <v-form v-model="valid" ref="form">
       <v-text-field
         v-model="username"
-        :rules="rules"
+        :rules="usernamePasswordRules"
         label="Tên đăng nhập"
         name="username"
         autocomplete="username"
@@ -25,7 +25,7 @@
 
       <v-text-field
         v-model="password"
-        :rules="rules"
+        :rules="usernamePasswordRules"
         label="Mật khẩu"
         name="password"
         autocomplete="current-password"
@@ -50,7 +50,7 @@
       {{ loginErrorMessage }}
     </v-alert>
 
-    <div class="mt-5">
+    <div>
       <v-btn block color="primary" @click="login" :disabled="isLoadingLogin">
         <v-progress-circular
           color="primary"
@@ -62,16 +62,6 @@
         Đăng nhập
       </v-btn>
     </div>
-
-    <div class="text-center text-body-2 mt-2">
-      Chưa có tài khoản?
-      <router-link
-        to="/auth/register"
-        class="text-decoration-none text-primary font-weight-medium"
-      >
-        Đăng ký
-      </router-link>
-    </div>
   </v-sheet>
 </template>
 
@@ -79,6 +69,11 @@
 import Vue from "vue";
 
 import { authApi } from "@/api/auth";
+import {
+  DEFAUT_ADMIN_USERNAME,
+  DEFAUT_ADMIN_PASSWORD,
+} from "../../../backend/src/controller/auth";
+import { usernamePasswordRules } from "../../../backend/src/controller/utils";
 
 const isDev = process.env.NODE_ENV == "development";
 export default Vue.extend({
@@ -87,23 +82,17 @@ export default Vue.extend({
       showPassword: false,
       valid: false,
       username: isDev
-        ? "qlgp1234"
+        ? DEFAUT_ADMIN_USERNAME
         : localStorage.getItem("QLGP.username") || "",
       password: isDev
-        ? "qlgp1234"
+        ? DEFAUT_ADMIN_PASSWORD
         : localStorage.getItem("QLGP.password") || "",
       rememberMe: !!(
         localStorage.getItem("QLGP.username") &&
         localStorage.getItem("QLGP.password")
       ),
       showRememberMe: false,
-      rules: [
-        (v: string) => !!v || "Không được để trống",
-        (v: string) =>
-          (6 <= v.length && v.length <= 12) || "Độ dài phải từ 6 đến 12 ký tự",
-        (v: string) =>
-          /^[a-zA-Z0-9]+$/.test(v) || "Chỉ được chứa a-z, A-Z và 0-9",
-      ],
+      usernamePasswordRules,
       loginErrorMessage: "",
       isLoadingLogin: false,
     };

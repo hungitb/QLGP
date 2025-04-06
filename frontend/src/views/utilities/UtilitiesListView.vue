@@ -77,7 +77,7 @@ export default defineComponent({
               },
             ]
           : []),
-        ...(this.ownGraph()
+        ...(this.isAdmin()
           ? [
               {
                 icon: "mdi-share-variant",

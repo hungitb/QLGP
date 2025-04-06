@@ -10,21 +10,11 @@ dotenv.config({ path: "../.env" });
 import authRouter from "./routes/auth";
 import personRouter from "./routes/person";
 import shareRouter from "./routes/share";
-
 const isDev = process.env.NODE_ENV == "development";
 const app = express();
 app.use(express.json({ limit: "50mb" }));
 app.use(morgan(isDev ? "dev" : "combined"));
 app.use(cookiePaser());
-app.use((req, res, next) => {
-    // Assign query parameters to body
-    req.body = {
-        ...req.body,
-        ...req.query,
-        ...req.params
-    };
-    next();
-});
 
 app.use("/api/auth", authRouter);
 app.use("/api/person", personRouter);

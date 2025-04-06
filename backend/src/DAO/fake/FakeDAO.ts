@@ -1,10 +1,11 @@
-import type { IDAO } from "../../model/IDAO";
+import type { IDAO, IDASO } from "../../model/IDAO";
 import type { User } from "../../model/User";
 import type { Person } from "../../model/Person";
 import { Gender, LifeStatus } from "../../model/Person";
 import type { FieldDef } from "../../model/FieldDef";
 import type { FieldVal } from "../../model/FieldVal";
-import { Share } from "../../model/Share";
+import { DEFAUT_ADMIN_PASSWORD, DEFAUT_ADMIN_USERNAME } from "../../controller/auth";
+import { getDefaultThongTinGiaPhaValue, ThongTinGiaPha } from "../../model/ThongTinGiaPha";
 
 const isWeb = typeof window != "undefined" && typeof document != "undefined";
 
@@ -16,7 +17,15 @@ const GENERATE_FAKE_DATA =
 const DELAY = 100;
 
 type Dict = { [key: string]: any };
-type AllTableTypes = [User[], Person[], FieldDef[], FieldVal[], Share[]];
+type AllTableTypes = [User[], Person[], FieldDef[], FieldVal[], ThongTinGiaPha[]];
+const tableNames = [
+  "users",
+  "people",
+  "fieldDefs",
+  "fieldVals",
+  "ThongTinGiaPha"
+] as const;
+const x: (typeof tableNames)["length"] extends AllTableTypes["length"] ? number : never = 1; // Trick
 type Storage = {
   startOperations: () => Promise<void>;
   endOperations: () => Promise<void>;
@@ -177,7 +186,7 @@ export function wrapApi<K extends { [f: string]: (...params: any[]) => any }>(
   return api;
 }
 
-function createDAO(key: string, pkName: string, initialRows: Promise<Dict[]>) {
+function createDAO(key: `QLGP.${(typeof tableNames)[number]}`, pkName: string, initialRows: Promise<Dict[]>) {
   let rows: Dict[] = [];
 
   let initDone = false;
@@ -310,202 +319,253 @@ function createDAO(key: string, pkName: string, initialRows: Promise<Dict[]>) {
   };
 }
 
-function generateFakeData(): AllTableTypes {
-  const NUM_PEOPLE = 10;
-  const MALE_RATE = 0.6;
-  const DEATH_RATE = 0.4;
+function createDASO<X>(DAO: IDAO<X>, initValue: X): IDASO<X> {
+  const specKey = "__inserted__";
 
-  const random = (() => {
-    let s = 1;
-    return () => {
-      const x = Math.sin(s++) * 10000;
-      return x - Math.floor(x);
-    };
-  })();
-  const randInt = (a: number, b: number) => {
-    return a + Math.floor(random() * (b - a + 1));
-  };
-  const randomId = (() => {
-    const exitedIds = new Set();
+  let initDone = false;
+  let initing = false;
+  const init = async () => {
+    if (initDone) return;
 
-    return () => {
-      let id = randInt(1, 2e9);
-      while (exitedIds.has(id)) id = randInt(1, 2e9);
-      exitedIds.add(id);
-      return id.toString();
-    };
-  })();
-  function sampleOne<K>(arr: K[]): K {
-    return arr[Math.floor(random() * arr.length)];
-  }
-  function sample<K>(arr: K[], n: number): K[] {
-    if (n > arr.length) return arr;
+    if (initing) {
+      await new Promise<void>((resolve, reject) => {
+        let count  = 0;
 
-    const indices = new Set<number>();
-    for (let i = 0; i < n; i++) {
-      let index = randInt(0, arr.length - 1);
-      while (indices.has(index)) {
-        index = randInt(0, arr.length - 1);
-      }
-      indices.add(index);
-    }
-    const result = [] as K[];
-    for (const index of indices) result.push(arr[index]);
-    return result;
-  }
+        const check = () => {
+          if (initDone) resolve();
 
-  const fakseUserId = randomId();
-  const fakeUsers: User[] = [
-    {
-      id: fakseUserId,
-      username: "qlgp1234",
-      password: "qlgp1234",
-      sessionToken: "qlgp1234",
-      sessionExpiry: null,
-      ownGraph: true,
-    },
-  ];
-
-  const fakePeople: Person[] = [
-    {
-      id: randomId(),
-      ownerUserId: fakseUserId,
-      isStandForUser: true,
-      callname: "Tôi",
-      gender: Gender.MALE,
-      birthdate: "9/9/2003",
-      status: LifeStatus.ALIVE,
-      avatarUrl: null,
-      deathdate: null,
-      spouseId: null,
-      fatherId: null,
-      motherId: null,
-    },
-  ];
-
-  // Sử dụng tháng này để làm phần sự kiện
-  const currMonth = new Date().getMonth() + 1;
-  const prevMonth = currMonth == 1 ? 12 : currMonth - 1;
-  const nextMonth = currMonth == 12 ? 1 : currMonth + 1;
-
-  for (let i = 0; i < NUM_PEOPLE; i++) {
-    const day = randInt(1, 28);
-    const month = sampleOne([prevMonth, currMonth, nextMonth]);
-    const year = randInt(1800, 2100);
-
-    const birthdate =
-      random() > 0.1
-        ? (random() < 0.3
-            ? [year]
-            : random() < 0.5
-            ? [month, year]
-            : [day, month, year]
-          ).join("/")
-        : null;
-
-    const status =
-      random() > 0.1
-        ? random() < DEATH_RATE
-          ? LifeStatus.DEAD
-          : LifeStatus.ALIVE
-        : null;
-
-    const deathdate =
-      status == LifeStatus.DEAD
-        ? random() < 0.1
-          ? null
-          : random() < 0.3
-          ? [year + randInt(1, 90)].join("/")
-          : random() < 0.5
-          ? [month, year + randInt(1, 90)].join("/")
-          : [day, month, year + randInt(1, 90)].join("/") +
-            (random() > 0.2 ? "AL" : "")
-        : null;
-
-    const gender = random() < MALE_RATE ? Gender.MALE : Gender.FEMALE;
-
-    fakePeople.push({
-      id: randomId(),
-      ownerUserId: fakseUserId,
-      isStandForUser: false,
-      callname: [
-        sampleOne(["Nguyễn", "Lê", "Đinh", "Phạm"]),
-        gender == Gender.MALE ? "Văn" : "Thị",
-        sampleOne("ABCDEFGHIKLMNOPQRSTWZYJ".split("")),
-      ].join(" "),
-      gender,
-      birthdate,
-      deathdate,
-      status,
-      spouseId: null,
-      fatherId: null,
-      motherId: null,
-      avatarUrl: null,
-    });
-
-    const personMapping: Record<string, Person> = {};
-    fakePeople.forEach((person) => (personMapping[person.id] = person));
-
-    for (let i = 0; i < Math.round(NUM_PEOPLE ** 2); i++) {
-      const hasRelationship = (p1: Person, p2: Person) => {
-        if (
-          [p1.id, p1.spouseId, p1.fatherId, p1.motherId].some(
-            (id) => id == p2.id
-          ) ||
-          [p2.id, p2.spouseId, p2.fatherId, p2.motherId].some(
-            (id) => id == p1.id
-          )
-        ) {
-          return false;
+          count++;
+          if (count < 100) {
+            setTimeout(check, 100);
+          } else {
+            reject("Timeout");
+          }
         }
-        return false;
-      };
-      const [p1, p2] = sample(fakePeople, 2);
-      if (hasRelationship(p1, p2)) continue;
 
-      if (random() < 0.2) {
-        // 1 người chỉ có 1 vợ 1 chồng, vậy nên nếu cập nhật đôi này thì phải cập nhật tất cả những người liên quan
-        [p1, p2].forEach((p) => {
-          const pSpouse = p.spouseId ? personMapping[p.spouseId] : null;
-          if (pSpouse) pSpouse.spouseId = null;
-        });
-
-        p1.spouseId = p2.id;
-        p2.spouseId = p1.id;
-
-        continue;
-      }
-
-      if (p1.gender == Gender.MALE) {
-        p2.fatherId = p1.id;
-      } else {
-        p2.motherId = p1.id;
-      }
+        check();
+      });
+      return;
     }
+
+    initing = true;
+
+    const data = await DAO.findAll();
+    if (data.length == 0) {
+      await DAO.create({
+        ...initValue,
+        [specKey]: "true"
+      });
+    }
+
+    initing = false;
+    initDone = true;
   }
 
-  return [
-    fakeUsers,
-    fakePeople,
-    [] as FieldDef[],
-    [] as FieldVal[],
-    [] as Share[]
-  ];
+  async function get() {
+    await init();
+    const data = await DAO.findAll();
+    if (data.length < 1) {
+      throw Error("Can't get object, list empty");
+    }
+    return data[0];
+  }
+
+  return {
+    get,
+    async update(data: Partial<X>) {
+      await init();
+      await DAO.update(data, { where: { [specKey]: "true" } as any })
+    }
+  };
 }
 
 function getData(): Promise<Dict[]>[] {
-  if (GENERATE_FAKE_DATA)
+  if (GENERATE_FAKE_DATA) {
+    function generateFakeData(): AllTableTypes {
+      const NUM_PEOPLE = 10;
+      const MALE_RATE = 0.6;
+      const DEATH_RATE = 0.4;
+    
+      const random = (() => {
+        let s = 1;
+        return () => {
+          const x = Math.sin(s++) * 10000;
+          return x - Math.floor(x);
+        };
+      })();
+      const randInt = (a: number, b: number) => {
+        return a + Math.floor(random() * (b - a + 1));
+      };
+      const randomId = (() => {
+        const exitedIds = new Set();
+    
+        return () => {
+          let id = randInt(1, 2e9);
+          while (exitedIds.has(id)) id = randInt(1, 2e9);
+          exitedIds.add(id);
+          return id.toString();
+        };
+      })();
+      function sampleOne<K>(arr: K[]): K {
+        return arr[Math.floor(random() * arr.length)];
+      }
+      function sample<K>(arr: K[], n: number): K[] {
+        if (n > arr.length) return arr;
+    
+        const indices = new Set<number>();
+        for (let i = 0; i < n; i++) {
+          let index = randInt(0, arr.length - 1);
+          while (indices.has(index)) {
+            index = randInt(0, arr.length - 1);
+          }
+          indices.add(index);
+        }
+        const result = [] as K[];
+        for (const index of indices) result.push(arr[index]);
+        return result;
+      }
+    
+      const fakseUserId = randomId();
+    
+      const fakeUsers: User[] = [
+        {
+          id: fakseUserId,
+          username: DEFAUT_ADMIN_USERNAME,
+          password: DEFAUT_ADMIN_PASSWORD,
+          sessionToken: null,
+          sessionExpiry: null,
+          permission: "admin",
+          note: "",
+        },
+      ];
+    
+      const fakePeople: Person[] = [
+        {
+          id: randomId(),
+          callname: "Tôi",
+          gender: Gender.MALE,
+          birthdate: "9/9/2003",
+          status: LifeStatus.ALIVE,
+          avatarUrl: null,
+          deathdate: null,
+          spouseId: null,
+          fatherId: null,
+          motherId: null,
+        },
+      ];
+    
+      // Sử dụng tháng này để làm phần sự kiện
+      const currMonth = new Date().getMonth() + 1;
+      const prevMonth = currMonth == 1 ? 12 : currMonth - 1;
+      const nextMonth = currMonth == 12 ? 1 : currMonth + 1;
+    
+      for (let i = 0; i < NUM_PEOPLE; i++) {
+        const day = randInt(1, 28);
+        const month = sampleOne([prevMonth, currMonth, nextMonth]);
+        const year = randInt(1800, 2100);
+    
+        const birthdate =
+          random() > 0.1
+            ? (random() < 0.3
+                ? [year]
+                : random() < 0.5
+                ? [month, year]
+                : [day, month, year]
+              ).join("/")
+            : null;
+    
+        const status =
+          random() > 0.1
+            ? random() < DEATH_RATE
+              ? LifeStatus.DEAD
+              : LifeStatus.ALIVE
+            : null;
+    
+        const deathdate =
+          status == LifeStatus.DEAD
+            ? random() < 0.1
+              ? null
+              : random() < 0.3
+              ? [year + randInt(1, 90)].join("/")
+              : random() < 0.5
+              ? [month, year + randInt(1, 90)].join("/")
+              : [day, month, year + randInt(1, 90)].join("/") +
+                (random() > 0.2 ? "AL" : "")
+            : null;
+    
+        const gender = random() < MALE_RATE ? Gender.MALE : Gender.FEMALE;
+    
+        fakePeople.push({
+          id: randomId(),
+          callname: [
+            sampleOne(["Nguyễn", "Lê", "Đinh", "Phạm"]),
+            gender == Gender.MALE ? "Văn" : "Thị",
+            sampleOne("ABCDEFGHIKLMNOPQRSTWZYJ".split("")),
+          ].join(" "),
+          gender,
+          birthdate,
+          deathdate,
+          status,
+          spouseId: null,
+          fatherId: null,
+          motherId: null,
+          avatarUrl: null,
+        });
+    
+        const personMapping: Record<string, Person> = {};
+        fakePeople.forEach((person) => (personMapping[person.id] = person));
+    
+        for (let i = 0; i < Math.round(NUM_PEOPLE ** 2); i++) {
+          const hasRelationship = (p1: Person, p2: Person) => {
+            if (
+              [p1.id, p1.spouseId, p1.fatherId, p1.motherId].some(
+                (id) => id == p2.id
+              ) ||
+              [p2.id, p2.spouseId, p2.fatherId, p2.motherId].some(
+                (id) => id == p1.id
+              )
+            ) {
+              return false;
+            }
+            return false;
+          };
+          const [p1, p2] = sample(fakePeople, 2);
+          if (hasRelationship(p1, p2)) continue;
+    
+          if (random() < 0.2) {
+            // 1 người chỉ có 1 vợ 1 chồng, vậy nên nếu cập nhật đôi này thì phải cập nhật tất cả những người liên quan
+            [p1, p2].forEach((p) => {
+              const pSpouse = p.spouseId ? personMapping[p.spouseId] : null;
+              if (pSpouse) pSpouse.spouseId = null;
+            });
+    
+            p1.spouseId = p2.id;
+            p2.spouseId = p1.id;
+    
+            continue;
+          }
+    
+          if (p1.gender == Gender.MALE) {
+            p2.fatherId = p1.id;
+          } else {
+            p2.motherId = p1.id;
+          }
+        }
+      }
+    
+      return [
+        fakeUsers,
+        fakePeople,
+        [] as FieldDef[],
+        [] as FieldVal[],
+        [] as ThongTinGiaPha[]
+      ];
+    }
+
     return generateFakeData().map((d) => Promise.resolve(d));
+  }
 
   const dataVersion = 1;
-
-  const tableNames = [
-    "users",
-    "people",
-    "fieldDefs",
-    "fieldVals",
-    "shares"
-  ] as const;
 
   let _cache: Dict[][] | null = null;
   async function getDataFromStorage() {
@@ -515,11 +575,10 @@ function getData(): Promise<Dict[]>[] {
       tableNames.map((name) => storage.getItem(`QLGP.${name}`))
     )) as AllTableTypes;
 
-    const [users, people, fieldDefs, fieldVals, shares] = tableDatas;
-    const x: (typeof tableNames)["length"] extends AllTableTypes["length"] ? number : never = 1; // Trick
+    const [users, people, fieldDefs, fieldVals] = tableDatas;
     await storage.setItem("QLGP.metadata", [{ dataVersion }]);
 
-    _cache = [users, people, fieldDefs, fieldVals, shares];
+    _cache = [users, people, fieldDefs, fieldVals];
     return _cache;
   }
   getDataFromStorage();
@@ -532,7 +591,7 @@ function getData(): Promise<Dict[]>[] {
   );
 }
 
-const [users, people, fieldDefs, fieldVals, shares] = getData();
+const [users, people, fieldDefs, fieldVals, ThongTinGiaPhas] = getData();
 
 export const userDAO: IDAO<User> = createDAO(
   "QLGP.users",
@@ -554,11 +613,12 @@ export const fieldValDAO: IDAO<FieldVal> = createDAO(
   "id",
   fieldVals
 ) as unknown as IDAO<FieldVal>;
-export const shareDAO: IDAO<Share> = createDAO(
-  "QLGP.shares",
-  "id",
-  shares
+const ttgpDAO: IDAO<ThongTinGiaPha> = createDAO(
+  "QLGP.ThongTinGiaPha",
+  "type",
+  ThongTinGiaPhas
 );
+export const ttgpDASO = createDASO(ttgpDAO, getDefaultThongTinGiaPhaValue());
 
 if (process.env.NODE_ENV == "development" && isWeb) {
   (window as any).userDAO = userDAO;
@@ -568,12 +628,13 @@ if (process.env.NODE_ENV == "development" && isWeb) {
 }
 
 export async function exportData() {
-  const [users, people, fieldDefs, fieldVals] =
+  const [users, people, fieldDefs, fieldVals, TTGP] =
     await Promise.all([
       userDAO.findAll(),
       personDAO.findAll(),
       fieldDefDAO.findAll(),
       fieldValDAO.findAll(),
+      ttgpDAO.findAll()
     ]);
 
   return JSON.stringify({
@@ -581,5 +642,6 @@ export async function exportData() {
     people,
     fieldDefs,
     fieldVals,
+    TTGP
   });
 }
