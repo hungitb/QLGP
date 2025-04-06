@@ -1,8 +1,12 @@
 <template>
   <div id="family-tree" class="d-flex justify-center align-center">
-    <template v-if="!$store.state.idToTien && !subjectId">
-      <div class="text-h4">Chỗ này sau sửa</div>
-    </template>
+    <div v-if="!$store.state.idToTien && !subjectId" class="px-4" style="max-width: 400px">
+      <div class="text-h4 text-center">Hiện chưa có tổ tiên để xem cây gia phả</div>
+      <div class="mt-8 px-8">
+        <div class="grey--text mb-2 text-center">Chọn một thành viên bất kỳ thay thế để xem cây gia phả của họ</div>
+        <PersonInputGroup v-model="subjectId" one label="Chủ thể"></PersonInputGroup>
+      </div>
+    </div>
     <template v-else-if="ancestor && !$store.state.isLoadingPeople">
       <Viewer ref="viewer" :key="key">
         <FamilyCard
@@ -254,6 +258,9 @@ export default Vue.extend({
       if (oldVal) {
         clearInterval(oldVal);
       }
+    },
+    subjectId() {
+      this.loadData();
     },
     "settingVModel.show.image"(newValue) {
       if (!newValue) {
