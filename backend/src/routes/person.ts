@@ -17,5 +17,6 @@ router.get("/statistic", wrapHandlerAdvance(personController.statistic));
 router.get("/analyze_relationship", wrapHandlerAdvance(personController.analyzeRelationship));
 // Không dùng GET, vì nếu truy vấn theo person IDs có thể sẽ quá dài
 router.post("/events", wrapHandlerAdvance(personController.getEvents));
+router.post("/thong_tin_gia_pha", wrapHandlerAdvance(personController.updateThongTinGiaPha));
 
 export default router;

@@ -140,4 +140,19 @@ export const personApi = wrapApi({
       user: await getLoggedInUserLocalStorage(),
     });
   }),
+  updateThongTinGiaPha: wrapPostApi<
+    typeof personController.updateThongTinGiaPha
+  >(async (data) => {
+    if (useBackend) {
+      return await wrapAxiosCall(() =>
+        api.post("/person/thong_tin_gia_pha", data)
+      );
+    }
+
+    return await personController.updateThongTinGiaPha({
+      body: data,
+      query: {},
+      user: await getLoggedInUserLocalStorage(),
+    });
+  }),
 });

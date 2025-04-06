@@ -2,7 +2,7 @@ import { v4 as uuid } from "uuid";
 
 import { compareTwoDateString, datePlusDay, lunarDateToNormalDate, normalDateToLunarDate, shortenDateString, todayDate } from "../utils/DateUtils";
 import { isStringPureInterger } from "../utils/ValidationUtils";
-import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR, Controller, ControllerHandler, applyUserGuards, CanReadGuard, CanWriteGuard } from "./utils";
+import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR, Controller, ControllerHandler, applyUserGuards, CanReadGuard, CanWriteGuard, keysModel } from "./utils";
 import { LifeStatus, Gender, type Person } from "../model/Person";
 import type { User } from "../model/User";
 import type { IDAO, IDASO } from "../model/IDAO";
@@ -112,7 +112,7 @@ export function filterPeople(people: Person[], search: string, searchFieldsAsStr
     return people;
 }
 
-export default function getPersonController(personDAO: IDAO<Person>, userDAO: IDAO<User>, TTGP: IDASO<ThongTinGiaPha>) {
+export default function getPersonController(personDAO: IDAO<Person>, userDAO: IDAO<User>, ttgpDASO: IDASO<ThongTinGiaPha>) {
     const getAllPeopleBaseInfo = applyUserGuards<
         {},
         PaginateParams,
@@ -212,7 +212,7 @@ export default function getPersonController(personDAO: IDAO<Person>, userDAO: ID
         if (isNaN(levelInt)) return CommonResponse.BAD_REQUEST;
         
         if (!subjectId) {
-            const thongTinGiaPha = await TTGP.get();
+            const thongTinGiaPha = await ttgpDASO.get();
 
             if (!thongTinGiaPha.idToTien) {
                 return CommonResponse.BAD_REQUEST;
@@ -639,6 +639,27 @@ export default function getPersonController(personDAO: IDAO<Person>, userDAO: ID
         };
     }, CanReadGuard);
 
+    const updateThongTinGiaPha = applyUserGuards<
+        Partial<ThongTinGiaPha>,
+        {}
+    >(async ({ body: data }) => {
+        // to do: Validate data
+
+        const keys = keysModel(data);
+
+        if (data.idToTien && keys.includes("idToTien")) {
+            const toTien = await personDAO.findByPk(data.idToTien);
+            if (!toTien) return CommonResponse.BAD_REQUEST;
+        }
+
+        await ttgpDASO.update(data);
+
+        return {
+            data: {},
+            status: 200
+        };
+    }, CanWriteGuard);
+
     return {
         getAllPeopleBaseInfo,
         getPersonDetailInfo,
@@ -648,6 +669,7 @@ export default function getPersonController(personDAO: IDAO<Person>, userDAO: ID
         updatePerson,
         statistic,
         analyzeRelationship,
-        getEvents
+        getEvents,
+        updateThongTinGiaPha
     };
 }

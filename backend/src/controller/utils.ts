@@ -34,6 +34,10 @@ export type ControllerHandler<
 
 export type Controller = Record<string, ControllerHandler<any, any, any>>;
 
+export function keysModel<K extends object>(obj: K): (keyof K)[] {
+    return Object.keys(obj) as (keyof K)[];
+}
+
 export type PaginateParams = {
     sortBy?: string,
     sortDesc?: string,
@@ -156,13 +160,12 @@ export function badRequetWithMsg(msg: string) {
 
 type UserGuard = {
     type: "UserGuard",
-    handler: (input: RequestInput<any, any, any>) => Promise<ControllerHandlerResult<{ msg: string }> | void>;
+    handler: (input: RequestInput<any, any, false>) => Promise<ControllerHandlerResult<{ msg: string }> | void>;
 };
 
 export const CanReadGuard: UserGuard = {
     type: "UserGuard",
     handler: async (input) => {
-        if (!input.user) return CommonResponse.UNAUTHORIZED;
         if (
             input.user.permission != "admin" &&
             input.user.permission != "read"
@@ -175,7 +178,6 @@ export const CanReadGuard: UserGuard = {
 export const CanWriteGuard: UserGuard = {
     type: "UserGuard",
     handler: async (input) => {
-        if (!input.user) return CommonResponse.UNAUTHORIZED;
         if (
             input.user.permission != "admin" &&
             input.user.permission != "write"
@@ -188,7 +190,6 @@ export const CanWriteGuard: UserGuard = {
 export const IsAdminGuard: UserGuard = {
     type: "UserGuard",
     handler: async (input) => {
-        if (!input.user) return CommonResponse.UNAUTHORIZED;
         if (input.user.permission != "admin") return CommonResponse.FORBIDDEN;
     }
 };
@@ -199,10 +200,11 @@ export function applyUserGuards<
     Output extends object = {}
 >(handler: ControllerHandler<Body, Query, Output, false>, ...guards: UserGuard[]) {
     const newHandler: ControllerHandler<Body, Query, Output | { msg: string }, true> = async (input: RequestInput<Body, Query, true>) => {
-        if (!input.user) return CommonResponse.UNAUTHORIZED;
+        const user = input.user;
+        if (!user) return CommonResponse.UNAUTHORIZED;
         
         for (const g of guards) {
-            const result = await g.handler(input);
+            const result = await g.handler({ ...input, user });
             if (result) return result;
         }
         return handler(input as RequestInput<Body, Query, any> as RequestInput<Body, Query, false>);

@@ -5,7 +5,7 @@ import { Gender, LifeStatus } from "../../model/Person";
 import type { FieldDef } from "../../model/FieldDef";
 import type { FieldVal } from "../../model/FieldVal";
 import { DEFAUT_ADMIN_PASSWORD, DEFAUT_ADMIN_USERNAME } from "../../controller/auth";
-import { defaultThongTinGiaPhaValue, ThongTinGiaPha } from "../../model/ThongTinGiaPha";
+import { getDefaultThongTinGiaPhaValue, ThongTinGiaPha } from "../../model/ThongTinGiaPha";
 
 const isWeb = typeof window != "undefined" && typeof document != "undefined";
 
@@ -618,7 +618,7 @@ const ttgpDAO: IDAO<ThongTinGiaPha> = createDAO(
   "type",
   ThongTinGiaPhas
 );
-export const ttgpDASO = createDASO(ttgpDAO, defaultThongTinGiaPhaValue);
+export const ttgpDASO = createDASO(ttgpDAO, getDefaultThongTinGiaPhaValue());
 
 if (process.env.NODE_ENV == "development" && isWeb) {
   (window as any).userDAO = userDAO;

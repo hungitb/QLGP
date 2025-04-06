@@ -3,7 +3,7 @@ import { Person } from "../../model/Person";
 import { FieldDef } from "../../model/FieldDef";
 import { FieldVal } from "../../model/FieldVal";
 import { TableSchema, TableSchemaSingleRow } from "./TableSchema";
-import { defaultThongTinGiaPhaValue, ThongTinGiaPha } from "../../model/ThongTinGiaPha";
+import { getDefaultThongTinGiaPhaValue, ThongTinGiaPha } from "../../model/ThongTinGiaPha";
 
 const userSchema = new TableSchema<User>({
     name: "user",
@@ -80,7 +80,7 @@ const ttgpSchema = new TableSchemaSingleRow<ThongTinGiaPha>({
         type: "string",
         soDoiCuaToTien: "int"
     },
-    initValue: defaultThongTinGiaPhaValue
+    initValue: getDefaultThongTinGiaPhaValue()
 });
 
 export const personDAO = personSchema.getDAO();

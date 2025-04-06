@@ -1,15 +1,20 @@
+
+export type CheDoGiaPha = "phaHe" | "mauHe";
+
 export type ThongTinGiaPha = {
     idToTien: string | null;
     soDoiCuaToTien: number;
     tenDongHo: string | null;
-    thongTinKhac: string | null;
-    type: "phaHe" | "mauHe";
+    thongTinKhac: string;
+    type: CheDoGiaPha;
 };
 
-export const defaultThongTinGiaPhaValue: ThongTinGiaPha = {
-    idToTien: null,
-    soDoiCuaToTien: 1,
-    tenDongHo: null,
-    thongTinKhac: null,
-    type: "phaHe"
+export const getDefaultThongTinGiaPhaValue = (): ThongTinGiaPha => {
+    return {
+        idToTien: null,
+        soDoiCuaToTien: 1,
+        tenDongHo: null,
+        thongTinKhac: "",
+        type: "phaHe"
+    };
 };
