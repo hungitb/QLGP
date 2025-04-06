@@ -65,7 +65,7 @@ export default function getShareController(userDAO: IDAO<User>) {
         {},
         {}
     >(async ({ body: { userId, permission, note } }) => {
-        if (!permission && !note) return CommonResponse.BAD_REQUEST;
+        if (!permission && typeof note != "string") return CommonResponse.BAD_REQUEST;
         if (typeof userId != "string") return CommonResponse.BAD_REQUEST;
         if (permission && (permission != "read" && permission != "write")) return CommonResponse.BAD_REQUEST;
         if (note && typeof note != "string") return CommonResponse.BAD_REQUEST;

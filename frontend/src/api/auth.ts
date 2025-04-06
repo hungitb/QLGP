@@ -80,15 +80,17 @@ export const authApi = wrapApi({
       user: await getLoggedInUserLocalStorage(),
     });
   }),
-  changePassword: wrapPostApi<typeof authController.changePassword>(async (data) => {
-    if (useBackend) {
-      return wrapAxiosCall(() => api.post("/auth/change-password", data));
-    }
+  changePassword: wrapPostApi<typeof authController.changePassword>(
+    async (data) => {
+      if (useBackend) {
+        return wrapAxiosCall(() => api.post("/auth/change-password", data));
+      }
 
-    return await authController.changePassword({
-      body: data,
-      query: {},
-      user: await getLoggedInUserLocalStorage(),
-    });
-  }),
+      return await authController.changePassword({
+        body: data,
+        query: {},
+        user: await getLoggedInUserLocalStorage(),
+      });
+    }
+  ),
 });

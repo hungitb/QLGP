@@ -77,7 +77,8 @@ const ttgpSchema = new TableSchemaSingleRow<ThongTinGiaPha>({
         idToTien: "string",
         thongTinKhac: "string",
         tenDongHo: "string",
-        type: "string"
+        type: "string",
+        soDoiCuaToTien: "int"
     },
     initValue: defaultThongTinGiaPhaValue
 });

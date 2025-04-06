@@ -42,7 +42,7 @@
           {
             text: 'Đổi mật khẩu',
             click: changePassword,
-            color: 'warning'
+            color: 'warning',
           },
         ]"
       >
@@ -142,7 +142,9 @@ import { CLEAR_STORE, FETCH_PEOPLE, UPDATE_USER } from "@/store";
 import ShowDialogAddOrCreatePerson from "@/components/utilities/ShowDialogAddOrCreatePerson.vue";
 import ShowDialogAddPersonWithSpecificRole from "@/components/utilities/ShowDialogAddPersonWithSpecificRole.vue";
 import ShowDialogConfirm from "@/components/utilities/ShowDialogConfirm.vue";
-import ShowSnackbar, { showSnackbar } from "@/components/utilities/ShowSnackbar.vue";
+import ShowSnackbar, {
+  showSnackbar,
+} from "@/components/utilities/ShowSnackbar.vue";
 import ShowImage from "@/components/utilities/ShowImage.vue";
 import ShowDialogPersonDetailInfo from "@/components/utilities/ShowDialogPersonDetailInfo.vue";
 import CustomDialog from "@/components/CustomDialog.vue";
@@ -283,7 +285,7 @@ export default Vue.extend({
     $route: "updateSelectedItemFromRoute",
     dialogChangePassword(value) {
       if (value) {
-        (this.$refs.formChangePassword as any).resetValidation();
+        (this.$refs.formChangePassword as any)?.resetValidation();
         this.changePasswordForm = initChangePasswordForm();
       }
     },

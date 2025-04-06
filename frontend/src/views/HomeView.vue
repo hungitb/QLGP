@@ -5,71 +5,8 @@
         <v-row>
           <v-col cols="12">
             <v-row>
-              <v-col cols="12" sm="6">
-                <v-card>
-                  <v-card-text>
-                    <div class="d-flex">
-                      <div class="d-flex flex-column justify-space-between">
-                        <div>Số lượng nam</div>
-                        <div class="text-h6">
-                          <v-skeleton-loader
-                            v-if="$store.state.isLoadingPeople"
-                            type="text"
-                            width="40"
-                          ></v-skeleton-loader>
-                          <template v-else>
-                            {{
-                              $store.state.people.filter(
-                                (p) => p.gender == Gender.MALE
-                              ).length
-                            }}
-                          </template>
-                        </div>
-                      </div>
-                      <v-spacer></v-spacer>
-                      <CustomPersonAvatar
-                        :person="{
-                          gender: Gender.MALE,
-                          avatarUrl: null,
-                          callname: '',
-                        }"
-                      />
-                    </div>
-                  </v-card-text>
-                </v-card>
-              </v-col>
-              <v-col cols="12" sm="6">
-                <v-card>
-                  <v-card-text>
-                    <div class="d-flex">
-                      <div class="d-flex flex-column justify-space-between">
-                        <div>Số lượng nữ</div>
-                        <div class="text-h6">
-                          <v-skeleton-loader
-                            v-if="$store.state.isLoadingPeople"
-                            type="text"
-                            width="40"
-                          ></v-skeleton-loader>
-                          <template v-else>
-                            {{
-                              $store.state.people.filter(
-                                (p) => p.gender == Gender.FEMALE
-                              ).length
-                            }}
-                          </template>
-                        </div>
-                      </div>
-                      <v-spacer></v-spacer>
-                      <CustomPersonAvatar
-                        :person="{
-                          gender: Gender.FEMALE,
-                          avatarUrl: null,
-                          callname: '',
-                        }"
-                      />
-                    </div>
-                  </v-card-text>
-                </v-card>
+              <v-col cols="12">
+                <ThongTinGiaPha />
               </v-col>
             </v-row>
           </v-col>
@@ -174,6 +111,72 @@
       </v-col>
       <v-col cols="12" lg="3">
         <v-row>
+          <v-col cols="12">
+            <v-card>
+              <v-card-text>
+                <div class="d-flex">
+                  <div class="d-flex flex-column justify-space-between">
+                    <div>Số lượng nam</div>
+                    <div class="text-h6">
+                      <v-skeleton-loader
+                        v-if="$store.state.isLoadingPeople"
+                        type="text"
+                        width="40"
+                      ></v-skeleton-loader>
+                      <template v-else>
+                        {{
+                          $store.state.people.filter(
+                            (p) => p.gender == Gender.MALE
+                          ).length
+                        }}
+                      </template>
+                    </div>
+                  </div>
+                  <v-spacer></v-spacer>
+                  <CustomPersonAvatar
+                    :person="{
+                      gender: Gender.MALE,
+                      avatarUrl: null,
+                      callname: '',
+                    }"
+                  />
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+          <v-col cols="12">
+            <v-card>
+              <v-card-text>
+                <div class="d-flex">
+                  <div class="d-flex flex-column justify-space-between">
+                    <div>Số lượng nữ</div>
+                    <div class="text-h6">
+                      <v-skeleton-loader
+                        v-if="$store.state.isLoadingPeople"
+                        type="text"
+                        width="40"
+                      ></v-skeleton-loader>
+                      <template v-else>
+                        {{
+                          $store.state.people.filter(
+                            (p) => p.gender == Gender.FEMALE
+                          ).length
+                        }}
+                      </template>
+                    </div>
+                  </div>
+                  <v-spacer></v-spacer>
+                  <CustomPersonAvatar
+                    :person="{
+                      gender: Gender.FEMALE,
+                      avatarUrl: null,
+                      callname: '',
+                    }"
+                  />
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
           <v-col cols="12" lg="12">
             <v-card>
               <v-card-title>Sự kiện sắp tới</v-card-title>
@@ -271,10 +274,12 @@ import {
 } from "@/components/utilities";
 import { getEventSettingFromLocalStorage, permissionMixin } from "@/utils";
 import { personApi } from "@/api/person";
+import ThongTinGiaPha from "@/components/ThongTinGiaPha.vue";
 
 export default Vue.extend({
   components: {
     CustomPersonAvatar,
+    ThongTinGiaPha,
   },
   mixins: [permissionMixin],
   data: function () {
