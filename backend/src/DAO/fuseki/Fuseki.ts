@@ -24,7 +24,11 @@ function logDevelopmentMode(msg: string) {
         const fileSizeInBytes = stats.size;
       
         if (fileSizeInBytes > 10*1024*1024) {
-          fs.unlinkSync(logFilePath);
+            const content = fs.readFileSync(logFilePath, "utf8");
+            const lines = content.split("\n");
+            const linesToRemove = Math.floor(lines.length / 2);
+            const remainingLines = lines.slice(linesToRemove);
+            fs.writeFileSync(logFilePath, remainingLines.join("\n"), "utf8");
         }
     }
 

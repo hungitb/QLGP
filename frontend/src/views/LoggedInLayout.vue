@@ -125,7 +125,7 @@
     <ShowDialogAddOrCreatePerson />
     <ShowDialogAddPersonWithSpecificRole />
     <ShowDialogConfirm />
-    <ShowSnackbar />
+    <ShowSnackbar :app="!drawer" />
     <ShowImage />
     <ShowDialogPersonDetailInfo />
   </v-app>
