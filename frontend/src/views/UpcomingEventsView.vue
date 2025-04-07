@@ -119,7 +119,6 @@
             </v-list>
           </CustomDialog>
           <v-btn
-            v-if="canWrite()"
             :small="isSmallScreen ? true : undefined"
             outlined
             color="primary"

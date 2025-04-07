@@ -30,70 +30,70 @@
             <v-list-item-title>Đăng xuất</v-list-item-title>
           </v-list-item>
         </v-list>
-      </v-navigation-drawer>
 
-      <CustomDialog
-        v-model="dialogChangePassword"
-        :isLoading="loadingDialogChangePassword"
-        header="Đổi mật khẩu"
-        maxWidth="480"
-        buttonText
-        :buttons="[
-          {
-            text: 'Đổi mật khẩu',
-            click: changePassword,
-            color: 'warning',
-          },
-        ]"
-      >
-        <v-form ref="formChangePassword">
-          <v-text-field
-            v-model="changePasswordForm.oldPassword"
-            label="Mật khẩu cũ"
-            outlined
-            :rules="usernamePasswordRules"
-            validate-on-blur
-            :type="changePasswordForm.showOldPassword ? 'text' : 'password'"
-            :append-icon="
-              changePasswordForm.showOldPassword ? 'mdi-eye' : 'mdi-eye-off'
-            "
-            @click:append="
-              changePasswordForm.showOldPassword =
-                !changePasswordForm.showOldPassword
-            "
-          />
-          <v-text-field
-            v-model="changePasswordForm.newPassword"
-            label="Mật khẩu mới"
-            outlined
-            :rules="usernamePasswordRules"
-            validate-on-blur
-            :type="changePasswordForm.showNewPassword ? 'text' : 'password'"
-            :append-icon="
-              changePasswordForm.showNewPassword ? 'mdi-eye' : 'mdi-eye-off'
-            "
-            @click:append="
-              changePasswordForm.showNewPassword =
-                !changePasswordForm.showNewPassword
-            "
-          />
-          <v-text-field
-            v-model="changePasswordForm.confirmPassword"
-            label="Xác nhận mật khẩu mới"
-            outlined
-            :rules="[checkConfirmPassword]"
-            validate-on-blur
-            :type="changePasswordForm.showConfirmPassword ? 'text' : 'password'"
-            :append-icon="
-              changePasswordForm.showConfirmPassword ? 'mdi-eye' : 'mdi-eye-off'
-            "
-            @click:append="
-              changePasswordForm.showConfirmPassword =
-                !changePasswordForm.showConfirmPassword
-            "
-          />
-        </v-form>
-      </CustomDialog>
+        <CustomDialog
+          v-model="dialogChangePassword"
+          :isLoading="loadingDialogChangePassword"
+          header="Đổi mật khẩu"
+          maxWidth="480"
+          buttonText
+          :buttons="[
+            {
+              text: 'Đổi mật khẩu',
+              click: changePassword,
+              color: 'warning',
+            },
+          ]"
+        >
+          <v-form ref="formChangePassword">
+            <v-text-field
+              v-model="changePasswordForm.oldPassword"
+              label="Mật khẩu cũ"
+              outlined
+              :rules="usernamePasswordRules"
+              validate-on-blur
+              :type="changePasswordForm.showOldPassword ? 'text' : 'password'"
+              :append-icon="
+                changePasswordForm.showOldPassword ? 'mdi-eye' : 'mdi-eye-off'
+              "
+              @click:append="
+                changePasswordForm.showOldPassword =
+                  !changePasswordForm.showOldPassword
+              "
+            />
+            <v-text-field
+              v-model="changePasswordForm.newPassword"
+              label="Mật khẩu mới"
+              outlined
+              :rules="usernamePasswordRules"
+              validate-on-blur
+              :type="changePasswordForm.showNewPassword ? 'text' : 'password'"
+              :append-icon="
+                changePasswordForm.showNewPassword ? 'mdi-eye' : 'mdi-eye-off'
+              "
+              @click:append="
+                changePasswordForm.showNewPassword =
+                  !changePasswordForm.showNewPassword
+              "
+            />
+            <v-text-field
+              v-model="changePasswordForm.confirmPassword"
+              label="Xác nhận mật khẩu mới"
+              outlined
+              :rules="[checkConfirmPassword]"
+              validate-on-blur
+              :type="changePasswordForm.showConfirmPassword ? 'text' : 'password'"
+              :append-icon="
+                changePasswordForm.showConfirmPassword ? 'mdi-eye' : 'mdi-eye-off'
+              "
+              @click:append="
+                changePasswordForm.showConfirmPassword =
+                  !changePasswordForm.showConfirmPassword
+              "
+            />
+          </v-form>
+        </CustomDialog>
+      </v-navigation-drawer>
 
       <v-app-bar app dark color="primary" id="app-bar">
         <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
