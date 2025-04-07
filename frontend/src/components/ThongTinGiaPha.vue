@@ -12,13 +12,20 @@
             <th>Tổ tiên</th>
             <td>
               <div v-if="thongTinGiaPha.idToTien" class="d-flex align-center">
-                <CustomPersonAvatar
-                  :person="$store.state.personMapping[thongTinGiaPha.idToTien]"
-                  size="30"
-                />
-                <span class="ml-3">{{
-                  $store.state.personMapping[thongTinGiaPha.idToTien].callname
-                }}</span>
+                <v-skeleton-loader
+                  v-if="$store.state.isLoadingPeople"
+                  type="text"
+                  width="40"
+                ></v-skeleton-loader>
+                <template v-else>
+                  <CustomPersonAvatar
+                    :person="$store.state.personMapping[thongTinGiaPha.idToTien]"
+                    size="30"
+                  />
+                  <span class="ml-3">{{
+                    $store.state.personMapping[thongTinGiaPha.idToTien].callname
+                  }}</span>
+                </template>
               </div>
               <template v-else>Chưa đặt</template>
             </td>
@@ -89,6 +96,8 @@ import {
 } from "../../../backend/src/model/ThongTinGiaPha";
 import { personApi } from "@/api/person";
 import CustomPersonAvatar from "./CustomPersonAvatar.vue";
+import store from "@/store";
+import { Person } from "../../../backend/src/model/Person";
 
 const cheDoGiaPhaTextMapping: Record<CheDoGiaPha, string> = {
   phaHe: "Phả hệ",
@@ -122,7 +131,7 @@ export default defineComponent({
   },
   computed: {
     thongTinGiaPha() {
-      return this.$store.state.user.thongTinGiaPha;
+      return ((this as any).$store as typeof store).state.user.thongTinGiaPha;
     },
     firstHeaderElementStyle() {
       if (this.$vuetify.breakpoint.xs) return {};

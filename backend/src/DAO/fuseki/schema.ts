@@ -74,11 +74,23 @@ const personSchema = new TableSchema<Person>({
 const ttgpSchema = new TableSchemaSingleRow<ThongTinGiaPha>({
     name: "thongTinGiaPha",
     fields: {
-        idToTien: "string",
-        thongTinKhac: "string",
-        tenDongHo: "string",
+        idToTien: {
+            type: personSchema,
+            alias: "ancestor"
+        },
+        thongTinKhac: {
+            type: "string",
+            alias: "otherInfo"
+        },
+        tenDongHo: {
+            type: "string",
+            alias: "familyName"
+        },
         type: "string",
-        soDoiCuaToTien: "int"
+        soDoiCuaToTien: {
+            type: "int",
+            alias: "ancestorStartingNumber"
+        }
     },
     initValue: getDefaultThongTinGiaPhaValue()
 });

@@ -13,7 +13,7 @@ type TableSchemaFieldDefs<Model extends ValidModel> = {
     [key in keyof Model]: FieldType | ({
         type: FieldType;
         alias?: string;
-    } & (Model[key] extends number | string | boolean ? { allowNull: false } | { primaryKey: true } : {}));
+    } & (Model[key] extends number | string | boolean ? { allowNull: false } | { primaryKey: true } | {} : {}));
 };
 type Triple = [subject: string, predicate: string, object: string];
 
@@ -189,7 +189,12 @@ class BaseTableSchema<Model extends ValidModel> {
 
     protected tripleObjectRepr(field: Key<Model>, value: any) {
         const type = utils.inferType(this.fields[field]);
-        const escape = (s: string) => s.replaceAll("\\", "\\\\").replaceAll("\"", "\\\"");
+        const escape = (s: string) => {
+            return s
+                .replaceAll("\\", "\\\\")
+                .replaceAll("\"", "\\\"")
+                .replaceAll("\n", "\\n");
+        };
 
         return utils.isLiteralType(type)
             ? type == "string"
