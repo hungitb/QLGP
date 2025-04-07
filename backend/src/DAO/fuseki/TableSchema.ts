@@ -1,7 +1,7 @@
 import { IDAO, IDASO } from "../../model/IDAO";
 import Fuseki from "./Fuseki";
 
-const ALL_LITERAL_TYPES = ["string", "int", "decimal", "boolean"] as const;
+const ALL_LITERAL_TYPES = ["string", "int", "decimal", "boolean", "date"] as const;
 type LiteralType = (typeof ALL_LITERAL_TYPES)[number];
 type FieldType = "__self__" | LiteralType | TableSchema<any>;
 type ValidModel = Record<string, string | boolean | number | null>;
@@ -63,6 +63,7 @@ function syncSchemas() {
 
 const constructorMapping: Record<LiteralType, (s: string) => any> = {
     string: s => String(s),
+    date: s => s,
     int: s => parseInt(s),
     decimal: s => Number(s),
     boolean: s => s == "true"
@@ -102,6 +103,8 @@ const utils = {
             return "xsd:int";
         } else if (type == "decimal") {
             return "xsd:decimal";
+        } else if (type == "date") {
+            return "xsd:dateTime";
         } else {
             const x: never = type; // Typescript trick
             throw Error(`Unknown data type of type ${type}`);

@@ -52,13 +52,13 @@ export default defineComponent({
         {
           icon: "mdi-chart-box-outline",
           title: "Thống kê",
-          subtitle: "Xem các thông tin thống kê về những người thân của bạn",
+          subtitle: "Xem các thông tin thống kê về các thành viên trong gia phả",
           url: "/utilities/statistic",
         },
         {
           icon: "mdi-account-switch",
           title: "Phân tích mối quan hệ",
-          subtitle: "Phân tích mối quan hệ giữa những người thân của bạn",
+          subtitle: "Phân tích mối quan hệ giữa các thành viên",
           url: "/utilities/relationship_analyze",
         },
         {

@@ -47,7 +47,7 @@
                   <v-list-item-content>
                     <v-list-item-title>Tất cả mọi người</v-list-item-title>
                     <v-list-item-subtitle>
-                      Tất cả mọi người trong danh sách người thân của bạn sẽ
+                      Tất cả mọi người trong danh sách thành viên sẽ
                       xuất hiện trong sự kiện sắp tới
                     </v-list-item-subtitle>
                   </v-list-item-content>
@@ -76,7 +76,7 @@
                     >
                       <PersonInputGroup
                         v-model="eventTargetPersonIds"
-                        label="Người thân"
+                        label="Thành viên"
                       />
                     </div>
                   </v-expand-transition>
@@ -160,7 +160,7 @@
         >
           <div class="text-h6">Không có sự kiện nào trong tháng này!</div>
           <div>
-            Bạn có thể cập nhật ngày sinh, ngày mất cho người thân của bạn để
+            Có thể cập nhật ngày sinh, ngày mất cho các thành viên để
             xem được thông tin về các sự kiện liên quan đến họ. Bạn cũng có thể
             tùy chỉnh những người bạn muốn xem thông tin về sự kiện trong phần
             cài đặt.

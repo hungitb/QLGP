@@ -2,7 +2,7 @@
   <CustomDialog
     v-model="dialog"
     :header="
-      person ? 'Cập nhật thông tin ' + person.callname : 'Thêm người thân'
+      person ? 'Cập nhật thông tin ' + person.callname : 'Thêm thành viên'
     "
     buttonText
     :buttons="buttons"
@@ -380,7 +380,7 @@ export default defineComponent({
           });
         } else {
           showSnackbar({
-            msg: `Thêm người thân ${this.callname} thành công`,
+            msg: `Thêm thành viên ${this.callname} thành công`,
           });
         }
       }

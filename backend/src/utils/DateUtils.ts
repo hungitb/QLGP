@@ -2,6 +2,67 @@
 import { getLunarDate } from "./amlich-hnd"
 import { isStringPureInterger } from "./ValidationUtils";
 
+export type StdDate = string & { __type__: "StdDate" };
+
+export function nowDate(): StdDate {
+    const tempDate = new Date();
+    const now = new Date(tempDate.getTime() + (tempDate.getTimezoneOffset()*60000) + 3600000*7); // Convert to UTC+7
+
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const seconds = String(now.getSeconds()).padStart(2, "0");
+    const milliseconds = String(now.getMilliseconds()).padStart(3, "0");
+
+    const timezone = "+07:00";
+
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}${timezone}` as StdDate;
+}
+
+export function sortByStdDate<Key extends string, Obj extends { [K in Key]: StdDate }>(key: Key, objs: Obj[], order: "asc" | "desc" = "asc"): Obj[] {
+    const times = objs.map(o => new Date(o[key]).getTime());
+
+    const indixes = objs.map((_, i) => i);
+    indixes.sort((i1, i2) => {
+        const n1 = times[i1];
+        const n2 = times[i2];
+
+        const asc = order == "asc";
+
+        if (isNaN(n1) && isNaN(n2)) {
+            return 0;
+        }
+        if (isNaN(n1)) {
+            return 1;
+        }
+        if (isNaN(n2)) {
+            return -1;
+        }
+
+        return asc ? (n1 - n2) : (n2 - n1);
+    });
+
+    return indixes.map(i => objs[i]);
+}
+
+export function userFriendlyDateFormat(stdDate: StdDate) {
+    const date = new Date(stdDate);
+
+    if (isNaN(date.getTime())) {
+      return `NaN`;
+    }
+
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+
+    return `${day}/${month}/${year} ${hours}h${minutes}`;
+}
+
 type DateFormStoredInDatabase = string;
 type LunarDateInNormalForm = string;
 type CompleteNormalDate = string;

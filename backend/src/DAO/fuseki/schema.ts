@@ -33,7 +33,8 @@ const userSchema = new TableSchema<User>({
         note: {
             type: "string",
             allowNull: false
-        }
+        },
+        createdAt: "date"
     }
 });
 
@@ -67,7 +68,8 @@ const personSchema = new TableSchema<Person>({
         motherId: {
             type: "__self__",
             alias: "hasMother"
-        }
+        },
+        createdAt: "date"
     }
 });
 

@@ -18,6 +18,7 @@ router.get("/me", wrapHandlerSimple(async (req, res) => {
             id: user.id,
             username: user.username,
             permission: user.permission,
+            createdAt: user.createdAt,
             thongTinGiaPha: await ttgpDASO.get()
         };
     }

@@ -6,6 +6,7 @@ import type { FieldDef } from "../../model/FieldDef";
 import type { FieldVal } from "../../model/FieldVal";
 import { DEFAUT_ADMIN_PASSWORD, DEFAUT_ADMIN_USERNAME } from "../../controller/auth";
 import { getDefaultThongTinGiaPhaValue, ThongTinGiaPha } from "../../model/ThongTinGiaPha";
+import { nowDate } from "../../utils/DateUtils";
 
 const isWeb = typeof window != "undefined" && typeof document != "undefined";
 
@@ -436,23 +437,11 @@ function getData(): Promise<Dict[]>[] {
           sessionExpiry: null,
           permission: "admin",
           note: "",
+          createdAt: nowDate()
         },
       ];
     
-      const fakePeople: Person[] = [
-        {
-          id: randomId(),
-          callname: "Tôi",
-          gender: Gender.MALE,
-          birthdate: "9/9/2003",
-          status: LifeStatus.ALIVE,
-          avatarUrl: null,
-          deathdate: null,
-          spouseId: null,
-          fatherId: null,
-          motherId: null,
-        },
-      ];
+      const fakePeople: Person[] = [];
     
       // Sử dụng tháng này để làm phần sự kiện
       const currMonth = new Date().getMonth() + 1;
@@ -510,6 +499,7 @@ function getData(): Promise<Dict[]>[] {
           fatherId: null,
           motherId: null,
           avatarUrl: null,
+          createdAt: nowDate()
         });
     
         const personMapping: Record<string, Person> = {};

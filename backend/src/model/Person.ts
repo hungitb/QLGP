@@ -1,3 +1,4 @@
+import { StdDate } from "../utils/DateUtils";
 
 export enum Gender {
     MALE = "Nam",
@@ -20,6 +21,7 @@ export type Person = {
     spouseId: string | null;
     fatherId: string | null;
     motherId: string | null;
+    createdAt: StdDate;
 };
 
 export type PersonFuseki = Person & {

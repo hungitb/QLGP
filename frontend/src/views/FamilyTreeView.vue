@@ -92,7 +92,7 @@
             </v-col>
 
             <v-col cols="12">
-              <span>Thông tin thẻ người thân</span>
+              <span>Thông tin thẻ thành viên</span>
               <v-checkbox
                 v-model="settingVModel.show.image"
                 hide-details

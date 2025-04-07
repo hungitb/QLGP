@@ -86,6 +86,10 @@
                 </div>
               </template>
 
+              <template v-slot:item.createdAt="{ value }">
+                {{ userFriendlyDateFormat(value) }}
+              </template>
+
               <template v-slot:item.actions="{ item }">
                 <v-icon class="mr-4" @click.stop="showEditShareDialog(item)">
                   mdi-pencil
@@ -140,6 +144,7 @@ import { permissionMixin } from "@/utils";
 import { SharedUserInfo } from "../../../../backend/src/controller/share";
 import { usernamePasswordRules } from "../../../../backend/src/controller/utils";
 import CustomDialog from "@/components/CustomDialog.vue";
+import { userFriendlyDateFormat } from "../../../../backend/src/utils/DateUtils";
 
 export default defineComponent({
   mixins: [permissionMixin],
@@ -148,6 +153,8 @@ export default defineComponent({
   },
   data() {
     return {
+      userFriendlyDateFormat,
+
       usernamePasswordRules,
       newUserUsername: "",
       newUserPassword: "",
@@ -160,6 +167,7 @@ export default defineComponent({
         { text: "Tên đăng nhập", value: "username" },
         { text: "Quyền", value: "permission" },
         { text: "Ghi chú", value: "note" },
+        { text: "Ngày tạo", value: "createdAt" },
         { text: "", value: "actions", sortable: false },
       ],
       sharedUsers: [] as SharedUserInfo[],

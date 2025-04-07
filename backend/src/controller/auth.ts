@@ -4,6 +4,7 @@ import { CommonMessages, AuthMessages, generateSessionToken, CommonResponse, wra
 import type { Controller, ControllerHandler } from "./utils";
 import type { User } from "../model/User";
 import type { IDAO } from "../model/IDAO";
+import { nowDate } from "../utils/DateUtils";
 
 export const DEFAUT_ADMIN_USERNAME = "admin";
 export const DEFAUT_ADMIN_PASSWORD = "admin";
@@ -19,7 +20,8 @@ export default function getAuthController(userDAO: IDAO<User>) {
                 permission: "admin",
                 sessionToken: null,
                 sessionExpiry: null,
-                note: ""
+                note: "",
+                createdAt: nowDate()
             });
         }
     };

@@ -3,6 +3,7 @@ import { IDAO } from "../model/IDAO";
 import { User } from "../model/User";
 import { ControllerHandlerResult as CHR, CommonResponse, IsAdminGuard, SafeOmit, UserInfo, applyUserGuards, badRequetWithMsg } from "./utils";
 import { DEFAUT_ADMIN_USERNAME } from "./auth";
+import { nowDate, sortByStdDate } from "../utils/DateUtils";
 
 export type SharedUserInfo = SafeOmit<User, "sessionToken" | "sessionExpiry" | "password">;
 
@@ -16,14 +17,17 @@ export default function getShareController(userDAO: IDAO<User>) {
     >(async () => {
         const users = await userDAO.findAll();
 
+        const filtered = users.filter(user => user.username != DEFAUT_ADMIN_USERNAME).map(user => ({
+            id: user.id,
+            username: user.username,
+            permission: user.permission,
+            note: user.note,
+            createdAt: user.createdAt
+        }));
+
         return {
             data: {
-                users: users.filter(user => user.username != DEFAUT_ADMIN_USERNAME).map(user => ({
-                    id: user.id,
-                    username: user.username,
-                    permission: user.permission,
-                    note: user.note
-                }))
+                users: sortByStdDate("createdAt", filtered)
             },
             status: 200
         };
@@ -51,7 +55,8 @@ export default function getShareController(userDAO: IDAO<User>) {
             permission: perm,
             sessionToken: null,
             sessionExpiry: null,
-            note
+            note,
+            createdAt: nowDate()
         });
 
         return {

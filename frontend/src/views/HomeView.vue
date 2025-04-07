@@ -13,7 +13,7 @@
           <v-col cols="12">
             <v-card>
               <v-card-title>
-                Danh sách người thân
+                Danh sách thành viên
                 <template v-if="!$vuetify.breakpoint.smAndDown && canWrite()">
                   <v-divider vertical class="mx-4"></v-divider>
                   <v-btn
@@ -103,6 +103,10 @@
                       }}
                     </span>
                   </template>
+                </template>
+
+                <template v-slot:item.createdAt="{ value }">
+                  {{ userFriendlyDateFormat(value) }}
                 </template>
               </v-data-table>
             </v-card>
@@ -265,6 +269,7 @@ import {
   transformDateString,
   todayDate,
   datePlusDay,
+  userFriendlyDateFormat,
 } from "../../../backend/src/utils/DateUtils";
 import CustomPersonAvatar from "@/components/CustomPersonAvatar.vue";
 import { filterPeople } from "../../../backend/src/controller/person";
@@ -287,6 +292,7 @@ export default Vue.extend({
       allEventTypes,
       Gender,
       LifeStatus,
+      userFriendlyDateFormat,
 
       search: "",
       page: 1,
@@ -312,6 +318,10 @@ export default Vue.extend({
         {
           text: "Tình trạng",
           value: "status_deathdate",
+        },
+        {
+          text: "Ngày thêm",
+          value: "createdAt",
         },
       ],
 

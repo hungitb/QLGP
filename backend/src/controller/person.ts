@@ -1,8 +1,8 @@
 import { v4 as uuid } from "uuid";
 
-import { compareTwoDateString, datePlusDay, lunarDateToNormalDate, normalDateToLunarDate, shortenDateString, todayDate } from "../utils/DateUtils";
+import { compareTwoDateString, datePlusDay, lunarDateToNormalDate, normalDateToLunarDate, nowDate, shortenDateString, sortByStdDate, todayDate } from "../utils/DateUtils";
 import { isStringPureInterger } from "../utils/ValidationUtils";
-import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR, Controller, ControllerHandler, applyUserGuards, CanReadGuard, CanWriteGuard, keysModel } from "./utils";
+import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR, Controller, ControllerHandler, applyUserGuards, CanReadGuard, CanWriteGuard, keysModel, SafeOmit } from "./utils";
 import { LifeStatus, Gender, type Person } from "../model/Person";
 import type { User } from "../model/User";
 import type { IDAO, IDASO } from "../model/IDAO";
@@ -17,7 +17,7 @@ export type ExtendedPerson = Person & {
 };
 
 export type CreatePersonParams = {
-    person: Omit<Person, "id" | "ownerUserId" | "isStandForUser">;
+    person: SafeOmit<Person, "id" | "createdAt">;
     role?: {
         roleName: string;
         roleWithTargetPersonId: string;
@@ -121,6 +121,7 @@ export default function getPersonController(personDAO: IDAO<Person>, userDAO: ID
         let people = await personDAO.findAll();
         if (query.search) {
             people = filterPeople(people, query.search, query.searchFields);
+            people = sortByStdDate("createdAt", people);
         }
 
         let compare: undefined | ((v1: any, v2: any, k1: Person, k2: Person) => number) = undefined;
@@ -324,6 +325,7 @@ export default function getPersonController(personDAO: IDAO<Person>, userDAO: ID
             id: uuid(),
             birthdate: data.person.birthdate ? shortenDateString(data.person.birthdate) : null,
             deathdate: data.person.deathdate ? shortenDateString(data.person.deathdate) : null,
+            createdAt: nowDate()
         };
         await personDAO.create(newPerson);
 

@@ -4,7 +4,7 @@
       <v-col cols="12" md="6">
         <PersonInputGroup
           v-model="id1"
-          label="Người thân 1"
+          label="Thành viên 1"
           one
           :exception-ids="id2 ? [id2] : []"
         />
@@ -12,7 +12,7 @@
       <v-col cols="12" md="6">
         <PersonInputGroup
           v-model="id2"
-          label="Người thân 2"
+          label="Thành viên 2"
           one
           :exception-ids="id1 ? [id1] : []"
         />

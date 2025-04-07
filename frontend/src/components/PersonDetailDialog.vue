@@ -52,7 +52,7 @@
             <v-col cols="12" sm="6">
               <v-btn block color="red" outlined @click="deletePerson">
                 <v-icon left>mdi-delete</v-icon>
-                Xóa người thân
+                Xóa thành viên
               </v-btn>
             </v-col>
           </v-row>
