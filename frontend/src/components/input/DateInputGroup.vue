@@ -45,7 +45,8 @@ import Vue from "vue";
 import type { PropType } from "vue";
 
 import { DateFormat } from "../types";
-import { dateValidationMessage } from "../../../../backend/src/utils/DateUtils";
+import { lunarDateValidationMessage, nonLunarDateValidationMessage } from "../../../../backend/src/utils/DateUtils";
+import { SafeExclude } from "../../../../backend/src/controller/utils";
 
 export default Vue.extend({
   inject: ["form"],
@@ -110,22 +111,24 @@ export default Vue.extend({
       this.errorText = "";
     },
     validate() {
-      const validationOptionMapping = {
-        [DateFormat.y]: { isMissingMonth: true },
-        [DateFormat.my]: { isMissingDay: true },
-        [DateFormat.dmy]: {},
-        [DateFormat.dmyAL]: { isLunarDate: true },
-      };
 
       let validationMessage: string | null = null;
       if (this.required && this.content == "") {
         validationMessage = "Không được để trống";
       } else {
         if (this.content != "") {
-          validationMessage = dateValidationMessage(
-            this.content,
-            validationOptionMapping[this.dataType]
-          );
+          if (this.dataType == DateFormat.dmyAL) {
+            validationMessage = lunarDateValidationMessage(this.content);
+          } else if (this.dataType == DateFormat.y) {
+            validationMessage = nonLunarDateValidationMessage(this.content, { isMissingMonth: true });
+          } else if (this.dataType == DateFormat.my) {
+            validationMessage = nonLunarDateValidationMessage(this.content, { isMissingDay: true });
+          } else if (this.dataType == DateFormat.dmy) {
+            validationMessage = nonLunarDateValidationMessage(this.content);
+          } else {
+            const x: never = this.dataType;
+            throw Error("Missing DateFormat case")!
+          }
         }
       }
 

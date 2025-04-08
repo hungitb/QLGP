@@ -6,6 +6,7 @@ import { DEFAUT_ADMIN_USERNAME } from "./auth";
 type RequestInputQuery = Record<string, string>;
 type RequestInputBody = Record<string, any>;
 
+export type SafeExclude<T, K extends T> = Exclude<T, K>;
 export type SafeOmit<T, K extends keyof T> = Omit<T, K>;
 
 export type UserInfo = SafeOmit<User, "sessionToken" | "sessionExpiry" | "password" | "note"> & {

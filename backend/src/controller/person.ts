@@ -1,6 +1,6 @@
 import { v4 as uuid } from "uuid";
 
-import { compareTwoDateString, datePlusDay, lunarDateToNormalDate, normalDateToLunarDate, nowDate, shortenDateString, sortByStdDate, todayDate } from "../utils/DateUtils";
+import { compareTwoDateString, datePlusDay, DateStoredDB, isSomeValueStandardNormalDate, isSufixedLunarDate, lunarDateToNormalDate, normalDateToLunarDate, nowDate, shortenDateString, sortByStdDate, StandardNormalDate, sufixedLunarDateToNormalDate, todayDate } from "../utils/DateUtils";
 import { isStringPureInterger } from "../utils/ValidationUtils";
 import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR, Controller, ControllerHandler, applyUserGuards, CanReadGuard, CanWriteGuard, keysModel, SafeOmit } from "./utils";
 import { LifeStatus, Gender, type Person } from "../model/Person";
@@ -95,8 +95,9 @@ export function filterPeople(people: Person[], search: string, searchFieldsAsStr
             let val = person[field as keyof Person];
             if (!val) return;
 
-            if (field == "deathdate" && normalDateToLunarDate(val as string)) {
-                val += " " + normalDateToLunarDate(val as string) as string;
+            const valAsLunarDate = normalDateToLunarDate(val as StandardNormalDate);
+            if (field == "deathdate" && valAsLunarDate) {
+                val += " " + valAsLunarDate;
             }
 
             val = val.toString().toLowerCase();
@@ -507,10 +508,9 @@ export default function getPersonController(personDAO: IDAO<Person>, userDAO: ID
             }
         }
 
-        function extractNormalDayMonthYear(date: string): [day: number, month: number, year: number] {
-            if (date.endsWith("AL")) {
-                date = date.replace("AL", "");
-                const temp = lunarDateToNormalDate(date);
+        function extractNormalDayMonthYear(date: DateStoredDB): [day: number, month: number, year: number] {
+            if (isSufixedLunarDate(date)) {
+                const temp = sufixedLunarDateToNormalDate(date);
                 if (!temp) return [1, 1, 10e10];
                 date = temp;
             }
@@ -601,8 +601,8 @@ export default function getPersonController(personDAO: IDAO<Person>, userDAO: ID
     }, CanReadGuard);
 
     type GetEventsParams = {
-        startDate?: string;
-        endDate?: string;
+        startDate?: StandardNormalDate;
+        endDate?: StandardNormalDate;
         allPeople: boolean;
         personIds?: string;
         eventTypes?: string;
@@ -626,10 +626,11 @@ export default function getPersonController(personDAO: IDAO<Person>, userDAO: ID
             return people.filter(p => validPersonIds.has(p.id));
         })();
         
-        if (!startDate || (typeof startDate != "string")) {
+        if (!isSomeValueStandardNormalDate(startDate)) {
             startDate = todayDate();
         }
-        if (!endDate || (typeof endDate != "string")) {
+
+        if (!isSomeValueStandardNormalDate(endDate)) {
             endDate = datePlusDay(startDate, 366);
         }
 

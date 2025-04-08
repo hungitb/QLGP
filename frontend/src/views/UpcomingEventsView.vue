@@ -223,6 +223,7 @@ import {
 } from "../../../backend/src/controller/event";
 import { Person } from "../../../backend/src/model/Person";
 import {
+  createStandardFormDateFromDayMonthYear,
   normalDateToLunarDate,
   transformDateString,
 } from "../../../backend/src/utils/DateUtils";
@@ -292,8 +293,10 @@ export default defineComponent({
       const backupValue = this.value;
       const eventSetting = getEventSettingFromLocalStorage();
       const { data } = await personApi.getEvents({
-        startDate: `1/${month}/${year}`,
-        endDate: month == 12 ? `1/1/${year + 1}` : `1/${month + 1}/${year}`,
+        startDate: createStandardFormDateFromDayMonthYear(1, month, year),
+        endDate: month == 12
+          ? createStandardFormDateFromDayMonthYear(1, 1, year + 1)
+          : createStandardFormDateFromDayMonthYear(1, month + 1, year),
         allPeople: eventSetting.allPeople,
         personIds: eventSetting.personIds?.join(","),
         eventTypes: eventSetting.eventTypes?.join(","),
@@ -350,16 +353,20 @@ export default defineComponent({
           }
 
           const person = this.$store.state.personMapping[personId] as Person;
-          let originalDateExplain = "";
+          var originalDateExplain: string;
           if (type == EventType.BIRTHDAY) {
-            originalDateExplain = `Sinh ngày ${transformDateString(
-              person.birthdate || "",
+            const birthdateText = person.birthdate ? transformDateString(
+              person.birthdate,
               { showLunarDate: false }
-            )}`;
+            ) : "NaN";
+            originalDateExplain = `Sinh ngày ${birthdateText}`;
           } else if (type == EventType.DEATHDAY) {
-            originalDateExplain = `Mất ngày ${transformDateString(
-              person.deathdate || ""
-            )}`;
+            const deathdateText = person.deathdate ? transformDateString(
+              person.deathdate
+            ) : "NaN";
+            originalDateExplain = `Mất ngày ${deathdateText}`;
+          } else {
+            originalDateExplain = "";
           }
 
           items.push({

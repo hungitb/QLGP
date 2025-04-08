@@ -1,4 +1,4 @@
-import { StdDate } from "../utils/DateUtils";
+import { DateStoredDB, StdDate } from "../utils/DateUtils";
 
 export enum Gender {
     MALE = "Nam",
@@ -15,8 +15,8 @@ export type Person = {
     callname: string;
     gender: Gender;
     avatarUrl: string | null;
-    birthdate: string | null;
-    deathdate: string | null;
+    birthdate: DateStoredDB | null;
+    deathdate: DateStoredDB | null;
     status: LifeStatus | null;
     spouseId: string | null;
     fatherId: string | null;

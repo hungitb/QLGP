@@ -63,9 +63,63 @@ export function userFriendlyDateFormat(stdDate: StdDate) {
     return `${day}/${month}/${year} ${hours}h${minutes}`;
 }
 
-type DateFormStoredInDatabase = string;
-type LunarDateInNormalForm = string;
-type CompleteNormalDate = string;
+export type YearOnlyDate = string & { __typeYearOnlyDate__: true }; // "1954", "2003"
+export type MonthAndYearDate = string & { __typeMonthAndYearDate__: true }; // "4/1975", "9/2003"
+export type StandardFormDate = string & { __typeStandardFormDate__: true };
+export type StandardNormalDate = StandardFormDate & { __typeCompleteNormalDate__: true }; // "12/8/2005", "1/1/2025"
+export type StandardLunarDate = StandardFormDate & { __typeStandardLunarDate__: true }; // "1/4/2004", "30/2/2005"
+export type SufixedLunarDate = string & { __typeSufixedLunarDate__: true }; // "1/4/2004AL", "30/2/2005AL"
+export type DateStoredDB = YearOnlyDate | MonthAndYearDate | StandardNormalDate | SufixedLunarDate;
+
+export function isSufixedLunarDate(date: DateStoredDB): date is SufixedLunarDate {
+    return date.endsWith("AL");
+}
+
+export function isStandardNormalDateOrSufixedLunarDate(date: DateStoredDB): date is SufixedLunarDate | StandardNormalDate {
+    return date.split("/").length == 3;
+}
+
+function isYearOnlyDate(date: DateStoredDB): date is YearOnlyDate {
+    if (date.endsWith("AL")) return false;
+    return date.split("/").length == 1;
+}
+
+function isMonthAndYearDate(date: DateStoredDB): date is MonthAndYearDate {
+    if (date.endsWith("AL")) return false;
+    return date.split("/").length == 2;
+}
+
+export function isStandardNormalDate(date: DateStoredDB): date is StandardNormalDate {
+    if (date.endsWith("AL")) return false;
+    return date.split("/").length == 3;
+}
+
+export function isSomeValueStandardNormalDate(date: unknown): date is StandardNormalDate {
+    if (typeof date != "string") return false;
+    const msg = nonLunarDateValidationMessage(date);
+    if (msg) return false;
+    return true;
+}
+
+function getStandardNormalDate(date: Date): StandardNormalDate {
+    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}` as StandardNormalDate;
+}
+
+function getDayMonthYearFromStandardFormDate(date: StandardFormDate): [day: number, month: number, year: number] {
+    return date.split("/").map(i => Number(i)) as [number, number, number];
+}
+
+export function createStandardFormDateFromDayMonthYear(day: number, month: number, year: number) {
+    return `${day}/${month}/${year}` as StandardNormalDate;
+}
+
+export function convertSufixedLunarDateToStandardLunarDate(date: SufixedLunarDate): StandardLunarDate {
+    return date.replace("AL", "") as StandardLunarDate;
+}
+
+function convertStandardLunarDateToSufixedLunarDate(date: StandardLunarDate): SufixedLunarDate {
+    return date + "AL" as SufixedLunarDate;
+}
 
 const lunarDateYearRangeSupported = [1802, 2198];
 
@@ -79,24 +133,24 @@ function createProperlyDateObject(year: number, monthIndex?: number, day?: numbe
     return dateObj;
 }
 
-export function todayDate(): CompleteNormalDate {
+export function todayDate(): StandardNormalDate {
     const tempDate = new Date();
     const today = new Date(tempDate.getTime() + (tempDate.getTimezoneOffset()*60000) + 3600000*7); // Convert to UTC+7
     const [d, m, y] = [today.getDate(), today.getMonth() + 1, today.getFullYear()];
-    return `${d}/${m}/${y}`;
+    return `${d}/${m}/${y}` as StandardNormalDate;
 }
 
-export function datePlusDay(normalDate: CompleteNormalDate, day: number) {
+export function datePlusDay(normalDate: StandardNormalDate, day: number): StandardNormalDate {
     const [d, m, y] = normalDate.split("/").map(s => parseInt(s));
     const dateObj = createProperlyDateObject(y, m - 1, d);
     const resultDateObj = new Date(
         dateObj.getTime() + day*48*60*60*1000
     );
     const [d2, m2, y2] = [resultDateObj.getDate(), resultDateObj.getMonth() + 1, resultDateObj.getFullYear()];
-    return `${d2}/${m2}/${y2}`;
+    return `${d2}/${m2}/${y2}` as StandardNormalDate;
 }
 
-export function normalDateMinusDay(normalDate: CompleteNormalDate, day: number) {
+export function normalDateMinusDay(normalDate: StandardNormalDate, day: number) {
     const [d, m, y] = normalDate.split("/").map(s => parseInt(s));
     const dateObj = createProperlyDateObject(y, m - 1, d);
     const resultDateObj = new Date(
@@ -106,13 +160,13 @@ export function normalDateMinusDay(normalDate: CompleteNormalDate, day: number) 
     return `${d2}/${m2}/${y2}`;
 }
 
-export function normalDatePlusOneMonth(normalDate: CompleteNormalDate): [normalDate: CompleteNormalDate, numDelayedDays: number] | [null, 0] {
+export function normalDatePlusOneMonth(normalDate: StandardNormalDate): [normalDate: StandardNormalDate, numDelayedDays: number] | [null, 0] {
     const [d, m, y] = normalDate.split("/").map(s => parseInt(s));
 
     let [d2, m2, y2] = m == 12 ? [d, 1, y + 1] : [d, m + 1, y];
     let date = `${d2}/${m2}/${y2}`;
     let count = 0;
-    while (count < 10 && dateValidationMessage(date)) {
+    while (count < 10 && nonLunarDateValidationMessage(date)) {
         count++;
         d2--;
         if (d2 == 0) {
@@ -126,78 +180,114 @@ export function normalDatePlusOneMonth(normalDate: CompleteNormalDate): [normalD
         date = `${d2}/${m2}/${y2}`;
     }
 
-    if (dateValidationMessage(date)) {
+    if (nonLunarDateValidationMessage(date)) {
         return [null, 0];
     }
 
-    return [`${d2}/${m2}/${y2}`, count];
+    return [`${d2}/${m2}/${y2}` as StandardNormalDate, count];
 }
 
-function isInvalidForm(s: string, { isMissingDay = false, isMissingMonth = false, strictYearPadding = true } = {}) {
-    const parts = s.split("/");
+function dateFormatValidationMessage(date: string, { isMissingDay = false, isMissingMonth = false } = {}) {
+    const parts = date.split("/");
     const count = parts.length;
 
+    const invalidMessage = `Không đúng định dạng "${(isMissingDay ? "" : "ngày/") + (isMissingMonth ? "" : "tháng/") + "năm"}"`;
+
     const allPartsAreInt = parts.every(p => isStringPureInterger(p, 1));
-    if (!allPartsAreInt) return false;
-    
-    // Riêng năm thì không được bắt đầu bằng số 0
-    if (strictYearPadding && parts[parts.length - 1].startsWith("0")) {
-        return false;
-    }
+    if (!allPartsAreInt) return invalidMessage;
+
+    if (count > 3) return invalidMessage;
 
     if (isMissingMonth) {
-        return count == 1;
+        return count == 1 ? null : invalidMessage;
     }
 
     if (isMissingDay) {
-        return count == 2;
+        return count == 2 ? null : invalidMessage;
     }
 
-    return count == 3;
+    return count == 3 ? null : invalidMessage;
 }
 
-export function shortenDateString(date: string) {
+function isInvalidForm(date: string, { isMissingDay = false, isMissingMonth = false } = {}) {
+    return !dateFormatValidationMessage(date, { isMissingDay, isMissingMonth });
+}
+
+export function shortenDateString(date: DateStoredDB): DateStoredDB {
+    if (isSufixedLunarDate(date)) {
+        const [day, month, year] = getDayMonthYearFromStandardFormDate(
+            convertSufixedLunarDateToStandardLunarDate(date)
+        );
+        return convertStandardLunarDateToSufixedLunarDate(`${day}/${month}/${year}AL` as StandardLunarDate);
+    }
     if (isInvalidForm(date)) {
         const [day, month, year] = date.split("/").map(s => parseInt(s))
-        return `${day}/${month}/${year}`
+        return `${day}/${month}/${year}` as StandardNormalDate;
     }
     if (isInvalidForm(date, { isMissingDay: true })) {
         const [month, year] = date.split("/").map(s => parseInt(s))
-        return `${month}/${year}`
+        return `${month}/${year}` as MonthAndYearDate;
     }
     if (isInvalidForm(date, { isMissingMonth: true })) {
         const [year] = date.split("/").map(s => parseInt(s))
-        return `${year}`
+        return `${year}` as YearOnlyDate;
     }
     return date;
 }
 
-export function normalDateToLunarDate(nd: CompleteNormalDate) {
-    if (dateValidationMessage(nd)) {
+export function normalDateToLunarDate(nd: StandardNormalDate): StandardLunarDate | null {
+    if (lunarDateValidationMessage(nd)) {
         return null;
     }
 
     const [nday, nmonth, nyear] = nd.split("/").map(s => parseInt(s));
     const { day, month, year } = getLunarDate(nday, nmonth, nyear);
 
-    return `${day}/${month}/${year}`
+    return `${day}/${month}/${year}` as StandardLunarDate;
 }
 
-export function lunarDateToNormalDate(ld: LunarDateInNormalForm, skipCheckingExistsLunarDate = false) {
-    // skipCheckingExistsLunarDate: Tránh gọi đệ quy vô hạn khi gọi dateValidationMessage
+export function lunarDateToNormalDate(date: StandardLunarDate): StandardNormalDate {
+    const stdNormalDate = someValueToNullableNormalDate(date);
+    if (stdNormalDate) return stdNormalDate;
 
-    if (dateValidationMessage(ld, { isLunarDate: true }, skipCheckingExistsLunarDate)) {
+    return `1/1/2000` as StandardNormalDate;
+}
+
+export function sufixedLunarDateToNormalDate(date: SufixedLunarDate): StandardNormalDate {
+    return lunarDateToNormalDate(
+        convertSufixedLunarDateToStandardLunarDate(date)
+    );
+}
+
+function lunarDateFormatValidationMessage(date: string) {
+    const formatMsg = dateFormatValidationMessage(date);
+    if (formatMsg) return formatMsg;
+
+    const [day, month, year] = date.split("/").map(s => parseInt(s));
+    if (day < 1 || 31 < day) return "Ngày phải nằm trong khoảng 1-31";
+    if (month < 1 || 12 < month) return "Tháng phải nằm trong khoảng 1-12";
+    if (year < lunarDateYearRangeSupported[0] || lunarDateYearRangeSupported[1] < year) {
+        return `Chỉ hỗ trợ lịch âm từ năm ${lunarDateYearRangeSupported[0]}-${lunarDateYearRangeSupported[1]}`
+    }
+
+    return null;
+}
+
+function someValueToNullableNormalDate(ld: string) {
+    if (lunarDateFormatValidationMessage(ld)) {
         return null;
     }
 
+    const [lday, lmonth, lyear] = ld.split('/').map(n => parseInt(n));
+
     function timestampCompareLunarDate(timestamp: number) {
-        const date = new Date(timestamp);
-        const lunarDate = normalDateToLunarDate(`${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`)
+        const lunarDate = normalDateToLunarDate(
+            getStandardNormalDate(new Date(timestamp))
+        );
 
         if (!lunarDate) return 1;
 
-        const [lday, lmonth, lyear] = ld.split('/').map(n => parseInt(n))
-        const [lday2, lmonth2, lyear2] = lunarDate.split('/').map(n => parseInt(n))
+        const [lday2, lmonth2, lyear2] = lunarDate.split('/').map(n => parseInt(n));
 
         if (lday == lday2 && lmonth == lmonth2 && lyear == lyear2) return 0;
         
@@ -230,78 +320,69 @@ export function lunarDateToNormalDate(ld: LunarDateInNormalForm, skipCheckingExi
     const timestamp = find(
         createProperlyDateObject(lunarDateYearRangeSupported[0], 0, 1).getTime(),
         createProperlyDateObject(lunarDateYearRangeSupported[1] + 1, 0, 1).getTime()
-    )
+    );
+
     if (!timestamp) {
         return null;
     }
 
-    const date = new Date(timestamp);
-    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+    return getStandardNormalDate(new Date(timestamp));
 }
 
-export function dateValidationMessage(date: string, { isLunarDate = false, isMissingDay = false, isMissingMonth = false } = {}, skipCheckingExistsLunarDate = false) {
-    // skipCheckingExistsLunarDate: Tránh gọi đệ quy vô hạn khi gọi lunarDateToNormalDate
+export function lunarDateValidationMessage(date: unknown): string | null {
+    if (typeof date != "string") return "Không phải chuỗi";
+    const formatMsg = dateFormatValidationMessage(date);
+    if (formatMsg) return formatMsg;
 
-    isMissingMonth = isMissingMonth && (!isLunarDate)
-    isMissingDay = (isMissingDay || isMissingMonth) && (!isLunarDate)
+    return someValueToNullableNormalDate(date)
+        ? null
+        : "Không tồn tại ngày âm này";
+}
 
-    if (!isInvalidForm(date, { isMissingDay, isMissingMonth })) {
-        return `Không đúng định dạng "${(isMissingDay ? "" : "ngày/") + (isMissingMonth ? "" : "tháng/") + "năm"}"`
+export function nonLunarDateValidationMessage(date: unknown, { isMissingDay = false, isMissingMonth = false } = {}) {
+    isMissingDay = isMissingDay || isMissingMonth;
+    
+    if (typeof date != "string") return "Không phải chuỗi";
+    const formatMsg = dateFormatValidationMessage(date, { isMissingDay, isMissingMonth });
+    if (formatMsg) return formatMsg;
+
+    if (isMissingMonth) {
+        // Any years is treated as valid, skip this!
     }
-
-    if (isLunarDate) {
+    else if (isMissingDay) {
+        const [month, year] = date.split("/").map(s => parseInt(s));
+        if (month < 1 || 12 < month) return "Tháng phải nằm trong khoảng 1-12";
+    }
+    else {
         const [day, month, year] = date.split("/").map(s => parseInt(s));
         if (day < 1 || 31 < day) return "Ngày phải nằm trong khoảng 1-31";
         if (month < 1 || 12 < month) return "Tháng phải nằm trong khoảng 1-12";
-        if (year < lunarDateYearRangeSupported[0] || lunarDateYearRangeSupported[1] < year) {
-            return `Chỉ hỗ trợ lịch âm từ năm ${lunarDateYearRangeSupported[0]}-${lunarDateYearRangeSupported[1]}`
-        }
+        if (year < 1) return "Năm phải lớn hơn 0";
 
-        if (!skipCheckingExistsLunarDate) {
-            if (!lunarDateToNormalDate(date, true)) {
-                return "Không tồn tại ngày âm này";
-            }
-        }
-    }
-    else {
-        if (isMissingMonth) {
-            // Any years is treated as valid, skip this!
-        }
-        else if (isMissingDay) {
-            const [month, year] = date.split("/").map(s => parseInt(s));
-            if (month < 1 || 12 < month) return "Tháng phải nằm trong khoảng 1-12";
-        }
-        else {
-            const [day, month, year] = date.split("/").map(s => parseInt(s));
-            if (day < 1 || 31 < day) return "Ngày phải nằm trong khoảng 1-31";
-            if (month < 1 || 12 < month) return "Tháng phải nằm trong khoảng 1-12";
-            if (year < 1) return "Năm phải lớn hơn 0";
-
-            const dateObj = createProperlyDateObject(year, month - 1, day);
-            if (dateObj.getFullYear() != year || dateObj.getMonth() != month - 1 || dateObj.getDate() != day) {
-                return "Không tồn tại ngày này";
-            }
+        const dateObj = createProperlyDateObject(year, month - 1, day);
+        if (dateObj.getFullYear() != year || dateObj.getMonth() != month - 1 || dateObj.getDate() != day) {
+            return "Không tồn tại ngày này";
         }
     }
 
     return null;
 }
 
-export function transformDateString(date: DateFormStoredInDatabase, {
+export function transformDateString(date: DateStoredDB, {
     showLunarDate = true,
     showNormalDate = true
 } = {}) {
-    if (!date.endsWith("AL")) {
-        const lunarDate = normalDateToLunarDate(date);
-        if (!lunarDate) return date;
-
-        if (showLunarDate) {
-            return `${date} (${lunarDate} AL)`
+    if (!isSufixedLunarDate(date)) {
+        if (isStandardNormalDate(date) && showLunarDate) {
+            const lunarDate = normalDateToLunarDate(date);
+            if (!lunarDate) return date;
+            return `${date} (${lunarDate} AL)`;
         }
+
         return date;
     }
 
-    const lunarDate = date.replace("AL", "");
+    const lunarDate = convertSufixedLunarDateToStandardLunarDate(date);
     const normalDate = lunarDateToNormalDate(lunarDate);
 
     if (!showNormalDate) return lunarDate + " AL";
@@ -310,53 +391,57 @@ export function transformDateString(date: DateFormStoredInDatabase, {
     return `${normalDate} (${lunarDate} AL)`;
 }
 
-export function compareTwoDateString(d1: DateFormStoredInDatabase | null, d2: DateFormStoredInDatabase | null, desc = false) {
+export function compareTwoDateString(d1: DateStoredDB | null, d2: DateStoredDB | null, desc = false) {
     // desc: Chỉ sử dụng để quyết định cho trường hợp có date bị null
 
-    function dateInfo(d: string | null) {
+    function dateInfo(d: DateStoredDB | null) {
+        const getInvalidResponse = () => ({
+            isValid: false,
+            day: 0, month: 0, year: 0
+        });
+
         if (!d) {
-            return {
-                isValid: false,
-                day: 0, month: 0, year: 0
-            };
+            return getInvalidResponse();
         }
 
-        const isLunarDate = d.endsWith("AL");
-        if (isLunarDate) {
-            d = d.replace("AL", "");
-        }
-
-        if (!dateValidationMessage(d, { isLunarDate })) {
-            if (isLunarDate) {
-                d = lunarDateToNormalDate(d) as string;
+        if (isSufixedLunarDate(d)) {
+            const normalDate = sufixedLunarDateToNormalDate(d);
+            if (!normalDate) {
+                return getInvalidResponse();
             }
 
-            const [day, month, year] = d.split("/").map(s => parseInt(s));
+            const [day, month, year] = getDayMonthYearFromStandardFormDate(normalDate);
             return {
                 isValid: true,
                 day, month, year
-            }
-        }
-
-        if (!dateValidationMessage(d, { isLunarDate, isMissingDay: true })) {
-            const [month, year] = d.split("/").map(s => parseInt(s));
-            return {
-                isValid: true,
-                day: 0, month, year
             };
         }
 
-        if (!dateValidationMessage(d, { isLunarDate, isMissingMonth: true })) {
-            const [year] = d.split("/").map(s => parseInt(s));
+        const parts = d.split("/").map(i => parseInt(i));
+        
+        if (parts.length == 3) {
             return {
                 isValid: true,
-                day: 0, month: 0, year
+                day: parts[0],
+                month: parts[1],
+                year: parts[2]
+            };
+        }
+
+        if (parts.length == 2) {
+            return {
+                isValid: true,
+                day: 0,
+                month: parts[0],
+                year: parts[1]
             };
         }
 
         return {
-            isValid: false,
-            day: 0, month: 0, year: 0
+            isValid: true,
+            day: 0,
+            month: 0,
+            year: parts[0]
         };
     }
 

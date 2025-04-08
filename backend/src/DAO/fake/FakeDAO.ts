@@ -6,7 +6,7 @@ import type { FieldDef } from "../../model/FieldDef";
 import type { FieldVal } from "../../model/FieldVal";
 import { DEFAUT_ADMIN_PASSWORD, DEFAUT_ADMIN_USERNAME } from "../../controller/auth";
 import { getDefaultThongTinGiaPhaValue, ThongTinGiaPha } from "../../model/ThongTinGiaPha";
-import { nowDate } from "../../utils/DateUtils";
+import { DateStoredDB, nowDate } from "../../utils/DateUtils";
 
 const isWeb = typeof window != "undefined" && typeof document != "undefined";
 
@@ -460,7 +460,7 @@ function getData(): Promise<Dict[]>[] {
                 : random() < 0.5
                 ? [month, year]
                 : [day, month, year]
-              ).join("/")
+              ).join("/") as DateStoredDB
             : null;
     
         const status =
@@ -471,7 +471,7 @@ function getData(): Promise<Dict[]>[] {
             : null;
     
         const deathdate =
-          status == LifeStatus.DEAD
+          (status == LifeStatus.DEAD
             ? random() < 0.1
               ? null
               : random() < 0.3
@@ -480,7 +480,7 @@ function getData(): Promise<Dict[]>[] {
               ? [month, year + randInt(1, 90)].join("/")
               : [day, month, year + randInt(1, 90)].join("/") +
                 (random() > 0.2 ? "AL" : "")
-            : null;
+            : null) as DateStoredDB | null;
     
         const gender = random() < MALE_RATE ? Gender.MALE : Gender.FEMALE;
     

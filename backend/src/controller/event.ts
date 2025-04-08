@@ -1,12 +1,20 @@
 import {
     compareTwoDateString,
     datePlusDay,
-    dateValidationMessage,
+    nonLunarDateValidationMessage,
     lunarDateToNormalDate,
     normalDateToLunarDate,
     todayDate,
     normalDatePlusOneMonth,
-    normalDateMinusDay
+    normalDateMinusDay,
+    StandardNormalDate,
+    DateStoredDB,
+    isStandardNormalDateOrSufixedLunarDate,
+    isStandardNormalDate,
+    sufixedLunarDateToNormalDate,
+    createStandardFormDateFromDayMonthYear,
+    StandardLunarDate,
+    lunarDateValidationMessage
 } from "../utils/DateUtils";
 import { LifeStatus, type Person } from "../model/Person";
 
@@ -93,27 +101,30 @@ export const allEventTypes: { text: string, value: EventType, desc: string, defa
 ];
 
 export type Event = {
-    normalDate: string;
+    normalDate: StandardNormalDate;
     type: EventType;
     personId: string;
     explain?: string;
 };
 
-export function extractEvents(startDate: string, endDate: string, people: Person[], eventTypesString?: string): Event[] {
+export function extractEvents(startDate: StandardNormalDate, endDate: StandardNormalDate, people: Person[], eventTypesString?: string): Event[] {
     const events: Event[] = [];
 
     const isCompleteDate = (date: string) => date.split("/").length == 3;
-    const isInTimeRange = (date: string) => {
+    const isInTimeRange = (date: DateStoredDB) => {
         if (!startDate || !endDate) return false;
         return compareTwoDateString(date, startDate) >= 0 && compareTwoDateString(date, endDate) <= 0;
-    }
+    };
+
     const eventTypes = new Set(eventTypesString ? eventTypesString.split(",") : allEventTypes.map(e => e.value));
     const [sd, sm, sy] = startDate.split("/").map(s => parseInt(s));
     const [ed, em, ey] = endDate.split("/").map(s => parseInt(s));
 
     people.forEach(person => {
-        if (person.birthdate && isCompleteDate(person.birthdate)) {
-            const birthdate = person.birthdate.endsWith("AL") ? lunarDateToNormalDate(person.birthdate.replace("AL", "")) as string : person.birthdate;
+        if (person.birthdate && isStandardNormalDateOrSufixedLunarDate(person.birthdate)) {
+            const birthdate = isStandardNormalDate(person.birthdate)
+                ? person.birthdate
+                : sufixedLunarDateToNormalDate(person.birthdate);
 
             if (isInTimeRange(birthdate)) {
                 events.push({
@@ -129,11 +140,11 @@ export function extractEvents(startDate: string, endDate: string, people: Person
                 // Math.max(sy, y + 1): Tránh sinh nhật và ngày sinh cùng xuất hiện
                 for (let year = Math.max(sy, y + 1); year <= ey; year++) {
                     let explain: string | undefined = undefined;
-                    let date = `${d}/${m}/${year}`;
+                    let date = createStandardFormDateFromDayMonthYear(d, m, year);
 
-                    if (d == 29 && m == 2 && dateValidationMessage(date)) {
+                    if (d == 29 && m == 2 && nonLunarDateValidationMessage(date)) {
                         // Sinh ngày 29/2 nhưng năm đang xét không có ngày này, nên sẽ lùi 1 ngày
-                        date = `28/2/${year}`;
+                        date = createStandardFormDateFromDayMonthYear(28, 2, year);
                         explain = `Sinh nhật bị lùi 1 ngày do năm ${year} không có ngày 29/2`;
                     }
 
@@ -166,8 +177,10 @@ export function extractEvents(startDate: string, endDate: string, people: Person
             //     }
             // }
         }
-        if (person.deathdate && isCompleteDate(person.deathdate)) {
-            const deathdate = person.deathdate.endsWith("AL") ? lunarDateToNormalDate(person.deathdate.replace("AL", "")) as string : person.deathdate;
+        if (person.deathdate && isStandardNormalDateOrSufixedLunarDate(person.deathdate)) {
+            const deathdate = isStandardNormalDate(person.deathdate)
+                ? person.deathdate
+                : sufixedLunarDateToNormalDate(person.deathdate);
 
             if (isInTimeRange(deathdate)) {
                 events.push({
@@ -214,7 +227,7 @@ export function extractEvents(startDate: string, endDate: string, people: Person
 
                         let count = 0; // Số ngày bị lùi, vì có thể có ngày âm không tồn tại ở các năm. Giả dụ 31/4/2000 tồn tại nhưng 31/4/2001 không tồn tại
                         let [tld, tlm, tyear] = [ld, lm ,year];
-                        while (count < 10 && dateValidationMessage(ldate, { isLunarDate: true })) {
+                        while (count < 10 && lunarDateValidationMessage(ldate)) {
                             count++;
                             tld--;
                             if (tld == 0) {
@@ -228,7 +241,7 @@ export function extractEvents(startDate: string, endDate: string, people: Person
                             ldate = `${tld}/${tlm}/${tyear}`;
                         }
 
-                        if (dateValidationMessage(ldate, { isLunarDate: true })) {
+                        if (lunarDateValidationMessage(ldate)) {
                             // Sau nhiều lần thử thì vẫn không được, có thể do nằm ngoài vùng hỗ trợ
                             continue;
                         }
@@ -237,7 +250,7 @@ export function extractEvents(startDate: string, endDate: string, people: Person
                             explain = `Ngày giỗ bị lùi ${count} ngày do năm ${year} không có ngày ${ld}/${lm}`;
                         }
 
-                        const date = lunarDateToNormalDate(ldate);
+                        const date = lunarDateToNormalDate(ldate as StandardLunarDate);
                         if (date && isInTimeRange(date)) {
                             events.push({
                                 type: EventType.DEATHDAY,

@@ -1,3 +1,4 @@
+import { convertSufixedLunarDateToStandardLunarDate, DateStoredDB, isSufixedLunarDate } from "../../backend/src/utils/DateUtils";
 import { DateFormat } from "./components/types";
 import store from "./store";
 
@@ -21,19 +22,20 @@ export function checkIfIsMobile() {
 export function handleDateInputValue([date, type]: [
   date: string,
   type: DateFormat
-]) {
+]): DateStoredDB | null {
   if (date == "") return null;
-  return date + (type == DateFormat.dmyAL ? "AL" : "");
+  date = date + (type == DateFormat.dmyAL ? "AL" : "");
+  return date as DateStoredDB;
 }
 
 export function convertToDateInputValue(
-  s: string | null,
+  s: DateStoredDB | null,
   defaultDateType: DateFormat
 ): [date: string, type: DateFormat] {
   if (!s) return ["", defaultDateType];
 
-  if (s.endsWith("AL")) {
-    return [s.replace("AL", ""), DateFormat.dmyAL];
+  if (isSufixedLunarDate(s)) {
+    return [convertSufixedLunarDateToStandardLunarDate(s), DateFormat.dmyAL];
   }
 
   const numParts = s.split("/").length;
