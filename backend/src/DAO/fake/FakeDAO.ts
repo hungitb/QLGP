@@ -13,7 +13,7 @@ const isWeb = typeof window != "undefined" && typeof document != "undefined";
 const GENERATE_FAKE_DATA =
   process.env.NODE_ENV == "development" &&
   isWeb
-    ? process.env.QLGP_FRONTEND_GEN_FAKE_DATA == "true"
+    ? (process.env.QLGP_FRONTEND_GEN_FAKE_DATA == "true" && process.env.QLGP_USE_BACKEND != "true")
     : process.env.QLGP_BACKEND_FAKE_DB == "true";
 const DELAY = 100;
 
@@ -501,45 +501,45 @@ function getData(): Promise<Dict[]>[] {
           avatarUrl: null,
           createdAt: nowDate()
         });
+      }
     
-        const personMapping: Record<string, Person> = {};
-        fakePeople.forEach((person) => (personMapping[person.id] = person));
-    
-        for (let i = 0; i < Math.round(NUM_PEOPLE ** 2); i++) {
-          const hasRelationship = (p1: Person, p2: Person) => {
-            if (
-              [p1.id, p1.spouseId, p1.fatherId, p1.motherId].some(
-                (id) => id == p2.id
-              ) ||
-              [p2.id, p2.spouseId, p2.fatherId, p2.motherId].some(
-                (id) => id == p1.id
-              )
-            ) {
-              return false;
-            }
+      const personMapping: Record<string, Person> = {};
+      fakePeople.forEach((person) => (personMapping[person.id] = person));
+  
+      for (let i = 0; i < Math.round(NUM_PEOPLE ** 2); i++) {
+        const hasRelationship = (p1: Person, p2: Person) => {
+          if (
+            [p1.id, p1.spouseId, p1.fatherId, p1.motherId].some(
+              (id) => id == p2.id
+            ) ||
+            [p2.id, p2.spouseId, p2.fatherId, p2.motherId].some(
+              (id) => id == p1.id
+            )
+          ) {
             return false;
-          };
-          const [p1, p2] = sample(fakePeople, 2);
-          if (hasRelationship(p1, p2)) continue;
-    
-          if (random() < 0.2) {
-            // 1 người chỉ có 1 vợ 1 chồng, vậy nên nếu cập nhật đôi này thì phải cập nhật tất cả những người liên quan
-            [p1, p2].forEach((p) => {
-              const pSpouse = p.spouseId ? personMapping[p.spouseId] : null;
-              if (pSpouse) pSpouse.spouseId = null;
-            });
-    
-            p1.spouseId = p2.id;
-            p2.spouseId = p1.id;
-    
-            continue;
           }
-    
-          if (p1.gender == Gender.MALE) {
-            p2.fatherId = p1.id;
-          } else {
-            p2.motherId = p1.id;
-          }
+          return false;
+        };
+        const [p1, p2] = sample(fakePeople, 2);
+        if (hasRelationship(p1, p2)) continue;
+  
+        if (random() < 0.2) {
+          // 1 người chỉ có 1 vợ 1 chồng, vậy nên nếu cập nhật đôi này thì phải cập nhật tất cả những người liên quan
+          [p1, p2].forEach((p) => {
+            const pSpouse = p.spouseId ? personMapping[p.spouseId] : null;
+            if (pSpouse) pSpouse.spouseId = null;
+          });
+  
+          p1.spouseId = p2.id;
+          p2.spouseId = p1.id;
+  
+          continue;
+        }
+  
+        if (p1.gender == Gender.MALE) {
+          p2.fatherId = p1.id;
+        } else {
+          p2.motherId = p1.id;
         }
       }
     
