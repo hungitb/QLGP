@@ -104,10 +104,6 @@
                     </span>
                   </template>
                 </template>
-
-                <template v-slot:item.createdAt="{ value }">
-                  {{ userFriendlyDateFormat(value) }}
-                </template>
               </v-data-table>
             </v-card>
           </v-col>
@@ -318,10 +314,6 @@ export default Vue.extend({
         {
           text: "Tình trạng",
           value: "status_deathdate",
-        },
-        {
-          text: "Ngày thêm",
-          value: "createdAt",
         },
       ],
 

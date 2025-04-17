@@ -111,7 +111,6 @@ export default Vue.extend({
       this.errorText = "";
     },
     validate() {
-
       let validationMessage: string | null = null;
       if (this.required && this.content == "") {
         validationMessage = "Không được để trống";
@@ -127,7 +126,7 @@ export default Vue.extend({
             validationMessage = nonLunarDateValidationMessage(this.content);
           } else {
             const x: never = this.dataType;
-            throw Error("Missing DateFormat case")!
+            throw Error("Missing DateFormat case!");
           }
         }
       }

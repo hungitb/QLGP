@@ -1,8 +1,0 @@
-@prefix : http://qlgp#
-
-[rule1: (?x :father ?y) -> (?x :bo ?y)]
-[rule2: (?x :mother ?y) -> (?x :me ?y)]
-[rule3: (?x :father ?y), (?y :father ?z) -> (?x :ongNoi ?z)]
-[rule4: (?x :father ?y), (?y :mother ?z) -> (?x :baNoi ?z)]
-[rule5: (?x :mother ?y), (?y :father ?z) -> (?x :ongNgoai ?z)]
-[rule6: (?x :mother ?y), (?y :mother ?z) -> (?x :baNgoai ?z)]

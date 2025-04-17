@@ -50,6 +50,7 @@
           buttonText
           :buttons="[{ text: 'Lưu', click: applySetting }]"
           maxWidth="600px"
+          xsFullScreen
         >
           <v-row>
             <v-col cols="12">

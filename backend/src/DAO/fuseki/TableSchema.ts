@@ -168,7 +168,7 @@ class BaseTableSchema<Model extends ValidModel> {
         return this.aliasMapping[field];
     }
 
-    protected removeSelfPrefix(s: string) {
+    removeSelfPrefix(s: string) {
         return s.substring(this.urlBase.length);
     }
 
@@ -201,7 +201,7 @@ class BaseTableSchema<Model extends ValidModel> {
 
         return utils.isLiteralType(type)
             ? type == "string"
-                ? `"${escape(value as string)}"@vi`
+                ? `"${escape(value as string)}"`
                 : `"${value}"^^${utils.dataType(type)}`
             : `${this.getSchemaName(type)}:${value}`;
     }
@@ -231,7 +231,23 @@ class BaseTableSchema<Model extends ValidModel> {
         if (!p.startsWith(this.urlBase)) {
             return false;
         }
+
+        const fieldFuseki = this.removeSelfPrefix(p);
+        const field = this.convertFusekiFieldToModelField(fieldFuseki);
+        if (!field) {
+            // Is not a field of model, may be inferenced field
+            return false;
+        }
+
         return true;
+    }
+
+    execPostQuery(query: string) {
+        return Fuseki.execPostQuery(query);
+    }
+
+    execSelectQuery<TFields extends string>(query: string) {
+        return Fuseki.execSelectQuery<TFields>(query);
     }
 }
 
@@ -327,7 +343,7 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
             ]);
         });
 
-        await Fuseki.execPostQuery(`
+        await this.execPostQuery(`
             INSERT DATA {
                 ${utils.tripleQueryRepr(triples)}
             }
@@ -363,7 +379,7 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
     async findByPk(pk: string): Promise<Model | null> {
         await syncSchemas();
 
-        const response = await Fuseki.execSelectQuery<"p" | "o">(`
+        const response = await this.execSelectQuery<"p" | "o">(`
             SELECT ?p ?o
             WHERE {
                 ${this.name}:${pk} ?p ?o
@@ -411,7 +427,7 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
             })
             : [];
 
-        const response = await Fuseki.execSelectQuery<"s">(`
+        const response = await this.execSelectQuery<"s">(`
             SELECT DISTINCT ?s
             WHERE {
                 ?s a :${this.name} .
@@ -447,7 +463,7 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
             });
         });
 
-        await Fuseki.execPostQuery(`
+        await this.execPostQuery(`
             DELETE {
                 ?s ?p ?o
             }
@@ -481,7 +497,7 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
             return [];
         }
 
-        const response = await Fuseki.execSelectQuery<"s" | "p" | "o">(`
+        const response = await this.execSelectQuery<"s" | "p" | "o">(`
             SELECT ?s ?p ?o
             WHERE {
                 ?s ?p ?o
@@ -510,7 +526,7 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
 
         const idsRepr = ids.map(id => `${this.name}:${id}`).join(", ");
 
-        await Fuseki.execPostQuery(`
+        await this.execPostQuery(`
             DELETE {
                 ?s ?p ?o
             }
@@ -581,7 +597,7 @@ export class TableSchemaSingleRow<Model extends ValidModel> extends BaseTableSch
             return;
         }
 
-        const response = await Fuseki.execSelectQuery<"o">(`
+        const response = await this.execSelectQuery<"o">(`
             SELECT ?o
             WHERE {
                 :${this.name} ${this.name}:${this.specKeyMarkExist} ?o
@@ -606,7 +622,7 @@ export class TableSchemaSingleRow<Model extends ValidModel> extends BaseTableSch
             ]);
         });
 
-        await Fuseki.execPostQuery(`
+        await this.execPostQuery(`
             INSERT DATA {
                 :${this.name} ${this.name}:${this.specKeyMarkExist} "true" .
                 ${utils.tripleQueryRepr(triples)}
@@ -619,7 +635,7 @@ export class TableSchemaSingleRow<Model extends ValidModel> extends BaseTableSch
     async get(): Promise<Model> {
         await this.init();
 
-        const response = await Fuseki.execSelectQuery<"p" | "o">(`
+        const response = await this.execSelectQuery<"p" | "o">(`
             SELECT ?p ?o
             WHERE {
                 :${this.name} ?p ?o
@@ -668,7 +684,7 @@ export class TableSchemaSingleRow<Model extends ValidModel> extends BaseTableSch
             ]);
         });
 
-        await Fuseki.execPostQuery(`
+        await this.execPostQuery(`
             DELETE {
                 ?s ?p ?o
             }

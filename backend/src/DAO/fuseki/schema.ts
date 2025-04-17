@@ -101,3 +101,38 @@ export const personDAO = personSchema.getDAO();
 export const userDAO = userSchema.getDAO();
 export const ttgpDASO = ttgpSchema.getDASO();
 
+export const personAdvanceDAO = () => {
+    const isPersonBelongToFamily = async (id: string) => {
+        const result = await personSchema.execSelectQuery(`
+            SELECT ?x where {
+                person:${id} person:thuocGiaPha ?x
+                FILTER (?x = "true")
+            }
+        `);
+
+        return result.results.bindings.length > 0;
+    };
+
+    const isPeopleBelongToFamily = async (ids: string[]) => {
+        const result = await personSchema.execSelectQuery<"x">(`
+            SELECT ?x where {
+                ?x person:thuocGiaPha "true"
+            }
+        `);
+
+        const validIds = new Set(result.results.bindings.map(
+            t => personSchema.removeSelfPrefix(t.x.value)
+        ));
+
+        return ids.reduce((result, id) => {
+            result[id] = validIds.has(id);
+            return result;
+        }, {} as Record<string, boolean>);
+    };
+
+    return {
+        isPersonBelongToFamily,
+        isPeopleBelongToFamily
+    };
+};
+

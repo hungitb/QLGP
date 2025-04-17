@@ -1,0 +1,24 @@
+@prefix : http://qlgp#
+@prefix person: http://qlgp/person#
+@prefix rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+@prefix ttgp: http://qlgp/thongTinGiaPha#
+
+
+### Tuổi tác (functor qlgpDateLessThan được custom từ source code jena fuseki)
+
+# Ngày sinh bé hơn thì lớn tuổi hơn
+[ruleTuoiTac1:
+  (?x person:birthdate ?ngaySinhX), 
+  (?y person:birthdate ?ngaySinhY),
+  qlgpDateLessThan(?ngaySinhX, ?ngaySinhY) 
+  -> 
+  (?x :lonTuoiHon ?y)
+]
+
+# Nếu có rule lớn tuổi hơn do người dùng định nghĩa, và không có rule ngược lại được suy luận thì chấp nhận rule của người dùng
+[ruleTuoiTac2:
+  (?x :userDefined_lonTuoiHon ?y),
+  noValue(?y :lonTuoiHon ?x)
+  ->
+  (?x :lonTuoiHon ?y)
+]

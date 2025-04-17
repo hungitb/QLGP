@@ -1,6 +1,6 @@
 import { v4 as uuid } from "uuid";
 
-import { compareTwoDateString, datePlusDay, DateStoredDB, isSomeValueStandardNormalDate, isSufixedLunarDate, lunarDateToNormalDate, normalDateToLunarDate, nowDate, shortenDateString, sortByStdDate, StandardNormalDate, sufixedLunarDateToNormalDate, todayDate } from "../utils/DateUtils";
+import { compareTwoDateString, datePlusDay, DateInputDB, isSomeValueStandardNormalDate, isSufixedLunarDate, lunarDateToNormalDate, normalDateToLunarDate, nowDate, shortenDateString, sortByStdDate, StandardNormalDate, sufixedLunarDateToNormalDate, todayDate, convertDateStoredDBToDateInputDB, convertDateInputDBToDateStoredDB } from "../utils/DateUtils";
 import { isStringPureInterger } from "../utils/ValidationUtils";
 import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR, Controller, ControllerHandler, applyUserGuards, CanReadGuard, CanWriteGuard, keysModel, SafeOmit } from "./utils";
 import { LifeStatus, Gender, type Person } from "../model/Person";
@@ -135,7 +135,11 @@ export default function getPersonController(personDAO: IDAO<Person>, userDAO: ID
                 if (v1 != v2) {
                     return v1 == LifeStatus.ALIVE ? -1 : 1;
                 }
-                return compareTwoDateString(k1.deathdate, k2.deathdate, sortDesc);
+                return compareTwoDateString(
+                    k1.deathdate,
+                    k2.deathdate,
+                    sortDesc
+                );
             }
         }
 
@@ -384,8 +388,12 @@ export default function getPersonController(personDAO: IDAO<Person>, userDAO: ID
     >(async ({ query: { id } }) => {
         if (!id) return CommonResponse.BAD_REQUEST;
 
-        const person = await personDAO.findByPk(id);
+        const [person, ttgp] = await Promise.all([
+            personDAO.findByPk(id),
+            ttgpDASO.get()
+        ]);
         if (!person) return CommonResponse.BAD_REQUEST;
+        if (ttgp.idToTien == id) return CommonResponse.BAD_REQUEST;
 
         await Promise.all([
             personDAO.update({ fatherId: null }, { where: { fatherId: id } }),
@@ -508,7 +516,7 @@ export default function getPersonController(personDAO: IDAO<Person>, userDAO: ID
             }
         }
 
-        function extractNormalDayMonthYear(date: DateStoredDB): [day: number, month: number, year: number] {
+        function extractNormalDayMonthYear(date: DateInputDB): [day: number, month: number, year: number] {
             if (isSufixedLunarDate(date)) {
                 const temp = sufixedLunarDateToNormalDate(date);
                 if (!temp) return [1, 1, 10e10];
@@ -531,7 +539,9 @@ export default function getPersonController(personDAO: IDAO<Person>, userDAO: ID
             gender[person.gender] += 1;
 
             if (person.birthdate) {
-                const [d, m, y] = extractNormalDayMonthYear(person.birthdate);
+                const [d, m, y] = extractNormalDayMonthYear(
+                    convertDateStoredDBToDateInputDB(person.birthdate)
+                );
                 let age = ny - y;
                 if (nm > m || (nm == m && nd >= d)) {
                     age += 1;
@@ -549,10 +559,10 @@ export default function getPersonController(personDAO: IDAO<Person>, userDAO: ID
 
             if (person.status == LifeStatus.DEAD) {
                 if (person.deathdate) {
-                    const [d, m, y] = extractNormalDayMonthYear(person.deathdate);
+                    const [d, m, y] = extractNormalDayMonthYear(convertDateStoredDBToDateInputDB(person.deathdate));
 
                     if (person.birthdate) {
-                        const [bd, bm, by] = extractNormalDayMonthYear(person.birthdate);
+                        const [bd, bm, by] = extractNormalDayMonthYear(convertDateStoredDBToDateInputDB(person.birthdate));
                         let age = y - by;
                         if (m > bm || (m == bm && d >= bd)) {
                             age += 1;

@@ -1,0 +1,12 @@
+@prefix : http://qlgp#
+@prefix person: http://qlgp/person#
+@prefix rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+@prefix ttgp: http://qlgp/thongTinGiaPha#
+
+### Giới tính
+
+# Người có giới tính Nam thuộc lớp male
+[male: (?x rdf:type :person), (?x person:gender "Nam") -> (?x rdf:type :male)]
+
+# Người có giới tính Nữ thuộc lớp female
+[female: (?x rdf:type :person), (?x person:gender "Nữ") -> (?x rdf:type :female)]

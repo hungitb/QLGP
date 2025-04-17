@@ -28,6 +28,7 @@ public abstract class BuiltinRegistry {
         theRegistry.register(new Print());
         theRegistry.register(new AddOne());
         theRegistry.register(new LessThan());
+        theRegistry.register(new QlgpDateLessThan());
         theRegistry.register(new GreaterThan());
         theRegistry.register(new LE());
         theRegistry.register(new GE());

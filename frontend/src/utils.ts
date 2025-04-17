@@ -1,4 +1,4 @@
-import { convertSufixedLunarDateToStandardLunarDate, DateStoredDB, isSufixedLunarDate } from "../../backend/src/utils/DateUtils";
+import { convertAdvanceSufixedLunarDateToSufixedLunarDate, convertSufixedLunarDateToStandardLunarDate, DateInputDB, DateStoredDB, isAdvanceSufixedLunarDate, isSufixedLunarDate, SufixedLunarDate, sufixedLunarDateToNormalDate } from "../../backend/src/utils/DateUtils";
 import { DateFormat } from "./components/types";
 import store from "./store";
 
@@ -24,7 +24,10 @@ export function handleDateInputValue([date, type]: [
   type: DateFormat
 ]): DateStoredDB | null {
   if (date == "") return null;
-  date = date + (type == DateFormat.dmyAL ? "AL" : "");
+  if (type == DateFormat.dmyAL) {
+    const lunarDate = date + "AL" as SufixedLunarDate;
+    date = lunarDate + sufixedLunarDateToNormalDate(lunarDate);
+  }
   return date as DateStoredDB;
 }
 
@@ -34,8 +37,11 @@ export function convertToDateInputValue(
 ): [date: string, type: DateFormat] {
   if (!s) return ["", defaultDateType];
 
-  if (isSufixedLunarDate(s)) {
-    return [convertSufixedLunarDateToStandardLunarDate(s), DateFormat.dmyAL];
+  if (isAdvanceSufixedLunarDate(s)) {
+    return [
+      convertSufixedLunarDateToStandardLunarDate(convertAdvanceSufixedLunarDateToSufixedLunarDate(s)),
+      DateFormat.dmyAL
+    ];
   }
 
   const numParts = s.split("/").length;

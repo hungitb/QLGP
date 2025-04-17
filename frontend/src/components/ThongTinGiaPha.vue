@@ -59,6 +59,7 @@
       buttonText
       :isLoading="loading"
       :buttons="[{ click: updateThongTinGiaPha, text: 'Lưu' }]"
+      xsFullScreen
     >
       <v-text-field
         v-model="newTenDongHo"

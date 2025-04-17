@@ -1,0 +1,7 @@
+# Build in window and copy
+FROM stain/jena-fuseki:5.1.0
+COPY ./jena/jena-fuseki2/apache-jena-fuseki/target/apache-jena-fuseki-5.1.0.tar.gz fuseki.tar.gz
+RUN tar zxf fuseki.tar.gz && mv apache-jena-fuseki-5.1.0/fuseki-server.jar /jena-fuseki/fuseki-server.jar
+RUN rm fuseki.tar.gz && rm -rf apache-jena-fuseki-5.1.0
+COPY ./config.ttl /fuseki/config.ttl
+COPY ./rules /fuseki/rules

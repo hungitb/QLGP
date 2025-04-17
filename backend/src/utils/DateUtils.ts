@@ -69,27 +69,62 @@ export type StandardFormDate = string & { __typeStandardFormDate__: true };
 export type StandardNormalDate = StandardFormDate & { __typeCompleteNormalDate__: true }; // "12/8/2005", "1/1/2025"
 export type StandardLunarDate = StandardFormDate & { __typeStandardLunarDate__: true }; // "1/4/2004", "30/2/2005"
 export type SufixedLunarDate = string & { __typeSufixedLunarDate__: true }; // "1/4/2004AL", "30/2/2005AL"
-export type DateStoredDB = YearOnlyDate | MonthAndYearDate | StandardNormalDate | SufixedLunarDate;
+export type AdvanceSufixedLunarDate = string & { __typeAdvanceSufixedLunarDate__: true }; // "1/4/2004AL19/5/2004", "30/2/2005AL8/4/2005"
+export type DateInputDB = YearOnlyDate | MonthAndYearDate | StandardNormalDate | SufixedLunarDate;
+export type DateStoredDB = YearOnlyDate | MonthAndYearDate | StandardNormalDate | AdvanceSufixedLunarDate;
 
-export function isSufixedLunarDate(date: DateStoredDB): date is SufixedLunarDate {
+export function convertAdvanceSufixedLunarDateToSufixedLunarDate(date: AdvanceSufixedLunarDate): SufixedLunarDate {
+    return date.split("AL")[0] + "AL" as SufixedLunarDate;
+}
+
+export function convertSufixedLunarDateToAdvanceSufixedLunarDate(date: SufixedLunarDate): AdvanceSufixedLunarDate {
+    console.log(date, date + sufixedLunarDateToNormalDate(date))
+    return date + sufixedLunarDateToNormalDate(date) as AdvanceSufixedLunarDate;
+}
+
+export function convertDateInputDBToDateStoredDB(date: DateInputDB): DateStoredDB;
+export function convertDateInputDBToDateStoredDB(date: DateInputDB | null): DateStoredDB | null;
+export function convertDateInputDBToDateStoredDB(date: DateInputDB | null): DateStoredDB | null {
+    if (!date) return null;
+    if (isSufixedLunarDate(date)) {
+        return convertSufixedLunarDateToAdvanceSufixedLunarDate(date);
+    }
+    return date;
+}
+
+export function convertDateStoredDBToDateInputDB(date: DateStoredDB): DateInputDB;
+export function convertDateStoredDBToDateInputDB(date: DateStoredDB | null): DateInputDB | null;
+export function convertDateStoredDBToDateInputDB(date: DateStoredDB | null): DateInputDB | null {
+    if (!date) return null;
+    if (isAdvanceSufixedLunarDate(date)) {
+        return convertAdvanceSufixedLunarDateToSufixedLunarDate(date);
+    }
+    return date;
+}
+
+export function isAdvanceSufixedLunarDate(date: DateStoredDB): date is AdvanceSufixedLunarDate {
+    return date.includes("AL");
+}
+
+export function isSufixedLunarDate(date: DateInputDB): date is SufixedLunarDate {
     return date.endsWith("AL");
 }
 
-export function isStandardNormalDateOrSufixedLunarDate(date: DateStoredDB): date is SufixedLunarDate | StandardNormalDate {
+export function isStandardNormalDateOrSufixedLunarDate(date: DateInputDB): date is SufixedLunarDate | StandardNormalDate {
     return date.split("/").length == 3;
 }
 
-function isYearOnlyDate(date: DateStoredDB): date is YearOnlyDate {
+function isYearOnlyDate(date: DateInputDB): date is YearOnlyDate {
     if (date.endsWith("AL")) return false;
     return date.split("/").length == 1;
 }
 
-function isMonthAndYearDate(date: DateStoredDB): date is MonthAndYearDate {
+function isMonthAndYearDate(date: DateInputDB): date is MonthAndYearDate {
     if (date.endsWith("AL")) return false;
     return date.split("/").length == 2;
 }
 
-export function isStandardNormalDate(date: DateStoredDB): date is StandardNormalDate {
+export function isStandardNormalDate(date: DateInputDB): date is StandardNormalDate {
     if (date.endsWith("AL")) return false;
     return date.split("/").length == 3;
 }
@@ -214,11 +249,15 @@ function isInvalidForm(date: string, { isMissingDay = false, isMissingMonth = fa
 }
 
 export function shortenDateString(date: DateStoredDB): DateStoredDB {
-    if (isSufixedLunarDate(date)) {
+    if (isAdvanceSufixedLunarDate(date)) {
         const [day, month, year] = getDayMonthYearFromStandardFormDate(
-            convertSufixedLunarDateToStandardLunarDate(date)
+            convertSufixedLunarDateToStandardLunarDate(
+                convertAdvanceSufixedLunarDateToSufixedLunarDate(date)
+            )
         );
-        return convertStandardLunarDateToSufixedLunarDate(`${day}/${month}/${year}AL` as StandardLunarDate);
+        return convertSufixedLunarDateToAdvanceSufixedLunarDate(
+            convertStandardLunarDateToSufixedLunarDate(`${day}/${month}/${year}` as StandardLunarDate)
+        );
     }
     if (isInvalidForm(date)) {
         const [day, month, year] = date.split("/").map(s => parseInt(s))
@@ -236,12 +275,12 @@ export function shortenDateString(date: DateStoredDB): DateStoredDB {
 }
 
 export function normalDateToLunarDate(nd: StandardNormalDate): StandardLunarDate | null {
-    if (lunarDateValidationMessage(nd)) {
-        return null;
-    }
-
     const [nday, nmonth, nyear] = nd.split("/").map(s => parseInt(s));
     const { day, month, year } = getLunarDate(nday, nmonth, nyear);
+
+    if (day < 1 || month < 1 || year < 1 || year < lunarDateYearRangeSupported[0] || lunarDateYearRangeSupported[1] < year) {
+        return null;
+    }
 
     return `${day}/${month}/${year}` as StandardLunarDate;
 }
@@ -331,7 +370,7 @@ function someValueToNullableNormalDate(ld: string) {
 
 export function lunarDateValidationMessage(date: unknown): string | null {
     if (typeof date != "string") return "Không phải chuỗi";
-    const formatMsg = dateFormatValidationMessage(date);
+    const formatMsg = lunarDateFormatValidationMessage(date);
     if (formatMsg) return formatMsg;
 
     return someValueToNullableNormalDate(date)
@@ -372,7 +411,7 @@ export function transformDateString(date: DateStoredDB, {
     showLunarDate = true,
     showNormalDate = true
 } = {}) {
-    if (!isSufixedLunarDate(date)) {
+    if (!isAdvanceSufixedLunarDate(date)) {
         if (isStandardNormalDate(date) && showLunarDate) {
             const lunarDate = normalDateToLunarDate(date);
             if (!lunarDate) return date;
@@ -382,7 +421,9 @@ export function transformDateString(date: DateStoredDB, {
         return date;
     }
 
-    const lunarDate = convertSufixedLunarDateToStandardLunarDate(date);
+    const lunarDate = convertSufixedLunarDateToStandardLunarDate(
+        convertAdvanceSufixedLunarDateToSufixedLunarDate(date)
+    );
     const normalDate = lunarDateToNormalDate(lunarDate);
 
     if (!showNormalDate) return lunarDate + " AL";
@@ -404,8 +445,10 @@ export function compareTwoDateString(d1: DateStoredDB | null, d2: DateStoredDB |
             return getInvalidResponse();
         }
 
-        if (isSufixedLunarDate(d)) {
-            const normalDate = sufixedLunarDateToNormalDate(d);
+        if (isAdvanceSufixedLunarDate(d)) {
+            const normalDate = sufixedLunarDateToNormalDate(
+                convertAdvanceSufixedLunarDateToSufixedLunarDate(d)
+            );
             if (!normalDate) {
                 return getInvalidResponse();
             }

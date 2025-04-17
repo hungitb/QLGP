@@ -9,6 +9,7 @@
     maxWidth="600px"
     :beforeClose="resetForm"
     :isLoading="isLoading"
+    xsFullScreen
   >
     <v-form ref="form">
       <v-row>

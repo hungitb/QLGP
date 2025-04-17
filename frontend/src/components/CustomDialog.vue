@@ -3,6 +3,7 @@
     v-model="dialog"
     :persistent="persistent || isLoading"
     :max-width="maxWidth"
+    :fullscreen="xsFullScreen && $vuetify.breakpoint.xs"
     scrollable
     @click.stop
   >
@@ -120,6 +121,10 @@ export default Vue.extend({
     divider: {
       type: Boolean,
       default: true,
+    },
+    xsFullScreen: {
+      type: Boolean,
+      default: false,
     },
     // Dùng cho setting event, dùng cái list padding hơi lạ nên mình phải có cái này
     noPadding: {

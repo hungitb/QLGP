@@ -478,8 +478,7 @@ function getData(): Promise<Dict[]>[] {
               ? [year + randInt(1, 90)].join("/")
               : random() < 0.5
               ? [month, year + randInt(1, 90)].join("/")
-              : [day, month, year + randInt(1, 90)].join("/") +
-                (random() > 0.2 ? "AL" : "")
+              : [day, month, year + randInt(1, 90)].join("/")
             : null) as DateStoredDB | null;
     
         const gender = random() < MALE_RATE ? Gender.MALE : Gender.FEMALE;

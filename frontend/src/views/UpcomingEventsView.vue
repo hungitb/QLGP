@@ -35,6 +35,7 @@
             buttonText
             maxWidth="500"
             :buttons="[{ text: 'Lưu', click: saveEventSetting }]"
+            xsFullScreen
           >
             <v-list subheader flat three-line>
               <v-subheader class="px-6">Đối tượng sự kiện</v-subheader>
@@ -446,9 +447,12 @@ export default defineComponent({
           ? "all"
           : "specific";
 
-        this.eventTargetPersonIds = eventSetting.personIds
-          ? eventSetting.personIds
-          : [];
+        if (eventSetting.personIds) {
+          const validPersonIds = new Set(this.$store.state.people.map(p => p.id));
+          this.eventTargetPersonIds = eventSetting.personIds.filter(id => validPersonIds.has(id));
+        } else {
+          this.eventTargetPersonIds = [];
+        }
         if (
           !eventSetting.eventTypes &&
           !Array.isArray(eventSetting.eventTypes)

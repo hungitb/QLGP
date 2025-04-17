@@ -8,13 +8,15 @@ import {
     normalDatePlusOneMonth,
     normalDateMinusDay,
     StandardNormalDate,
-    DateStoredDB,
+    DateInputDB,
     isStandardNormalDateOrSufixedLunarDate,
     isStandardNormalDate,
     sufixedLunarDateToNormalDate,
     createStandardFormDateFromDayMonthYear,
     StandardLunarDate,
-    lunarDateValidationMessage
+    lunarDateValidationMessage,
+    convertDateStoredDBToDateInputDB,
+    DateStoredDB
 } from "../utils/DateUtils";
 import { LifeStatus, type Person } from "../model/Person";
 
@@ -121,10 +123,12 @@ export function extractEvents(startDate: StandardNormalDate, endDate: StandardNo
     const [ed, em, ey] = endDate.split("/").map(s => parseInt(s));
 
     people.forEach(person => {
-        if (person.birthdate && isStandardNormalDateOrSufixedLunarDate(person.birthdate)) {
-            const birthdate = isStandardNormalDate(person.birthdate)
-                ? person.birthdate
-                : sufixedLunarDateToNormalDate(person.birthdate);
+        const birthdateDateInput = convertDateStoredDBToDateInputDB(person.birthdate);
+
+        if (birthdateDateInput && isStandardNormalDateOrSufixedLunarDate(birthdateDateInput)) {
+            const birthdate = isStandardNormalDate(birthdateDateInput)
+                ? birthdateDateInput
+                : sufixedLunarDateToNormalDate(birthdateDateInput);
 
             if (isInTimeRange(birthdate)) {
                 events.push({
@@ -177,10 +181,12 @@ export function extractEvents(startDate: StandardNormalDate, endDate: StandardNo
             //     }
             // }
         }
-        if (person.deathdate && isStandardNormalDateOrSufixedLunarDate(person.deathdate)) {
-            const deathdate = isStandardNormalDate(person.deathdate)
-                ? person.deathdate
-                : sufixedLunarDateToNormalDate(person.deathdate);
+
+        const deathdateDateInput = convertDateStoredDBToDateInputDB(person.deathdate);
+        if (deathdateDateInput && isStandardNormalDateOrSufixedLunarDate(deathdateDateInput)) {
+            const deathdate = isStandardNormalDate(deathdateDateInput)
+                ? deathdateDateInput
+                : sufixedLunarDateToNormalDate(deathdateDateInput);
 
             if (isInTimeRange(deathdate)) {
                 events.push({

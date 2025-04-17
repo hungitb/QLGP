@@ -35,13 +35,16 @@ PREFIX tdb2:    <http://jena.apache.org/2016/tdb#>
 
 :model_inf a ja:InfModel ;
     ja:baseModel :tdbGraph ;
-    # ja:reasoner [
-    #    ja:reasonerURL <http://jena.hpl.hp.com/2003/OWLFBRuleReasoner>
-    #] .
+
     
     ja:reasoner [
+        # ja:reasonerURL <http://jena.hpl.hp.com/2003/OWLFBRuleReasoner>; # Can't use rule
+        
         ja:reasonerURL <http://jena.hpl.hp.com/2003/GenericRuleReasoner>;
-        ja:rulesFrom <file:rules.txt>
+        ja:rulesFrom <file:rules/rules1_gioiTinh.txt>;
+        ja:rulesFrom <file:rules/rules2_thuocGiaPha.txt>;
+        ja:rulesFrom <file:rules/rules3_tuoiTac.txt>;
+        ja:rulesFrom <file:rules/rules4_quanHe.txt>;
     ] .
 
 :baseModel a ja:MemoryModel ; .

@@ -1,5 +1,5 @@
 <template>
-  <CustomDialog v-model="dialog" ref="dialog" maxWidth="500px" buttonText>
+  <CustomDialog v-model="dialog" ref="dialog" maxWidth="500px" buttonText xsFullScreen>
     <template v-if="person">
       <v-row>
         <v-col cols="12" sm="3" class="d-flex justify-center">
@@ -49,7 +49,7 @@
                 Sửa thông tin
               </v-btn>
             </v-col>
-            <v-col cols="12" sm="6">
+            <v-col cols="12" sm="6" v-if="$store.state.idToTien != person.id">
               <v-btn block color="red" outlined @click="deletePerson">
                 <v-icon left>mdi-delete</v-icon>
                 Xóa thành viên

@@ -1,12 +1,12 @@
 services:
   fuseki:
-    image: stain/jena-fuseki
+    image: my-fuseki
     container_name: qlgp_fuseki
     ports:
     - 3030:3030
     volumes:
     - ./fuseki/config.ttl:/fuseki/config.ttl
-    - ./fuseki/rules.txt:/fuseki/rules.txt
+    - ./fuseki/rules:/fuseki/rules
     environment:
     - FUSEKI_ARGS=--config /fuseki/config.ttl
     - ADMIN_PASSWORD=1
