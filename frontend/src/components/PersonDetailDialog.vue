@@ -41,7 +41,7 @@
           </div>
         </v-col>
 
-        <v-col cols="12" v-if="editable">
+        <v-col cols="12" v-if="editable && canWrite()">
           <v-row dense>
             <v-col cols="12" sm="6">
               <v-btn block color="primary" outlined @click="editPerson">
@@ -61,13 +61,13 @@
         <v-col cols="12">
           <v-card :loading="isLoadingDetailInfo">
             <v-card-title style="word-break: initial">
-              Người liên quan
+              Danh sách người thân
             </v-card-title>
             <v-card-subtitle
               v-if="!isLoadingDetailInfo && groups.length == 0"
               style="word-break: initial"
             >
-              Không có người thân liên quan
+              Không có thông tin người thân
             </v-card-subtitle>
             <v-list v-else two-line>
               <template v-for="group in groups">
@@ -96,10 +96,73 @@
                 </template>
               </template>
             </v-list>
+            <v-card-actions>
+              <v-btn v-if="personDetailInfo && personDetailInfo.childIds.length > 1 && canWrite() && editable" text color="primary" @click="dialogEditChildOrders = true">
+                <v-icon left>mdi-swap-vertical</v-icon>
+                Sửa thứ tự con
+              </v-btn>
+            </v-card-actions>
           </v-card>
         </v-col>
       </v-row>
     </template>
+
+    <CustomDialog v-model="dialogEditChildOrders" header="Chỉnh sửa thứ tự" maxWidth="400px" buttonText noPadding :isLoading="isSavingNewChildOrders" :buttons="[{
+      text: 'Lưu',
+      click: saveNewChildOrders
+    }]">
+      <v-list two-line>
+        <v-list-item v-for="id, i in newChildOrders" :key="id + '-' + i">
+          <v-list-item-avatar>
+            <CustomPersonAvatar
+              :person="$store.state.personMapping[id]"
+              textSize="5"
+            />
+          </v-list-item-avatar>
+
+          <v-list-item-content>
+            <v-list-item-title>{{
+              $store.state.personMapping[id].callname
+            }}</v-list-item-title>
+            <v-list-item-subtitle>{{
+              $store.state.personMapping[id].gender
+            }}</v-list-item-subtitle>
+          </v-list-item-content>
+
+          <v-list-item-action>
+            <div class="d-flex justify-space-between" style="width: 90px">
+              <v-btn
+                v-if="i != 0"
+                fab
+                dark
+                small
+                color="primary"
+                outlined
+                @click="moveUpChild(i)"
+              >
+                <v-icon dark>
+                  mdi-arrow-up
+                </v-icon>
+              </v-btn>
+              <v-spacer v-if="i == 0 || i == newChildOrders.length - 1"></v-spacer>
+              <v-btn
+                v-if="i != newChildOrders.length - 1"
+                fab
+                dark
+                small
+                color="primary"
+                outlined
+                @click="moveDownChild(i)"
+              >
+                <v-icon dark>
+                  mdi-arrow-down
+                </v-icon>
+              </v-btn>
+            </div>
+          </v-list-item-action>
+        </v-list-item>
+      </v-list>
+    </CustomDialog>
   </CustomDialog>
 </template>
 
@@ -118,12 +181,16 @@ import {
 } from "@/components/utilities";
 import { mapActions } from "vuex";
 import { FETCH_PEOPLE } from "@/store";
+import { permissionMixin } from "@/utils";
+
+type PersonDetailInfo = Awaited<ReturnType<typeof personApi.getPersonDetailInfo>>["data"] extends { msg: string } | { person: infer T } ? T : never;
 
 export default defineComponent({
   components: {
     CustomDialog,
     CustomPersonAvatar,
   },
+  mixins: [permissionMixin],
   props: {
     value: {
       type: Boolean,
@@ -150,7 +217,10 @@ export default defineComponent({
       LifeStatus,
       internalPersonId: this.personId,
       isLoadingDetailInfo: false,
-      groups: [] as { text: string; personIds: string[] }[],
+      personDetailInfo: undefined as PersonDetailInfo | undefined,
+      dialogEditChildOrders: false,
+      newChildOrders: [] as string[],
+      isSavingNewChildOrders: false,
     };
   },
   computed: {
@@ -167,6 +237,51 @@ export default defineComponent({
         (this as any).internalPersonId
       ] as Person | null;
     },
+    groups() {
+      if (!this.personDetailInfo) return [];
+
+      const person = this.personDetailInfo;
+      const groups : { text: string; personIds: string[] }[] = [];
+
+      if (person.fatherId) {
+        groups.push({
+          text: "Bố",
+          personIds: [person.fatherId],
+        });
+      }
+      if (person.motherId) {
+        groups.push({
+          text: "Mẹ",
+          personIds: [person.motherId],
+        });
+      }
+      groups.push({
+        text: "Anh em ruột",
+        personIds: person.personIdsSameBothFatherAndMother,
+      });
+      groups.push({
+        text: "Anh em cùng bố khác mẹ",
+        personIds: person.personIdsOnlySameFather,
+      });
+      groups.push({
+        text: "Anh em cùng mẹ khác bố",
+        personIds: person.personIdsOnlySameMother,
+      });
+      if (person.spouseId) {
+        groups.push({
+          text: "Bạn đời",
+          personIds: [person.spouseId],
+        });
+      }
+      groups.push({
+        text: "Con ruột",
+        personIds: person.childIds,
+      });
+
+      return groups.filter(
+        ({ personIds }) => personIds.length != 0
+      );
+    },
   },
   watch: {
     personId(val) {
@@ -175,18 +290,23 @@ export default defineComponent({
     internalPersonId() {
       this.refresh();
     },
+    dialogEditChildOrders(v) {
+      if (v) {
+        this.newChildOrders = [...this.personDetailInfo!.childIds];
+      }
+    }
   },
   methods: {
     ...mapActions([FETCH_PEOPLE]),
     transformDateString,
     refresh() {
-      this.groups = [];
       (this.$refs.dialog as any).scrollTop();
       this.fetchPersonDetailInfo();
     },
     async fetchPersonDetailInfo() {
       if (!this.internalPersonId) return;
       this.isLoadingDetailInfo = true;
+      this.personDetailInfo = undefined;
       const { data } = await personApi.getPersonDetailInfo({
         id: this.internalPersonId,
       });
@@ -194,47 +314,7 @@ export default defineComponent({
 
       if (!("person" in data)) return;
 
-      const person = data.person;
-      if (!person) return;
-
-      if (person.fatherId) {
-        this.groups.push({
-          text: "Bố",
-          personIds: [person.fatherId],
-        });
-      }
-      if (person.motherId) {
-        this.groups.push({
-          text: "Mẹ",
-          personIds: [person.motherId],
-        });
-      }
-      this.groups.push({
-        text: "Anh em ruột",
-        personIds: person.personIdsSameBothFatherAndMother,
-      });
-      this.groups.push({
-        text: "Anh em cùng bố khác mẹ",
-        personIds: person.personIdsOnlySameFather,
-      });
-      this.groups.push({
-        text: "Anh em cùng mẹ khác bố",
-        personIds: person.personIdsOnlySameMother,
-      });
-      if (person.spouseId) {
-        this.groups.push({
-          text: "Bạn đời",
-          personIds: [person.spouseId],
-        });
-      }
-      this.groups.push({
-        text: "Con ruột",
-        personIds: person.childIds,
-      });
-
-      this.groups = this.groups.filter(
-        ({ personIds }) => personIds.length != 0
-      );
+      this.personDetailInfo = data.person;
     },
     editPerson() {
       if (!this.person) {
@@ -255,7 +335,7 @@ export default defineComponent({
       const person = this.person;
       const onConfirmed = async () => {
         await personApi.deletePerson({ id: person.id }).then(() => {
-          this[FETCH_PEOPLE]();
+          (this as any)[FETCH_PEOPLE]();
         });
         showSnackbar({ msg: `Xóa ${person.callname} thành công` });
         if (this.onPersonDeleted) {
@@ -271,6 +351,25 @@ export default defineComponent({
         confirmText: "Xóa",
         confirmColor: "error",
       });
+    },
+    moveUpChild(childIdex: number) {
+      if (childIdex > 0) {
+        const swapElements = [this.newChildOrders[childIdex - 1], this.newChildOrders[childIdex]];
+        this.newChildOrders.splice(childIdex - 1, 2, swapElements[1], swapElements[0]);
+      }
+    },
+    moveDownChild(childIdex: number) {
+      if (childIdex < this.newChildOrders.length - 1) {
+        const swapElements = [this.newChildOrders[childIdex], this.newChildOrders[childIdex + 1]];
+        this.newChildOrders.splice(childIdex, 2, swapElements[1], swapElements[0]);
+      }
+    },
+    async saveNewChildOrders() {
+      this.isSavingNewChildOrders = true;
+      await personApi.swapYoungnessLevel({ ids: this.newChildOrders });
+      this.isSavingNewChildOrders = false;
+      this.dialogEditChildOrders = false;
+      this.refresh();
     },
   },
   mounted() {

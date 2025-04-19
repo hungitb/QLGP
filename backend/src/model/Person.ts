@@ -10,6 +10,11 @@ export enum LifeStatus {
     DEAD = "Đã mất"
 };
 
+export type PersonAdvanceDAO = {
+    isPersonBelongToFamily(id: string): Promise<boolean>;
+    isPeopleBelongToFamily(ids: string[]): Promise<Record<string, boolean>>;
+};
+
 export type Person = {
     id: string;
     callname: string;
@@ -22,4 +27,5 @@ export type Person = {
     fatherId: string | null;
     motherId: string | null;
     createdAt: StdDate;
+    youngnessLevel: number;
 };

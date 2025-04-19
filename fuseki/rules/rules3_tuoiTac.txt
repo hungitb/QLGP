@@ -4,21 +4,13 @@
 @prefix ttgp: http://qlgp/thongTinGiaPha#
 
 
-### Tuổi tác (functor qlgpDateLessThan được custom từ source code jena fuseki)
+### Tuổi tác
 
-# Ngày sinh bé hơn thì lớn tuổi hơn
+# Sinh trước thì lớn tuổi hơn
 [ruleTuoiTac1:
-  (?x person:birthdate ?ngaySinhX), 
-  (?y person:birthdate ?ngaySinhY),
-  qlgpDateLessThan(?ngaySinhX, ?ngaySinhY) 
-  -> 
-  (?x :lonTuoiHon ?y)
-]
-
-# Nếu có rule lớn tuổi hơn do người dùng định nghĩa, và không có rule ngược lại được suy luận thì chấp nhận rule của người dùng
-[ruleTuoiTac2:
-  (?x :userDefined_lonTuoiHon ?y),
-  noValue(?y :lonTuoiHon ?x)
+  (?x person:youngnessLevel ?doTreChungX),
+  (?y person:youngnessLevel ?doTreChungY),
+  lessThan(?doTreChungX, ?doTreChungY) 
   ->
-  (?x :lonTuoiHon ?y)
+  (?x person:lonTuoiHon ?y)
 ]

@@ -23,7 +23,7 @@ import {
 } from "../../../backend/src/controller/utils";
 import { Event } from "../../../backend/src/controller/event";
 
-const personController = getPersonController(personDAO, userDAO, ttgpDASO);
+const personController = getPersonController(personDAO, userDAO, ttgpDASO, null as any);
 
 export const personApi = wrapApi({
   getAllPeopleBaseInfo: wrapGetApi<
@@ -150,6 +150,21 @@ export const personApi = wrapApi({
     }
 
     return await personController.updateThongTinGiaPha({
+      body: data,
+      query: {},
+      user: await getLoggedInUserLocalStorage(),
+    });
+  }),
+  swapYoungnessLevel: wrapPostApi<
+    typeof personController.swapYoungnessLevel
+  >(async (data) => {
+    if (useBackend) {
+      return await wrapAxiosCall(() =>
+        api.post("/person/swap_youngness_level", data)
+      );
+    }
+
+    return await personController.swapYoungnessLevel({
       body: data,
       query: {},
       user: await getLoggedInUserLocalStorage(),

@@ -1,5 +1,5 @@
 import { User } from "../../model/User";
-import { Person } from "../../model/Person";
+import { Person, PersonAdvanceDAO } from "../../model/Person";
 import { FieldDef } from "../../model/FieldDef";
 import { FieldVal } from "../../model/FieldVal";
 import { TableSchema, TableSchemaSingleRow } from "./TableSchema";
@@ -24,7 +24,7 @@ const userSchema = new TableSchema<User>({
             type: "string"
         },
         sessionExpiry: {
-            type: "int"
+            type: "integer"
         },
         permission: {
             type: "string",
@@ -69,7 +69,8 @@ const personSchema = new TableSchema<Person>({
             type: "__self__",
             alias: "hasMother"
         },
-        createdAt: "date"
+        createdAt: "date",
+        youngnessLevel: "integer"
     }
 });
 
@@ -90,7 +91,7 @@ const ttgpSchema = new TableSchemaSingleRow<ThongTinGiaPha>({
         },
         type: "string",
         soDoiCuaToTien: {
-            type: "int",
+            type: "integer",
             alias: "ancestorStartingNumber"
         }
     },
@@ -101,10 +102,10 @@ export const personDAO = personSchema.getDAO();
 export const userDAO = userSchema.getDAO();
 export const ttgpDASO = ttgpSchema.getDASO();
 
-export const personAdvanceDAO = () => {
+export const personAdvanceDAO: PersonAdvanceDAO = (() => {
     const isPersonBelongToFamily = async (id: string) => {
         const result = await personSchema.execSelectQuery(`
-            SELECT ?x where {
+            SELECT ?x WHERE {
                 person:${id} person:thuocGiaPha ?x
                 FILTER (?x = "true")
             }
@@ -115,7 +116,7 @@ export const personAdvanceDAO = () => {
 
     const isPeopleBelongToFamily = async (ids: string[]) => {
         const result = await personSchema.execSelectQuery<"x">(`
-            SELECT ?x where {
+            SELECT ?x WHERE {
                 ?x person:thuocGiaPha "true"
             }
         `);
@@ -134,5 +135,5 @@ export const personAdvanceDAO = () => {
         isPersonBelongToFamily,
         isPeopleBelongToFamily
     };
-};
+})();
 

@@ -1,11 +1,11 @@
 
 import { Router } from "express";
 
-import { personDAO, ttgpDASO, userDAO } from "../DAO";
+import { personAdvanceDAO, personDAO, ttgpDASO, userDAO } from "../DAO";
 import getPersonController from "../controller/person";
 import { wrapHandlerAdvance } from "./utils";
 const router = Router();
-const personController = getPersonController(personDAO, userDAO, ttgpDASO);
+const personController = getPersonController(personDAO, userDAO, ttgpDASO, personAdvanceDAO);
 
 router.post("", wrapHandlerAdvance(personController.createPerson));
 router.delete("", wrapHandlerAdvance(personController.deletePerson));
@@ -18,5 +18,6 @@ router.get("/analyze_relationship", wrapHandlerAdvance(personController.analyzeR
 // Không dùng GET, vì nếu truy vấn theo person IDs có thể sẽ quá dài
 router.post("/events", wrapHandlerAdvance(personController.getEvents));
 router.post("/thong_tin_gia_pha", wrapHandlerAdvance(personController.updateThongTinGiaPha));
+router.post("/swap_youngness_level", wrapHandlerAdvance(personController.swapYoungnessLevel));
 
 export default router;

@@ -498,7 +498,8 @@ function getData(): Promise<Dict[]>[] {
           fatherId: null,
           motherId: null,
           avatarUrl: null,
-          createdAt: nowDate()
+          createdAt: nowDate(),
+          youngnessLevel: i
         });
       }
     

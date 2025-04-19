@@ -1,6 +1,6 @@
 services:
   fuseki:
-    image: my-fuseki
+    image: stain/jena-fuseki:5.1.0
     container_name: qlgp_fuseki
     ports:
     - 3030:3030

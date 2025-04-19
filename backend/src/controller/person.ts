@@ -3,21 +3,25 @@ import { v4 as uuid } from "uuid";
 import { compareTwoDateString, datePlusDay, DateInputDB, isSomeValueStandardNormalDate, isSufixedLunarDate, lunarDateToNormalDate, normalDateToLunarDate, nowDate, shortenDateString, sortByStdDate, StandardNormalDate, sufixedLunarDateToNormalDate, todayDate, convertDateStoredDBToDateInputDB, convertDateInputDBToDateStoredDB } from "../utils/DateUtils";
 import { isStringPureInterger } from "../utils/ValidationUtils";
 import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR, Controller, ControllerHandler, applyUserGuards, CanReadGuard, CanWriteGuard, keysModel, SafeOmit } from "./utils";
-import { LifeStatus, Gender, type Person } from "../model/Person";
+import { LifeStatus, Gender, type Person, PersonAdvanceDAO } from "../model/Person";
 import type { User } from "../model/User";
 import type { IDAO, IDASO } from "../model/IDAO";
 import { extractEvents, type Event } from "./event";
 import { ThongTinGiaPha } from "../model/ThongTinGiaPha";
 
-export type ExtendedPerson = Person & {
+export type FamilyTreePerson = {
+    id: string,
+    fatherId: string | null,
+    motherId: string | null,
+    spouseId: string | null,
     children: {
-        child: ExtendedPerson;
+        child: FamilyTreePerson;
         spouseId: string | null;
     }[];
 };
 
 export type CreatePersonParams = {
-    person: SafeOmit<Person, "id" | "createdAt">;
+    person: SafeOmit<Person, "id" | "createdAt" | "youngnessLevel">;
     role?: {
         roleName: string;
         roleWithTargetPersonId: string;
@@ -113,7 +117,12 @@ export function filterPeople(people: Person[], search: string, searchFieldsAsStr
     return people;
 }
 
-export default function getPersonController(personDAO: IDAO<Person>, userDAO: IDAO<User>, ttgpDASO: IDASO<ThongTinGiaPha>) {
+export default function getPersonController(
+    personDAO: IDAO<Person>,
+    userDAO: IDAO<User>,
+    ttgpDASO: IDASO<ThongTinGiaPha>,
+    personAdvanceDAO: PersonAdvanceDAO
+) {
     const getAllPeopleBaseInfo = applyUserGuards<
         {},
         PaginateParams,
@@ -199,18 +208,18 @@ export default function getPersonController(personDAO: IDAO<Person>, userDAO: ID
                     personIdsOnlySameFather,
                     personIdsOnlySameMother,
                     personIdsSameBothFatherAndMother,
-                    childIds: children.map(p => p.id)
+                    childIds: children.sort((p1, p2) => p1.youngnessLevel - p2.youngnessLevel).map(p => p.id),
                 }
             },
             status: 200
-        }
+        };
     }, CanReadGuard);
 
     const getFamilyTreeInfo = applyUserGuards<
         {},
         { subjectId?: string, level: string },
         {
-            ancestor: ExtendedPerson,
+            ancestor: FamilyTreePerson,
             subjectId: string,
         }
     >(async ({ query: { subjectId, level } }) => {
@@ -229,22 +238,27 @@ export default function getPersonController(personDAO: IDAO<Person>, userDAO: ID
 
         const people = await personDAO.findAll();
 
-        const mapIdToPerson: Record<string, ExtendedPerson> = {};
+        const mapIdToOriginPerson: Record<string, Person> = {};
+        const mapIdToPerson: Record<string, FamilyTreePerson> = {};
         const childrenIdsOf: Record<string, string[]> = {};
         const fatherIdOf: Record<string, string> = {};
         const motherIdOf: Record<string, string> = {};
         
         people.forEach(person => {
-            mapIdToPerson[person.id] = Object.assign(person, {
-                children: [],
-            });
+            mapIdToOriginPerson[person.id] = person;
+            mapIdToPerson[person.id] = {
+                id: person.id,
+                fatherId: person.fatherId,
+                motherId: person.motherId,
+                spouseId: person.spouseId,
+                children: []
+            };
             childrenIdsOf[person.id] = [];
         });
 
-        const getPersonById = (id: string) => {
+        const getPersonById = (id: string): FamilyTreePerson => {
             const person = mapIdToPerson[id];
-            // Make copy
-            return Object.assign({}, person, { children: [] }) as ExtendedPerson;
+            return Object.assign({}, person, { children: [] });
         }
 
         people.forEach(person => {
@@ -278,14 +292,11 @@ export default function getPersonController(personDAO: IDAO<Person>, userDAO: ID
         }
 
         // Travelsal and update children of person
-        function travesal(person: ExtendedPerson, path?: Set<string>) {
+        function travesal(person: FamilyTreePerson, path?: Set<string>) {
             if (!path) path = new Set([person.id]);
             else path.add(person.id);
 
-            if (person.gender == Gender.MALE || levelInt > 2) {
-                if (!childrenIdsOf[person.id]) {
-                    console.log(childrenIdsOf, person, person.id, childrenIdsOf);
-                }
+            if (mapIdToOriginPerson[person.id].gender == Gender.MALE || levelInt > 2) {
                 childrenIdsOf[person.id].forEach(childId => {
                     if (!path) {
                         return; // By pass typescript error
@@ -328,9 +339,11 @@ export default function getPersonController(personDAO: IDAO<Person>, userDAO: ID
         const newPerson: Person = {
             ...data.person,
             id: uuid(),
+            callname: data.person.callname.trim(),
             birthdate: data.person.birthdate ? shortenDateString(data.person.birthdate) : null,
             deathdate: data.person.deathdate ? shortenDateString(data.person.deathdate) : null,
-            createdAt: nowDate()
+            createdAt: nowDate(),
+            youngnessLevel: Math.round((new Date()).getTime())
         };
         await personDAO.create(newPerson);
 
@@ -673,6 +686,40 @@ export default function getPersonController(personDAO: IDAO<Person>, userDAO: ID
         };
     }, CanWriteGuard);
 
+    const swapYoungnessLevel = applyUserGuards<
+        { ids: string[] },
+        {}
+    >(async ({ body: { ids } }) => {
+        if (!Array.isArray(ids)) {
+            return CommonResponse.BAD_REQUEST;
+        }
+
+        for (const id of ids) {
+            if (typeof id != "string" || id.trim() == "") {
+                return CommonResponse.BAD_REQUEST;
+            }
+        }
+
+        const people = await Promise.all(
+            ids.map(id => personDAO.findByPk(id))
+        );
+
+        if (people.some(person => !person)) return CommonResponse.BAD_REQUEST;
+
+        const youngnessLevels = people.map(p => p!.youngnessLevel).sort((a, b) => a - b);
+        await Promise.all(
+            people.map((person, index) => personDAO.update({
+                youngnessLevel: youngnessLevels[index] },
+                { where: { id: person!.id }
+            }))
+        );
+
+        return {
+            data: {},
+            status: 200
+        };
+    });
+
     return {
         getAllPeopleBaseInfo,
         getPersonDetailInfo,
@@ -683,6 +730,7 @@ export default function getPersonController(personDAO: IDAO<Person>, userDAO: ID
         statistic,
         analyzeRelationship,
         getEvents,
-        updateThongTinGiaPha
+        updateThongTinGiaPha,
+        swapYoungnessLevel
     };
 }

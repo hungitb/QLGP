@@ -1,6 +1,6 @@
 <template>
   <div :style="isLoading ? { height: 'calc(100vh - 300px)' } : {}">
-    <FullViewLoading :floating="false" v-if="isLoading" />
+    <FullViewLoading noFloating v-if="isLoading" />
     <v-row v-else>
       <v-col>
         <v-row style="min-height: 300px">

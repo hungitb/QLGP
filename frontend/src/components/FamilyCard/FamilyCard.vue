@@ -10,7 +10,7 @@
   >
     <div class="parent">
       <PersonCard
-        :person="person"
+        :person="$store.state.personMapping[person.id]"
         :config="config"
         :ref="mappingPersonIdToRef[person.id]"
         :viewer="viewer"
@@ -71,7 +71,7 @@
 import Vue, { nextTick } from "vue";
 import $ from "jquery";
 
-import { type ExtendedPerson } from "../../../../backend/src/controller/person";
+import { type FamilyTreePerson } from "../../../../backend/src/controller/person";
 import PersonCard from "./PersonCard.vue";
 import { Gender } from "../../../../backend/src/model/Person";
 import { type FamilyCardConfig } from "../types";
@@ -96,7 +96,7 @@ export default Vue.extend({
   },
   props: {
     person: {
-      type: Object as () => ExtendedPerson,
+      type: Object as () => FamilyTreePerson,
       required: true,
     },
     config: {
@@ -119,14 +119,14 @@ export default Vue.extend({
       Gender,
       sffrmfsi: sufixForRefMappingForSpouseId,
       drawSpouse:
-        (this.config.level == 2 && this.person.gender == Gender.MALE) ||
+        (this.config.level == 2 && this.$store.state.personMapping[this.person.id].gender == Gender.MALE) ||
         this.config.level >= 3,
-      allChildren: [] as ExtendedPerson[],
-      childrenNotKnowSpouse: [] as ExtendedPerson[],
-      childrenHasSpouseSameCurrSpouse: [] as ExtendedPerson[],
+      allChildren: [] as FamilyTreePerson[],
+      childrenNotKnowSpouse: [] as FamilyTreePerson[],
+      childrenHasSpouseSameCurrSpouse: [] as FamilyTreePerson[],
       groupChildrenHasSpouseDiffFromSpouse: {} as Record<
         string,
-        ExtendedPerson[]
+        FamilyTreePerson[]
       >,
       mappingPersonIdToRef: {} as Record<string, string>,
       mappingChildIdToDistanceBetweenChildCardWithHorizentalLineAbove:
@@ -243,7 +243,7 @@ export default Vue.extend({
       ][] = [];
 
       const drawConnectLinesBetweenChildrenWithAbove = (
-        children: ExtendedPerson[],
+        children: FamilyTreePerson[],
         x: number,
         y: number
       ) => {
@@ -492,12 +492,12 @@ export default Vue.extend({
         string,
         number
       > = {};
-      const allChildren: ExtendedPerson[] = [];
-      const childrenNotKnowSpouse: ExtendedPerson[] = [];
-      const childrenHasSpouseSameCurrSpouse: ExtendedPerson[] = [];
+      const allChildren: FamilyTreePerson[] = [];
+      const childrenNotKnowSpouse: FamilyTreePerson[] = [];
+      const childrenHasSpouseSameCurrSpouse: FamilyTreePerson[] = [];
       const groupChildrenHasSpouseDiffFromSpouse: Record<
         string,
-        ExtendedPerson[]
+        FamilyTreePerson[]
       > = {};
 
       mappingPersonIdToRef[this.person.id] = getUniqueID();

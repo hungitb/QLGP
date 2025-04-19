@@ -113,7 +113,6 @@
 import Vue from "vue";
 
 import PersonCardButton from "./PersonCardButton.vue";
-import { type ExtendedPerson } from "../../../../backend/src/controller/person";
 import {
   Gender,
   LifeStatus,
@@ -136,7 +135,7 @@ export default Vue.extend({
   mixins: [permissionMixin],
   props: {
     person: {
-      type: Object as () => ExtendedPerson | Person,
+      type: Object as () => Person,
       required: true,
     },
     config: {

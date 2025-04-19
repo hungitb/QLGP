@@ -18,36 +18,36 @@
 ]
 
 [ruleQuanHe1:
-  (?x :hasFather ?z),
-  (?y :hasFather ?z),
-  (?x :lonTuoiHon ?y),
+  (?x person:hasFather ?z),
+  (?y person:hasFather ?z),
+  (?x person:lonTuoiHon ?y),
   (?x :gender "Nam"),
   ->
   (?x :qh_anh ?y)
 ]
 
 [ruleQuanHe2:
-  (?x :hasFather ?z),
-  (?y :hasFather ?z),
-  (?x :lonTuoiHon ?y),
+  (?x person:hasFather ?z),
+  (?y person:hasFather ?z),
+  (?x person:lonTuoiHon ?y),
   (?x :gender "Nữ"),
   ->
   (?x :qh_chi ?y)
 ]
 
 [ruleQuanHe3:
-  (?x :hasMother ?z),
-  (?y :hasMother ?z),
-  (?x :lonTuoiHon ?y),
+  (?x person:hasMother ?z),
+  (?y person:hasMother ?z),
+  (?x person:lonTuoiHon ?y),
   (?x :gender "Nam"),
   ->
   (?x :qh_anh ?y)
 ]
 
 [ruleQuanHe4:
-  (?x :hasMother ?z),
-  (?y :hasMother ?z),
-  (?x :lonTuoiHon ?y),
+  (?x person:hasMother ?z),
+  (?y person:hasMother ?z),
+  (?x person:lonTuoiHon ?y),
   (?x :gender "Nữ"),
   ->
   (?x :qh_chi ?y)

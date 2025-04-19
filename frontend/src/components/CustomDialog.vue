@@ -15,6 +15,10 @@
         </span>
       </v-card-title>
       <v-divider v-if="divider && (header || $slots.header)"></v-divider>
+      <v-progress-linear
+        v-if="isLoading"
+        indeterminate
+      ></v-progress-linear>
       <v-card-text
         :class="noPadding ? 'pa-0' : ''"
         ref="cardText"
@@ -53,18 +57,12 @@
 
       <div
         v-if="isLoading"
-        class="d-flex align-center justify-center"
         style="
           position: absolute;
           inset: 0;
-          background-color: rgba(0, 0, 0, 0.1);
+          background-color: rgba(248, 248, 248, 0.56);
         "
-      >
-        <v-progress-circular
-          indeterminate
-          color="primary"
-        ></v-progress-circular>
-      </div>
+      ></div>
     </v-card>
   </v-dialog>
 </template>

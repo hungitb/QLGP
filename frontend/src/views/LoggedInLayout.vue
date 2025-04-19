@@ -118,7 +118,7 @@
       </v-bottom-navigation>
     </template>
 
-    <FullViewLoading :tbb="true" v-if="isLoading"></FullViewLoading>
+    <FullViewLoading applyOpacity v-if="isLoading"></FullViewLoading>
     <FullViewLoading v-if="isLoadingUser"></FullViewLoading>
 
     <!-- Import Utilities so that it is useable -->

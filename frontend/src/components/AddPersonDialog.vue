@@ -22,7 +22,7 @@
         </v-col>
         <v-col cols="12" class="pt-5">
           <v-text-field
-            label="Tên gọi *"
+            label="Họ tên (Bắt buộc)"
             outlined
             v-model="callname"
             :rules="callnameRules"
@@ -97,8 +97,6 @@
         </v-col>
       </v-row>
     </v-form>
-
-    <small>* Không được để trống</small>
   </CustomDialog>
 </template>
 
@@ -297,8 +295,11 @@ export default defineComponent({
     async save() {
       const valid = (this.$refs?.form as any)?.validate?.();
       if (!valid) {
-        if (this.callname == "") {
-          showSnackbar({ msg: "Không được để trống Tên gọi" });
+        if (this.callname.trim() == "") {
+          showSnackbar({
+            msg: "Không được để trống Họ tên",
+            type: "error"
+          });
         }
         return;
       }
