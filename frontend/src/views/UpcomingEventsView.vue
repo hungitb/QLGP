@@ -36,6 +36,7 @@
             maxWidth="500"
             :buttons="[{ text: 'Lưu', click: saveEventSetting }]"
             xsFullScreen
+            persistent
           >
             <v-list subheader flat three-line>
               <v-subheader class="px-6">Đối tượng sự kiện</v-subheader>
@@ -48,8 +49,8 @@
                   <v-list-item-content>
                     <v-list-item-title>Tất cả mọi người</v-list-item-title>
                     <v-list-item-subtitle>
-                      Tất cả mọi người trong danh sách thành viên sẽ
-                      xuất hiện trong sự kiện sắp tới
+                      Tất cả mọi người trong danh sách thành viên sẽ xuất hiện
+                      trong sự kiện sắp tới
                     </v-list-item-subtitle>
                   </v-list-item-content>
                 </v-list-item>
@@ -161,10 +162,9 @@
         >
           <div class="text-h6">Không có sự kiện nào trong tháng này!</div>
           <div>
-            Có thể cập nhật ngày sinh, ngày mất cho các thành viên để
-            xem được thông tin về các sự kiện liên quan đến họ. Bạn cũng có thể
-            tùy chỉnh những người bạn muốn xem thông tin về sự kiện trong phần
-            cài đặt.
+            Có thể cập nhật ngày sinh, ngày mất cho các thành viên để xem được
+            thông tin về các sự kiện liên quan đến họ. Bạn cũng có thể tùy chỉnh
+            những người bạn muốn xem thông tin về sự kiện trong phần cài đặt.
           </div>
         </v-alert>
         <v-list three-line>
@@ -295,9 +295,10 @@ export default defineComponent({
       const eventSetting = getEventSettingFromLocalStorage();
       const { data } = await personApi.getEvents({
         startDate: createStandardFormDateFromDayMonthYear(1, month, year),
-        endDate: month == 12
-          ? createStandardFormDateFromDayMonthYear(1, 1, year + 1)
-          : createStandardFormDateFromDayMonthYear(1, month + 1, year),
+        endDate:
+          month == 12
+            ? createStandardFormDateFromDayMonthYear(1, 1, year + 1)
+            : createStandardFormDateFromDayMonthYear(1, month + 1, year),
         allPeople: eventSetting.allPeople,
         personIds: eventSetting.personIds?.join(","),
         eventTypes: eventSetting.eventTypes?.join(","),
@@ -356,15 +357,14 @@ export default defineComponent({
           const person = this.$store.state.personMapping[personId] as Person;
           var originalDateExplain: string;
           if (type == EventType.BIRTHDAY) {
-            const birthdateText = person.birthdate ? transformDateString(
-              person.birthdate,
-              { showLunarDate: false }
-            ) : "NaN";
+            const birthdateText = person.birthdate
+              ? transformDateString(person.birthdate, { showLunarDate: false })
+              : "NaN";
             originalDateExplain = `Sinh ngày ${birthdateText}`;
           } else if (type == EventType.DEATHDAY) {
-            const deathdateText = person.deathdate ? transformDateString(
-              person.deathdate
-            ) : "NaN";
+            const deathdateText = person.deathdate
+              ? transformDateString(person.deathdate)
+              : "NaN";
             originalDateExplain = `Mất ngày ${deathdateText}`;
           } else {
             originalDateExplain = "";
@@ -448,8 +448,12 @@ export default defineComponent({
           : "specific";
 
         if (eventSetting.personIds) {
-          const validPersonIds = new Set(this.$store.state.people.map(p => p.id));
-          this.eventTargetPersonIds = eventSetting.personIds.filter(id => validPersonIds.has(id));
+          const validPersonIds = new Set(
+            this.$store.state.people.map((p) => p.id)
+          );
+          this.eventTargetPersonIds = eventSetting.personIds.filter((id) =>
+            validPersonIds.has(id)
+          );
         } else {
           this.eventTargetPersonIds = [];
         }

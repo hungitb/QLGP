@@ -1,6 +1,10 @@
 <template>
   <div class="d-flex align-center justify-center" :style="coatingStyle">
-    <v-progress-circular v-if="noFloating" indeterminate color="primary"></v-progress-circular>
+    <v-progress-circular
+      v-if="noFloating"
+      indeterminate
+      color="primary"
+    ></v-progress-circular>
     <div v-else>
       <v-img
         :src="require('@/assets/logo.png')"
@@ -41,7 +45,9 @@ export default defineComponent({
         right: 0,
         bottom: 0,
         zIndex: 10,
-        backgroundColor: (this as any).applyOpacity ? "rgba(0, 0, 0, 0.4)" : "white",
+        backgroundColor: (this as any).applyOpacity
+          ? "rgba(0, 0, 0, 0.4)"
+          : "white",
       };
     },
   },

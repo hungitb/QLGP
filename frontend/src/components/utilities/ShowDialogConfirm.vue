@@ -34,13 +34,6 @@ export default defineComponent({
       props: { header: "" } as Record<string, any>,
     };
   },
-  watch: {
-    show(val) {
-      if (!val) {
-        this.props = { header: "" };
-      }
-    },
-  },
   methods: {
     showDialogConfirm({
       notAwaitOnConfirmed,

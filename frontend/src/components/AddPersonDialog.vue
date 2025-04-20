@@ -10,6 +10,7 @@
     :beforeClose="resetForm"
     :isLoading="isLoading"
     xsFullScreen
+    persistent
   >
     <v-form ref="form">
       <v-row>
@@ -127,6 +128,7 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    // Person và initData không bao giờ đi cùng nhau. Nghĩa là 1 trong 2 phải không có giá trị
     initData: {
       type: Object as () => Partial<Person>,
       default: () => ({}),
@@ -287,6 +289,40 @@ export default defineComponent({
       this.motherId = this.isConstant("motherId") ? initData.motherId : null;
       this.spouseId = this.isConstant("spouseId") ? initData.spouseId : null;
 
+      if (this.role) {
+        const targetPerson =
+          this.$store.state.personMapping[this.role.roleWithTargetPersonId];
+
+        // Gợi ý
+        if (this.role.roleName == "father") {
+          if (!this.isConstant("spouseId")) {
+            this.spouseId = targetPerson.motherId;
+          }
+        } else if (this.role.roleName == "mother") {
+          if (!this.isConstant("spouseId")) {
+            this.spouseId = targetPerson.fatherId;
+          }
+        } else if (this.role.roleName == "spouse") {
+          // Pass
+        } else if (this.role.roleName == "child") {
+          if (
+            targetPerson.spouseId &&
+            this.$store.state.personMapping[targetPerson.spouseId].gender !=
+              targetPerson.gender
+          ) {
+            if (targetPerson.gender == Gender.MALE) {
+              if (!this.isConstant("motherId")) {
+                this.motherId = targetPerson.spouseId;
+              }
+            } else if (targetPerson.gender == Gender.FEMALE) {
+              if (!this.isConstant("fatherId")) {
+                this.fatherId = targetPerson.spouseId;
+              }
+            }
+          }
+        }
+      }
+
       (this.$refs.form as any)?.resetValidation?.();
     },
     isConstant(field: keyof Person) {
@@ -294,13 +330,11 @@ export default defineComponent({
     },
     async save() {
       const valid = (this.$refs?.form as any)?.validate?.();
-      if (!valid) {
-        if (this.callname.trim() == "") {
-          showSnackbar({
-            msg: "Không được để trống Họ tên",
-            type: "error"
-          });
-        }
+      if (!valid || this.callname.trim() == "") {
+        showSnackbar({
+          msg: "Không được để trống Họ tên",
+          type: "error",
+        });
         return;
       }
 

@@ -45,7 +45,10 @@ import Vue from "vue";
 import type { PropType } from "vue";
 
 import { DateFormat } from "../types";
-import { lunarDateValidationMessage, nonLunarDateValidationMessage } from "../../../../backend/src/utils/DateUtils";
+import {
+  lunarDateValidationMessage,
+  nonLunarDateValidationMessage,
+} from "../../../../backend/src/utils/DateUtils";
 import { SafeExclude } from "../../../../backend/src/controller/utils";
 
 export default Vue.extend({
@@ -119,9 +122,13 @@ export default Vue.extend({
           if (this.dataType == DateFormat.dmyAL) {
             validationMessage = lunarDateValidationMessage(this.content);
           } else if (this.dataType == DateFormat.y) {
-            validationMessage = nonLunarDateValidationMessage(this.content, { isMissingMonth: true });
+            validationMessage = nonLunarDateValidationMessage(this.content, {
+              isMissingMonth: true,
+            });
           } else if (this.dataType == DateFormat.my) {
-            validationMessage = nonLunarDateValidationMessage(this.content, { isMissingDay: true });
+            validationMessage = nonLunarDateValidationMessage(this.content, {
+              isMissingDay: true,
+            });
           } else if (this.dataType == DateFormat.dmy) {
             validationMessage = nonLunarDateValidationMessage(this.content);
           } else {

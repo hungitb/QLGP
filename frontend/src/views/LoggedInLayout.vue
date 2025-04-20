@@ -37,6 +37,7 @@
           header="Đổi mật khẩu"
           maxWidth="480"
           buttonText
+          persistent
           :buttons="[
             {
               text: 'Đổi mật khẩu',
@@ -82,9 +83,13 @@
               outlined
               :rules="[checkConfirmPassword]"
               validate-on-blur
-              :type="changePasswordForm.showConfirmPassword ? 'text' : 'password'"
+              :type="
+                changePasswordForm.showConfirmPassword ? 'text' : 'password'
+              "
               :append-icon="
-                changePasswordForm.showConfirmPassword ? 'mdi-eye' : 'mdi-eye-off'
+                changePasswordForm.showConfirmPassword
+                  ? 'mdi-eye'
+                  : 'mdi-eye-off'
               "
               @click:append="
                 changePasswordForm.showConfirmPassword =

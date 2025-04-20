@@ -8,17 +8,14 @@
     @click.stop
   >
     <v-card style="position: relative">
-      <v-card-title v-if="header || $slots.header">
+      <v-card-title v-if="useHeader">
         <!-- Mặc định do vuetify set word-break=break-all làm cho chữ bị gãy khi xuống dòng nên pahri set lại -->
         <span class="text-h5" style="word-break: initial">
           <slot name="header">{{ header }}</slot>
         </span>
       </v-card-title>
-      <v-divider v-if="divider && (header || $slots.header)"></v-divider>
-      <v-progress-linear
-        v-if="isLoading"
-        indeterminate
-      ></v-progress-linear>
+      <v-divider v-if="!noDivider && useHeader"></v-divider>
+      <v-progress-linear v-if="isLoading" indeterminate></v-progress-linear>
       <v-card-text
         :class="noPadding ? 'pa-0' : ''"
         ref="cardText"
@@ -28,14 +25,13 @@
           <slot></slot>
         </div>
       </v-card-text>
-      <v-divider v-if="divider"></v-divider>
+      <v-divider v-if="!noDivider"></v-divider>
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn
           :text="buttonText || undefined"
           color="blue"
           @click.stop="dialog = false"
-          v-if="buttonSide == 'right'"
           >Đóng</v-btn
         >
         <v-btn
@@ -45,13 +41,6 @@
           :color="color || 'blue'"
           @click.stop="click"
           >{{ text }}</v-btn
-        >
-        <v-btn
-          :text="buttonText || undefined"
-          color="blue"
-          @click.stop="dialog = false"
-          v-if="buttonSide != 'right'"
-          >Đóng</v-btn
         >
       </v-card-actions>
 
@@ -84,7 +73,7 @@ export default Vue.extend({
     },
     persistent: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     buttons: {
       type: Array as () => CustomDialogButtonProp[],
@@ -94,10 +83,6 @@ export default Vue.extend({
     buttonText: {
       type: Boolean,
       default: false,
-    },
-    buttonSide: {
-      type: String as () => "left" | "right",
-      default: "right",
     },
     maxWidth: {
       type: String,
@@ -116,9 +101,9 @@ export default Vue.extend({
       type: Boolean,
       default: false,
     },
-    divider: {
+    noDivider: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     xsFullScreen: {
       type: Boolean,
@@ -153,6 +138,9 @@ export default Vue.extend({
         ...(this.bodyMaxHeight ? { maxHeight: this.bodyMaxHeight } : {}),
         ...(this.bodyHeight ? { height: this.bodyHeight } : {}),
       };
+    },
+    useHeader() {
+      return !!(this.header || this.$slots.header);
     },
   },
   watch: {

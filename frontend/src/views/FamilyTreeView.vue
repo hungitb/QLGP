@@ -1,10 +1,22 @@
 <template>
   <div id="family-tree" class="d-flex justify-center align-center">
-    <div v-if="!$store.state.idToTien && !subjectId" class="px-4" style="max-width: 400px">
-      <div class="text-h4 text-center">Hiện chưa có tổ tiên để xem cây gia phả</div>
+    <div
+      v-if="!$store.state.idToTien && !subjectId"
+      class="px-4"
+      style="max-width: 400px"
+    >
+      <div class="text-h4 text-center">
+        Hiện chưa có tổ tiên để xem cây gia phả
+      </div>
       <div class="mt-8 px-8">
-        <div class="grey--text mb-2 text-center">Chọn một thành viên bất kỳ thay thế để xem cây gia phả của họ</div>
-        <PersonInputGroup v-model="subjectId" one label="Chủ thể"></PersonInputGroup>
+        <div class="grey--text mb-2 text-center">
+          Chọn một thành viên bất kỳ thay thế để xem cây gia phả của họ
+        </div>
+        <PersonInputGroup
+          v-model="subjectId"
+          one
+          label="Chủ thể"
+        ></PersonInputGroup>
       </div>
     </div>
     <template v-else-if="ancestor && !$store.state.isLoadingPeople">
@@ -51,6 +63,7 @@
           :buttons="[{ text: 'Lưu', click: applySetting }]"
           maxWidth="600px"
           xsFullScreen
+          persistent
         >
           <v-row>
             <v-col cols="12">

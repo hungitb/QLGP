@@ -1,5 +1,11 @@
 <template>
-  <CustomDialog v-model="dialog" ref="dialog" maxWidth="500px" buttonText xsFullScreen>
+  <CustomDialog
+    v-model="dialog"
+    ref="dialog"
+    maxWidth="500px"
+    buttonText
+    xsFullScreen
+  >
     <template v-if="person">
       <v-row>
         <v-col cols="12" sm="3" class="d-flex justify-center">
@@ -97,7 +103,17 @@
               </template>
             </v-list>
             <v-card-actions>
-              <v-btn v-if="personDetailInfo && personDetailInfo.childIds.length > 1 && canWrite() && editable" text color="primary" @click="dialogEditChildOrders = true">
+              <v-btn
+                v-if="
+                  personDetailInfo &&
+                  personDetailInfo.childIds.length > 1 &&
+                  canWrite() &&
+                  editable
+                "
+                text
+                color="primary"
+                @click="dialogEditChildOrders = true"
+              >
                 <v-icon left>mdi-swap-vertical</v-icon>
                 Sửa thứ tự con
               </v-btn>
@@ -107,12 +123,23 @@
       </v-row>
     </template>
 
-    <CustomDialog v-model="dialogEditChildOrders" header="Chỉnh sửa thứ tự" maxWidth="400px" buttonText noPadding :isLoading="isSavingNewChildOrders" :buttons="[{
-      text: 'Lưu',
-      click: saveNewChildOrders
-    }]">
+    <CustomDialog
+      v-model="dialogEditChildOrders"
+      header="Chỉnh sửa thứ tự"
+      maxWidth="400px"
+      buttonText
+      noPadding
+      persistent
+      :isLoading="isSavingNewChildOrders"
+      :buttons="[
+        {
+          text: 'Lưu',
+          click: saveNewChildOrders,
+        },
+      ]"
+    >
       <v-list two-line>
-        <v-list-item v-for="id, i in newChildOrders" :key="id + '-' + i">
+        <v-list-item v-for="(id, i) in newChildOrders" :key="id + '-' + i">
           <v-list-item-avatar>
             <CustomPersonAvatar
               :person="$store.state.personMapping[id]"
@@ -140,11 +167,11 @@
                 outlined
                 @click="moveUpChild(i)"
               >
-                <v-icon dark>
-                  mdi-arrow-up
-                </v-icon>
+                <v-icon dark> mdi-arrow-up </v-icon>
               </v-btn>
-              <v-spacer v-if="i == 0 || i == newChildOrders.length - 1"></v-spacer>
+              <v-spacer
+                v-if="i == 0 || i == newChildOrders.length - 1"
+              ></v-spacer>
               <v-btn
                 v-if="i != newChildOrders.length - 1"
                 fab
@@ -154,9 +181,7 @@
                 outlined
                 @click="moveDownChild(i)"
               >
-                <v-icon dark>
-                  mdi-arrow-down
-                </v-icon>
+                <v-icon dark> mdi-arrow-down </v-icon>
               </v-btn>
             </div>
           </v-list-item-action>
@@ -183,7 +208,11 @@ import { mapActions } from "vuex";
 import { FETCH_PEOPLE } from "@/store";
 import { permissionMixin } from "@/utils";
 
-type PersonDetailInfo = Awaited<ReturnType<typeof personApi.getPersonDetailInfo>>["data"] extends { msg: string } | { person: infer T } ? T : never;
+type PersonDetailInfo = Awaited<
+  ReturnType<typeof personApi.getPersonDetailInfo>
+>["data"] extends { msg: string } | { person: infer T }
+  ? T
+  : never;
 
 export default defineComponent({
   components: {
@@ -241,7 +270,7 @@ export default defineComponent({
       if (!this.personDetailInfo) return [];
 
       const person = this.personDetailInfo;
-      const groups : { text: string; personIds: string[] }[] = [];
+      const groups: { text: string; personIds: string[] }[] = [];
 
       if (person.fatherId) {
         groups.push({
@@ -278,9 +307,7 @@ export default defineComponent({
         personIds: person.childIds,
       });
 
-      return groups.filter(
-        ({ personIds }) => personIds.length != 0
-      );
+      return groups.filter(({ personIds }) => personIds.length != 0);
     },
   },
   watch: {
@@ -294,7 +321,7 @@ export default defineComponent({
       if (v) {
         this.newChildOrders = [...this.personDetailInfo!.childIds];
       }
-    }
+    },
   },
   methods: {
     ...mapActions([FETCH_PEOPLE]),
@@ -354,14 +381,30 @@ export default defineComponent({
     },
     moveUpChild(childIdex: number) {
       if (childIdex > 0) {
-        const swapElements = [this.newChildOrders[childIdex - 1], this.newChildOrders[childIdex]];
-        this.newChildOrders.splice(childIdex - 1, 2, swapElements[1], swapElements[0]);
+        const swapElements = [
+          this.newChildOrders[childIdex - 1],
+          this.newChildOrders[childIdex],
+        ];
+        this.newChildOrders.splice(
+          childIdex - 1,
+          2,
+          swapElements[1],
+          swapElements[0]
+        );
       }
     },
     moveDownChild(childIdex: number) {
       if (childIdex < this.newChildOrders.length - 1) {
-        const swapElements = [this.newChildOrders[childIdex], this.newChildOrders[childIdex + 1]];
-        this.newChildOrders.splice(childIdex, 2, swapElements[1], swapElements[0]);
+        const swapElements = [
+          this.newChildOrders[childIdex],
+          this.newChildOrders[childIdex + 1],
+        ];
+        this.newChildOrders.splice(
+          childIdex,
+          2,
+          swapElements[1],
+          swapElements[0]
+        );
       }
     },
     async saveNewChildOrders() {

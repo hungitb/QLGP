@@ -86,6 +86,7 @@
         maxWidth="400px"
         :buttons="[{ text: 'Lưu', click: dialogSaveBtnHandler }]"
         bodyHeight="400px"
+        persistent
       >
         <div
           v-if="

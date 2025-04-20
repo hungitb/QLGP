@@ -126,6 +126,7 @@ import {
 import { checkIfIsMobile, permissionMixin } from "@/utils";
 import CustomPersonAvatar from "../CustomPersonAvatar.vue";
 import { transformDateString } from "../../../../backend/src/utils/DateUtils";
+import { RoleOfPersonWithOtherPerson } from "../../../../backend/src/controller/person";
 
 export default Vue.extend({
   components: {
@@ -178,7 +179,7 @@ export default Vue.extend({
         this.timeoutHideControlDesktop = undefined;
       }, 2000);
     },
-    addPerson(type: string) {
+    addPerson(type: RoleOfPersonWithOtherPerson) {
       if (this.viewer && !this.viewer.isClickEvent()) {
         return;
       }

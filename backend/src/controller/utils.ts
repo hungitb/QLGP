@@ -164,18 +164,6 @@ type UserGuard = {
     handler: (input: RequestInput<any, any, false>) => Promise<ControllerHandlerResult<{ msg: string }> | void>;
 };
 
-export const CanReadGuard: UserGuard = {
-    type: "UserGuard",
-    handler: async (input) => {
-        if (
-            input.user.permission != "admin" &&
-            input.user.permission != "read"
-        ) {
-            return CommonResponse.FORBIDDEN;
-        }
-    }
-};
-
 export const CanWriteGuard: UserGuard = {
     type: "UserGuard",
     handler: async (input) => {

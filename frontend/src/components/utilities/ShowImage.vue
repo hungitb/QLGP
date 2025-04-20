@@ -39,13 +39,6 @@ export default defineComponent({
       src: "",
     };
   },
-  watch: {
-    dialog(val) {
-      if (!val) {
-        this.src = "";
-      }
-    },
-  },
   methods: {
     showImage({ src }: ShowImageParams) {
       this.dialog = true;

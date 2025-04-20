@@ -37,7 +37,7 @@ export const authApi = wrapApi({
         username: user.username,
         permission: user.permission,
         thongTinGiaPha: await ttgpDASO.get(),
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
       };
     }
 

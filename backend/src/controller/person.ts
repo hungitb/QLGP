@@ -2,7 +2,7 @@ import { v4 as uuid } from "uuid";
 
 import { compareTwoDateString, datePlusDay, DateInputDB, isSomeValueStandardNormalDate, isSufixedLunarDate, lunarDateToNormalDate, normalDateToLunarDate, nowDate, shortenDateString, sortByStdDate, StandardNormalDate, sufixedLunarDateToNormalDate, todayDate, convertDateStoredDBToDateInputDB, convertDateInputDBToDateStoredDB } from "../utils/DateUtils";
 import { isStringPureInterger } from "../utils/ValidationUtils";
-import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR, Controller, ControllerHandler, applyUserGuards, CanReadGuard, CanWriteGuard, keysModel, SafeOmit } from "./utils";
+import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR, Controller, ControllerHandler, applyUserGuards, CanWriteGuard, keysModel, SafeOmit } from "./utils";
 import { LifeStatus, Gender, type Person, PersonAdvanceDAO } from "../model/Person";
 import type { User } from "../model/User";
 import type { IDAO, IDASO } from "../model/IDAO";
@@ -20,10 +20,11 @@ export type FamilyTreePerson = {
     }[];
 };
 
+export type RoleOfPersonWithOtherPerson = "father" | "mother" | "spouse" | "child";
 export type CreatePersonParams = {
     person: SafeOmit<Person, "id" | "createdAt" | "youngnessLevel">;
     role?: {
-        roleName: string;
+        roleName: RoleOfPersonWithOtherPerson;
         roleWithTargetPersonId: string;
     };
 };
@@ -167,7 +168,7 @@ export default function getPersonController(
             },
             status: 200
         };
-    }, CanReadGuard);
+    });
 
     const getPersonDetailInfo = applyUserGuards<
         {},
@@ -213,7 +214,7 @@ export default function getPersonController(
             },
             status: 200
         };
-    }, CanReadGuard);
+    });
 
     const getFamilyTreeInfo = applyUserGuards<
         {},
@@ -314,6 +315,10 @@ export default function getPersonController(
                 })
             }
 
+            person.children.sort((p1, p2) => {
+                return mapIdToOriginPerson[p1.child.id].youngnessLevel - mapIdToOriginPerson[p2.child.id].youngnessLevel;
+            });
+
             path.delete(person.id);
         }
 
@@ -326,7 +331,7 @@ export default function getPersonController(
             },
             status: 200,
         };
-    }, CanReadGuard);
+    });
 
     const createPerson = applyUserGuards<
         CreatePersonParams,
@@ -599,7 +604,7 @@ export default function getPersonController(
             },
             status: 200,
         };
-    }, CanReadGuard);
+    });
 
     const analyzeRelationship = applyUserGuards<
         {},
@@ -621,7 +626,7 @@ export default function getPersonController(
             },
             status: 200
         };
-    }, CanReadGuard);
+    });
 
     type GetEventsParams = {
         startDate?: StandardNormalDate;
@@ -663,7 +668,7 @@ export default function getPersonController(
             data: { events },
             status: 200
         };
-    }, CanReadGuard);
+    });
 
     const updateThongTinGiaPha = applyUserGuards<
         Partial<ThongTinGiaPha>,
@@ -718,7 +723,7 @@ export default function getPersonController(
             data: {},
             status: 200
         };
-    });
+    }, CanWriteGuard);
 
     return {
         getAllPeopleBaseInfo,

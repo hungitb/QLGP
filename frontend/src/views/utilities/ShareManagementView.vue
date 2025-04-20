@@ -107,6 +107,7 @@
               max-width="500"
               header="Chỉnh sửa tài khoản"
               buttonText
+              persistent
               :buttons="[
                 {
                   text: 'Lưu',

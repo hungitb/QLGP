@@ -119,7 +119,9 @@ export default Vue.extend({
       Gender,
       sffrmfsi: sufixForRefMappingForSpouseId,
       drawSpouse:
-        (this.config.level == 2 && this.$store.state.personMapping[this.person.id].gender == Gender.MALE) ||
+        (this.config.level == 2 &&
+          this.$store.state.personMapping[this.person.id].gender ==
+            Gender.MALE) ||
         this.config.level >= 3,
       allChildren: [] as FamilyTreePerson[],
       childrenNotKnowSpouse: [] as FamilyTreePerson[],

@@ -2,11 +2,10 @@
   <CustomDialog
     v-model="dialog"
     buttonText
-    :divider="false"
+    noDivider
     :header="header"
     :buttons="[{ text: confirmText, color: confirmColor, click }]"
     maxWidth="360px"
-    :persistent="false"
     :contentPaddingTop="false"
     :isLoading="isLoading"
   >

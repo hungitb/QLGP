@@ -45,14 +45,6 @@ export default defineComponent({
       return colorMapping[(this as any).type];
     },
   },
-  watch: {
-    snackbar(val) {
-      if (!val) {
-        this.msg = "";
-        this.type = "info";
-      }
-    },
-  },
   methods: {
     showSnackbar({ msg, type }: ShowSnackbarParams) {
       this.snackbar = true;

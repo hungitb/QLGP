@@ -47,14 +47,6 @@ export default defineComponent({
       onPersonEdited: undefined as (() => any) | undefined,
     };
   },
-  watch: {
-    dialog(val) {
-      if (!val) {
-        this.personId = "";
-        this.editable = undefined;
-      }
-    },
-  },
   methods: {
     showDialogPersonDetailInfo({
       personId,

@@ -52,7 +52,8 @@ export default defineComponent({
         {
           icon: "mdi-chart-box-outline",
           title: "Thống kê",
-          subtitle: "Xem các thông tin thống kê về các thành viên trong gia phả",
+          subtitle:
+            "Xem các thông tin thống kê về các thành viên trong gia phả",
           url: "/utilities/statistic",
         },
         {

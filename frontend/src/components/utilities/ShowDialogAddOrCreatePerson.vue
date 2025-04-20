@@ -49,6 +49,10 @@ export default defineComponent({
       roleOfAddedPerson: undefined as CreatePersonParams["role"] | undefined,
     };
   },
+  // Không giống các util khác, util này vẫn phải theo dõi show để reset form
+  // Vì cơ chế của AddPersonDialog khá phức tạp về reset form (thực ra bad code :v)
+  // Khi set initData thì phải làm sớm, nếu set sau thì nó sẽ reset thông tin của person. Nên buộc phải reset ở đây chứ không phải trong hàm showDialogAddOrCreatePerson
+  // Nếu trong hàm showDialogAddOrCreatePerson thực hiện set initData trước rồi set editedPerson sau thì watcher của editedPerson vẫn kích hoạt trước.
   watch: {
     show(val) {
       if (!val) {

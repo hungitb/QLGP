@@ -50,10 +50,11 @@ import CustomDialog from "@/components/CustomDialog.vue";
 import PersonInputGroup from "@/components/input/PersonInputGroup.vue";
 import { personApi } from "@/api/person";
 import { showSnackbar } from "./ShowSnackbar.vue";
+import { RoleOfPersonWithOtherPerson } from "../../../../backend/src/controller/person";
 
 type ShowDialogAddPersonWithSpecificRoleParams = {
   person: Person;
-  roleOfPersonWillAdd: string;
+  roleOfPersonWillAdd: RoleOfPersonWithOtherPerson;
   onAddedOrCreated?: (addedPersonId: string) => any;
 };
 let _showDialogAddPersonWithSpecificRole:
@@ -83,18 +84,6 @@ export default defineComponent({
       isLoading: false,
     };
   },
-  watch: {
-    show(val) {
-      if (!val) {
-        this.editedPerson = null;
-        this.props = {};
-        this.pickedPersonId = null;
-        this.savePickedPerson = null;
-        this.clickAddPerson = () => 1;
-        this.isLoading = false;
-      }
-    },
-  },
   methods: {
     showDialogAddPersonWithSpecificRole({
       person,
@@ -102,7 +91,9 @@ export default defineComponent({
       onAddedOrCreated,
     }: ShowDialogAddPersonWithSpecificRoleParams) {
       this.show = true;
+      this.isLoading = false;
       this.editedPerson = person;
+      this.pickedPersonId = null;
       const roleMapping: Record<string, string> = {
         spouse: "Bạn đời",
         child: "Con",

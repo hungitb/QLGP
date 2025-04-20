@@ -19,7 +19,9 @@
                 ></v-skeleton-loader>
                 <template v-else>
                   <CustomPersonAvatar
-                    :person="$store.state.personMapping[thongTinGiaPha.idToTien]"
+                    :person="
+                      $store.state.personMapping[thongTinGiaPha.idToTien]
+                    "
                     size="30"
                   />
                   <span class="ml-3">{{
@@ -60,6 +62,7 @@
       :isLoading="loading"
       :buttons="[{ click: updateThongTinGiaPha, text: 'Lưu' }]"
       xsFullScreen
+      persistent
     >
       <v-text-field
         v-model="newTenDongHo"
