@@ -61,7 +61,7 @@ function execQuery<TFields extends string>(query: string, method: "get"): Promis
 function execQuery(query: string, method: "post"): Promise<any>;
 async function execQuery<TFields extends string = any>(query: string, method: "post" | "get") {
     console.log(`======================================================================${query}`);
-    const fusekiUrl = process.env.QLGP_FUSEKI_URL || "localhost:3030";
+    const fusekiUrl = process.env.QLGP_FUSEKI_URL || "http://localhost:3030";
 
     if (!fusekiQueryPrefix) {
         fusekiQueryPrefix = Object.entries(allPrefixes).map(([prefix, url]) => {

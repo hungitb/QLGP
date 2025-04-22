@@ -47,7 +47,8 @@ const personSchema = new TableSchema<Person>({
         },
         callname: {
             type: "string",
-            allowNull: false
+            allowNull: false,
+            alias: "name"
         },
         gender: {
             type: "string",

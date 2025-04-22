@@ -1,21 +1,22 @@
 require("dotenv").config({ path: "../.env" });
 const { defineConfig } = require("@vue/cli-service");
-const { DefinePlugin } = require("webpack");
+const { EnvironmentPlugin } = require("webpack");
 
-const USED_ENVS = {
+const USED_ENV_VARS = {
   NODE_ENV: "production",
   QLGP_USE_BACKEND: "true",
   QLGP_FRONTEND_GEN_FAKE_DATA: "false"
 };
 
+Object.entries(USED_ENV_VARS).forEach(([k, v]) => {
+  process.env[k] = process.env[k] || v;
+});
+
 module.exports = defineConfig({
   transpileDependencies: ["vuetify"],
   configureWebpack: {
     plugins: [
-      new DefinePlugin(Object.entries(USED_ENVS).reduce((result, [key, value]) => {
-        result[key] = process.env[key] || value;
-        return result;
-      }), {}),
+      new EnvironmentPlugin(Object.keys(USED_ENV_VARS)),
     ],
   },
   ...(process.env.QLGP_USE_BACKEND == "true"
