@@ -6,7 +6,7 @@
 ### Giới tính
 
 # Người có giới tính Nam thuộc lớp male
-[male: (?x rdf:type :person), (?x person:gender "Nam") -> (?x rdf:type :male)]
+[(?x rdf:type :person), (?x person:gender "Nam") -> (?x rdf:type :male)]
 
 # Người có giới tính Nữ thuộc lớp female
-[female: (?x rdf:type :person), (?x person:gender "Nữ") -> (?x rdf:type :female)]
+[(?x rdf:type :person), (?x person:gender "Nữ") -> (?x rdf:type :female)]

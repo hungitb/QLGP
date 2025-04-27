@@ -7,7 +7,7 @@
 ### Tuổi tác
 
 # Sinh trước thì lớn tuổi hơn
-[ruleTuoiTac1:
+[
   (?x person:youngnessLevel ?doTreChungX),
   (?y person:youngnessLevel ?doTreChungY),
   lessThan(?doTreChungX, ?doTreChungY) 

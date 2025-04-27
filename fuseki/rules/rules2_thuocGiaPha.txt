@@ -6,14 +6,14 @@
 ### Thuộc gia phả
 
 # Tổ tiên thuộc gia phả
-[ruleGiaPha1:
+[
   (:thongTinGiaPha ttgp:ancestor ?x)
   ->
   (?x person:thuocGiaPha "true")
 ]
 
 # Bạn đời của một Nam trong gia phả thuộc chế độ phả hệ sẽ thuộc gia phả do quan hệ vợ chồng
-[ruleGiaPha2:
+[
   (?x person:thuocGiaPha "true"),
   (?x rdf:type :male),
   (:thongTinGiaPha ttgp:type "phaHe"),
@@ -23,7 +23,7 @@
 ]
 
 # Bạn đời của một Nữ trong gia phả thuộc chế độ mẫu hệ sẽ thuộc gia phả do quan hệ vợ chồng
-[ruleGiaPha3:
+[
   (?x person:thuocGiaPha "true"),
   (?x rdf:type :female),
   (:thongTinGiaPha ttgp:type "mauHe"),
@@ -33,7 +33,7 @@
 ]
 
 # Trường hợp đặc biệt của tổ tiên, dù là nam hay nữ, dù là phả hệ hay mẫu hệ thì bạn đời cũng sẽ thuộc gia phả
-[ruleGiaPha4:
+[
   (:thongTinGiaPha ttgp:ancestor ?x),
   (?x person:hasSpouse ?y)
   ->
@@ -41,7 +41,7 @@
 ]
 
 # Người thuộc gia phả do quan hệ vợ chồng thì cũng thuộc gia phả
-[ruleGiaPha5:
+[
   (?x person:thuocGiaPhaDoVoChong "true")
   ->
   (?x person:thuocGiaPha "true")
@@ -49,7 +49,7 @@
 
 # Trong gia tộc theo chế độ phả hệ, người có bố thuộc gia phả cũng thuộc gia phả do quan hệ ruột thịt
 # noValue: Bỏ qua con riêng
-[ruleGiaPha6:
+[
   (?x person:thuocGiaPha "true"),
   (:thongTinGiaPha ttgp:type "phaHe"),
   (?y person:hasFather ?x),
@@ -60,7 +60,7 @@
 
 # Trong gia tộc theo chế độ mẫu hệ, người có mẹ thuộc gia phả cũng thuộc gia phả do quan hệ ruột thịt
 # noValue: Bỏ qua con riêng
-[ruleGiaPha7:
+[
   (?x person:thuocGiaPha "true"),
   (:thongTinGiaPha ttgp:type "mauHe"),
   (?y person:hasMother ?x),
