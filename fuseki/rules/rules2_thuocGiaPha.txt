@@ -9,12 +9,12 @@
 [
   (:thongTinGiaPha ttgp:ancestor ?x)
   ->
-  (?x person:thuocGiaPha "true")
+  (?x person:thuocGiaPhaDoHuyetThong "true")
 ]
 
 # Bạn đời của một Nam trong gia phả thuộc chế độ phả hệ sẽ thuộc gia phả do quan hệ vợ chồng
 [
-  (?x person:thuocGiaPha "true"),
+  (?x person:thuocGiaPhaDoHuyetThong "true"),
   (?x rdf:type :male),
   (:thongTinGiaPha ttgp:type "phaHe"),
   (?x person:hasSpouse ?y)
@@ -24,7 +24,7 @@
 
 # Bạn đời của một Nữ trong gia phả thuộc chế độ mẫu hệ sẽ thuộc gia phả do quan hệ vợ chồng
 [
-  (?x person:thuocGiaPha "true"),
+  (?x person:thuocGiaPhaDoHuyetThong "true"),
   (?x rdf:type :female),
   (:thongTinGiaPha ttgp:type "mauHe"),
   (?x person:hasSpouse ?y)
@@ -40,31 +40,34 @@
   (?y person:thuocGiaPhaDoVoChong "true")
 ]
 
+# Trong gia tộc theo chế độ phả hệ, người có bố thuộc gia phả cũng thuộc gia phả do quan hệ ruột thịt
+[
+  (?x person:thuocGiaPhaDoHuyetThong "true"),
+  (:thongTinGiaPha ttgp:type "phaHe"),
+  (?y person:hasFather ?x)
+  ->
+  (?y person:thuocGiaPhaDoHuyetThong "true")
+]
+
+# Trong gia tộc theo chế độ mẫu hệ, người có mẹ thuộc gia phả cũng thuộc gia phả do quan hệ ruột thịt
+[
+  (?x person:thuocGiaPhaDoHuyetThong "true"),
+  (:thongTinGiaPha ttgp:type "mauHe"),
+  (?y person:hasMother ?x)
+  ->
+  (?y person:thuocGiaPhaDoHuyetThong "true")
+]
+
+# Người thuộc gia phả do quan hệ huyết thống thì cũng thuộc gia phả
+[
+  (?x person:thuocGiaPhaDoHuyetThong "true")
+  ->
+  (?x person:thuocGiaPha "true")
+]
+
 # Người thuộc gia phả do quan hệ vợ chồng thì cũng thuộc gia phả
 [
   (?x person:thuocGiaPhaDoVoChong "true")
   ->
   (?x person:thuocGiaPha "true")
-]
-
-# Trong gia tộc theo chế độ phả hệ, người có bố thuộc gia phả cũng thuộc gia phả do quan hệ ruột thịt
-# noValue: Bỏ qua con riêng
-[
-  (?x person:thuocGiaPha "true"),
-  (:thongTinGiaPha ttgp:type "phaHe"),
-  (?y person:hasFather ?x),
-  noValue(?x person:thuocGiaPhaDoVoChong "true")
-  ->
-  (?y person:thuocGiaPha "true")
-]
-
-# Trong gia tộc theo chế độ mẫu hệ, người có mẹ thuộc gia phả cũng thuộc gia phả do quan hệ ruột thịt
-# noValue: Bỏ qua con riêng
-[
-  (?x person:thuocGiaPha "true"),
-  (:thongTinGiaPha ttgp:type "mauHe"),
-  (?y person:hasMother ?x),
-  noValue(?x person:thuocGiaPhaDoVoChong "true")
-  ->
-  (?y person:thuocGiaPha "true")
 ]
