@@ -1,8 +1,7 @@
 import { IDAO, IDASO } from "../../model/IDAO";
 import Fuseki from "./Fuseki";
 
-const NULL_ANNOTATION = "__null__";
-const ALL_LITERAL_TYPES = ["string", "integer", "decimal", "boolean", "date"] as const;
+const ALL_LITERAL_TYPES = ["string", "int", "decimal", "boolean", "date"] as const;
 type LiteralType = (typeof ALL_LITERAL_TYPES)[number];
 type FieldType = "__self__" | LiteralType | TableSchema<any>;
 type ValidModel = Record<string, string | boolean | number | null>;
@@ -65,7 +64,7 @@ function syncSchemas() {
 const constructorMapping: Record<LiteralType, (s: string) => any> = {
     string: s => String(s),
     date: s => s,
-    integer: s => parseInt(s),
+    int: s => parseInt(s),
     decimal: s => Number(s),
     boolean: s => s == "true"
 };
@@ -82,12 +81,6 @@ const utils = {
     },
     keys<T extends Record<string, any>>(obj: T): Extract<keyof T, string>[] {
         return Object.keys(obj) as Extract<keyof T, string>[];
-    },
-    entries<T, V extends Record<string, T>>(obj: V) {
-        return Object.entries(obj) as [Extract<keyof V, string>, T][];
-    },
-    isNullOrUndefined(v: unknown): v is (null | undefined) {
-        return v === undefined || v === null;
     },
     inferType(typeDef: TableSchema<any>["fields"][string]): FieldType {
         return typeof typeDef == "object" && "type" in typeDef
@@ -106,8 +99,8 @@ const utils = {
             return "xsd:string";
         } else if (type == "boolean") {
             return "xsd:boolean";
-        } else if (type == "integer") {
-            return "xsd:integer";
+        } else if (type == "int") {
+            return "xsd:int";
         } else if (type == "decimal") {
             return "xsd:decimal";
         } else if (type == "date") {
@@ -143,8 +136,7 @@ class BaseTableSchema<Model extends ValidModel> {
         this.fields = fields;
 
         if (state.allCompleteSchemas.some(schema => schema.name == name)) {
-            // Now allow duplicate schema name
-            // throw Error("Duplicate schema name: " + name);
+            throw Error("Duplicate schema name: " + name);
         }
 
         const allFields = utils.keys(fields);
@@ -199,10 +191,6 @@ class BaseTableSchema<Model extends ValidModel> {
     }
 
     protected tripleObjectRepr(field: Key<Model>, value: any) {
-        if (utils.isNullOrUndefined(value)) {
-            return `"${NULL_ANNOTATION}"`;
-        }
-
         const type = utils.inferType(this.fields[field]);
         const escape = (s: string) => {
             return s
@@ -334,6 +322,7 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
         await syncSchemas();
 
         const id = obj[this.primaryKey] as string;
+        const data = this.filterInvalidProps(obj, true);
 
         const triples: Triple[] = [[`${this.name}:${id}`, "a", `:${this.name}`]];
         const primaryKeyType = utils.inferType(this.fields[this.primaryKey]);
@@ -344,9 +333,8 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
                 `${this.getSchemaName(primaryKeyType)}:${id}`
             ]);
         }
-
-        utils.entries(obj).forEach(([key, value]) => {
-            if (key == this.primaryKey) return;
+        Object.entries(data).forEach(([_key, value]) => {
+            const key = _key as Key<Model>;
 
             triples.push([
                 `${this.name}:${id}`,
@@ -379,11 +367,6 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
 
             const field = this.convertFusekiFieldToModelField(this.removeSelfPrefix(p));
             const type = utils.inferType(this.fields[field]);
-
-            if (o == NULL_ANNOTATION) {
-                objs[id][field] = null as any;
-                return;
-            }
 
             objs[id][field] = utils.isLiteralType(type)
                 ? constructorMapping[type](o)
@@ -469,6 +452,9 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
         
         ids.forEach(id => {
             dataValidKeys.forEach(field => {
+                if (!data[field]) {
+                    return;
+                }
                 triples.push([
                     `${this.name}:${id}`,
                     `${this.name}:${this.convertModelFieldToFusekiField(field)}`,
@@ -625,7 +611,10 @@ export class TableSchemaSingleRow<Model extends ValidModel> extends BaseTableSch
 
         const triples: Triple[] = [];
 
-        utils.entries(this.initValue).forEach(([key, value]) => {
+        Object.entries(this.initValue).forEach(([_key, value]) => {
+            if (value === undefined || value === null) return;
+            const key = _key as Key<Model>;
+
             triples.push([
                 `:${this.name}`,
                 `${this.name}:${this.convertModelFieldToFusekiField(key)}`,
@@ -670,11 +659,6 @@ export class TableSchemaSingleRow<Model extends ValidModel> extends BaseTableSch
             const field = this.convertFusekiFieldToModelField(fieldFuseki);
             const type = utils.inferType(this.fields[field]);
 
-            if (o == NULL_ANNOTATION) {
-                obj[field] = null as any;
-                return;
-            }
-
             obj[field] = utils.isLiteralType(type)
                 ? constructorMapping[type](o)
                 : this.revertValue(o, type);
@@ -689,6 +673,10 @@ export class TableSchemaSingleRow<Model extends ValidModel> extends BaseTableSch
         const triples: Triple[] = [];
         
         utils.keys(data).forEach(field => {
+            if (!data[field]) {
+                return;
+            }
+
             triples.push([
                 `:${this.name}`,
                 `${this.name}:${this.convertModelFieldToFusekiField(field)}`,
