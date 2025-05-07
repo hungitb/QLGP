@@ -1,7 +1,8 @@
 import { IDAO, IDASO } from "../../model/IDAO";
 import Fuseki from "./Fuseki";
 
-const ALL_LITERAL_TYPES = ["string", "int", "decimal", "boolean", "date"] as const;
+const NULL_ANNOTATION = "__null__";
+const ALL_LITERAL_TYPES = ["string", "integer", "decimal", "boolean", "date"] as const;
 type LiteralType = (typeof ALL_LITERAL_TYPES)[number];
 type FieldType = "__self__" | LiteralType | TableSchema<any>;
 type ValidModel = Record<string, string | boolean | number | null>;
@@ -64,7 +65,7 @@ function syncSchemas() {
 const constructorMapping: Record<LiteralType, (s: string) => any> = {
     string: s => String(s),
     date: s => s,
-    int: s => parseInt(s),
+    integer: s => parseInt(s),
     decimal: s => Number(s),
     boolean: s => s == "true"
 };
@@ -81,6 +82,12 @@ const utils = {
     },
     keys<T extends Record<string, any>>(obj: T): Extract<keyof T, string>[] {
         return Object.keys(obj) as Extract<keyof T, string>[];
+    },
+    entries<T, V extends Record<string, T>>(obj: V) {
+        return Object.entries(obj) as [Extract<keyof V, string>, T][];
+    },
+    isNullOrUndefined(v: unknown): v is (null | undefined) {
+        return v === undefined || v === null;
     },
     inferType(typeDef: TableSchema<any>["fields"][string]): FieldType {
         return typeof typeDef == "object" && "type" in typeDef
@@ -99,8 +106,8 @@ const utils = {
             return "xsd:string";
         } else if (type == "boolean") {
             return "xsd:boolean";
-        } else if (type == "int") {
-            return "xsd:int";
+        } else if (type == "integer") {
+            return "xsd:integer";
         } else if (type == "decimal") {
             return "xsd:decimal";
         } else if (type == "date") {
@@ -117,15 +124,18 @@ class BaseTableSchema<Model extends ValidModel> {
     protected readonly name: string;
     protected readonly fields: TableSchemaFieldDefs<Model>;
     protected readonly urlBase: string;
+    protected readonly useNullAnnotationForMissingValueField: boolean;
     private readonly fieldMapping: Record<Key<Model>, string> = {} as any;
     private readonly aliasMapping: Record<string, Key<Model>> = {};
 
     constructor({
         name,
-        fields
+        fields,
+        useNullAnnotationForMissingValueField = false
     }: {
         name: string,
-        fields: TableSchemaFieldDefs<Model>
+        fields: TableSchemaFieldDefs<Model>,
+        useNullAnnotationForMissingValueField?: boolean
     }) {
         if (state.syncing || state.synced) {
             throw Error("It's too late to create a schema");
@@ -134,6 +144,7 @@ class BaseTableSchema<Model extends ValidModel> {
         this.name = name;
         this.urlBase = utils.getBaseUrl(name);
         this.fields = fields;
+        this.useNullAnnotationForMissingValueField = useNullAnnotationForMissingValueField;
 
         if (state.allCompleteSchemas.some(schema => schema.name == name)) {
             throw Error("Duplicate schema name: " + name);
@@ -191,6 +202,13 @@ class BaseTableSchema<Model extends ValidModel> {
     }
 
     protected tripleObjectRepr(field: Key<Model>, value: any) {
+        if (utils.isNullOrUndefined(value)) {
+            if (!this.useNullAnnotationForMissingValueField) {
+                throw Error(`Can't process value ${value} for field ${field}, schema ${this.name}`);
+            }
+            return `"${NULL_ANNOTATION}"`;
+        }
+
         const type = utils.inferType(this.fields[field]);
         const escape = (s: string) => {
             return s
@@ -256,10 +274,12 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
 
     constructor({
         name,
-        fields
+        fields,
+        useNullAnnotationForMissingValueField
     }: {
         name: string,
-        fields: TableSchemaFieldDefs<Model>
+        fields: TableSchemaFieldDefs<Model>,
+        useNullAnnotationForMissingValueField?: boolean
     }) {
         const allFields = utils.keys(fields);
         let primaryKey: Key<Model> | undefined = undefined;
@@ -293,7 +313,7 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
             throw Error(`Missing primary key in schema ${name}`);
         }
 
-        super({ name, fields });
+        super({ name, fields, useNullAnnotationForMissingValueField });
 
         this.primaryKey = primaryKey;
 
@@ -309,9 +329,9 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
         });
     }
 
-    private filterInvalidProps(obj: Partial<Model>, filterPrimaryKey = false) {
+    private filterNullOrUndefinedFields(obj: Partial<Model>) {
         return Object.entries(obj)
-            .filter(([key, value]) => value !== undefined && value !== null && (!filterPrimaryKey || key != this.primaryKey))
+            .filter(([_, value]) => !utils.isNullOrUndefined(value))
             .reduce((result, [key, value]) => {
                 result[key as keyof Model] = value;
                 return result;
@@ -322,7 +342,6 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
         await syncSchemas();
 
         const id = obj[this.primaryKey] as string;
-        const data = this.filterInvalidProps(obj, true);
 
         const triples: Triple[] = [[`${this.name}:${id}`, "a", `:${this.name}`]];
         const primaryKeyType = utils.inferType(this.fields[this.primaryKey]);
@@ -333,8 +352,13 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
                 `${this.getSchemaName(primaryKeyType)}:${id}`
             ]);
         }
-        Object.entries(data).forEach(([_key, value]) => {
-            const key = _key as Key<Model>;
+
+        utils.entries(
+            this.useNullAnnotationForMissingValueField
+            ? obj
+            : this.filterNullOrUndefinedFields(obj)
+        ).forEach(([key, value]) => {
+            if (key == this.primaryKey) return;
 
             triples.push([
                 `${this.name}:${id}`,
@@ -367,6 +391,11 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
 
             const field = this.convertFusekiFieldToModelField(this.removeSelfPrefix(p));
             const type = utils.inferType(this.fields[field]);
+
+            if (o == NULL_ANNOTATION) {
+                objs[id][field] = null as any;
+                return;
+            }
 
             objs[id][field] = utils.isLiteralType(type)
                 ? constructorMapping[type](o)
@@ -415,7 +444,7 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
             return [];
         }
 
-        match = this.filterInvalidProps(match || {});
+        match = this.filterNullOrUndefinedFields(match || {});
 
         const triples: Triple[] = (match && Object.keys(match).length > 0)
             ? utils.entriesPartialModel(match).map(([k, v]) => {
@@ -452,7 +481,7 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
         
         ids.forEach(id => {
             dataValidKeys.forEach(field => {
-                if (!data[field]) {
+                if (!data[field] && !this.useNullAnnotationForMissingValueField) {
                     return;
                 }
                 triples.push([
@@ -561,11 +590,13 @@ export class TableSchemaSingleRow<Model extends ValidModel> extends BaseTableSch
     constructor({
         name,
         fields,
-        initValue
+        initValue,
+        useNullAnnotationForMissingValueField
     }: {
         name: string,
         fields: TableSchemaFieldDefs<Model>,
-        initValue: Model
+        initValue: Model,
+        useNullAnnotationForMissingValueField?: boolean
     }) {
         const allFields = utils.keys(fields);
         for (let i = 0; i < allFields.length; i++) {
@@ -581,7 +612,7 @@ export class TableSchemaSingleRow<Model extends ValidModel> extends BaseTableSch
             }
         }
 
-        super({ name, fields });
+        super({ name, fields, useNullAnnotationForMissingValueField });
 
         this.initValue = initValue;
 
@@ -611,9 +642,10 @@ export class TableSchemaSingleRow<Model extends ValidModel> extends BaseTableSch
 
         const triples: Triple[] = [];
 
-        Object.entries(this.initValue).forEach(([_key, value]) => {
-            if (value === undefined || value === null) return;
-            const key = _key as Key<Model>;
+        utils.entries(this.initValue).forEach(([key, value]) => {
+            if (utils.isNullOrUndefined(value) && !this.useNullAnnotationForMissingValueField) {
+                return;
+            }
 
             triples.push([
                 `:${this.name}`,
@@ -659,6 +691,11 @@ export class TableSchemaSingleRow<Model extends ValidModel> extends BaseTableSch
             const field = this.convertFusekiFieldToModelField(fieldFuseki);
             const type = utils.inferType(this.fields[field]);
 
+            if (o == NULL_ANNOTATION) {
+                obj[field] = null as any;
+                return;
+            }
+
             obj[field] = utils.isLiteralType(type)
                 ? constructorMapping[type](o)
                 : this.revertValue(o, type);
@@ -673,7 +710,7 @@ export class TableSchemaSingleRow<Model extends ValidModel> extends BaseTableSch
         const triples: Triple[] = [];
         
         utils.keys(data).forEach(field => {
-            if (!data[field]) {
+            if (!data[field] && !this.useNullAnnotationForMissingValueField) {
                 return;
             }
 
