@@ -1,0 +1,78 @@
+@prefix : http://qlgp#
+@prefix person: http://qlgp/person#
+@prefix quanHeTrucTiep: http://qlgp/quanHeTrucTiep#
+@prefix rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+@prefix ttgp: http://qlgp/thongTinGiaPha#
+
+### Quan hệ L4
+[
+  (?x quanHeTrucTiep:OngCoNoi ?y),
+  (?y quanHeTrucTiep:Bo ?z),
+  (:thongTinGiaPha ttgp:type "phaHe")
+  ->
+  (?x quanHeTrucTiep:OngKyNoi ?z),
+  (?z quanHeTrucTiep:ChutNoi ?x)
+]
+
+[
+  (?x quanHeTrucTiep:OngCoNoi ?y),
+  (?y quanHeTrucTiep:Me ?z),
+  (:thongTinGiaPha ttgp:type "phaHe")
+  ->
+  (?x quanHeTrucTiep:BaKyNoi ?z),
+  (?z quanHeTrucTiep:ChutNoi ?x)
+]
+
+[
+  (?x quanHeTrucTiep:OngCoNoi ?y),
+  (?y quanHeTrucTiep:Bo ?z),
+  (:thongTinGiaPha ttgp:type "mauHe")
+  ->
+  (?x quanHeTrucTiep:OngKyNgoai ?z),
+  (?z quanHeTrucTiep:ChutNgoai ?x)
+]
+
+[
+  (?x quanHeTrucTiep:OngCoNoi ?y),
+  (?y quanHeTrucTiep:Me ?z),
+  (:thongTinGiaPha ttgp:type "mauHe")
+  ->
+  (?x quanHeTrucTiep:BaKyNgoai ?z),
+  (?z quanHeTrucTiep:ChutNgoai ?x)
+]
+
+[
+  (?x quanHeTrucTiep:BaCoNoi ?y),
+  (?y quanHeTrucTiep:Bo ?z),
+  (:thongTinGiaPha ttgp:type "phaHe")
+  ->
+  (?x quanHeTrucTiep:OngKyNgoai ?z),
+  (?z quanHeTrucTiep:ChutNgoai ?x)
+]
+
+[
+  (?x quanHeTrucTiep:BaCoNoi ?y),
+  (?y quanHeTrucTiep:Me ?z),
+  (:thongTinGiaPha ttgp:type "phaHe")
+  ->
+  (?x quanHeTrucTiep:BaKyNgoai ?z),
+  (?z quanHeTrucTiep:ChutNgoai ?x)
+]
+
+[
+  (?x quanHeTrucTiep:BaCoNoi ?y),
+  (?y quanHeTrucTiep:Bo ?z),
+  (:thongTinGiaPha ttgp:type "mauHe")
+  ->
+  (?x quanHeTrucTiep:OngKyNoi ?z),
+  (?z quanHeTrucTiep:ChutNoi ?x)
+]
+
+[
+  (?x quanHeTrucTiep:BaCoNoi ?y),
+  (?y quanHeTrucTiep:Me ?z),
+  (:thongTinGiaPha ttgp:type "mauHe")
+  ->
+  (?x quanHeTrucTiep:BaKyNoi ?z),
+  (?z quanHeTrucTiep:ChutNoi ?x)
+]

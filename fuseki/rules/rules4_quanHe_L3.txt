@@ -1,0 +1,198 @@
+@prefix : http://qlgp#
+@prefix person: http://qlgp/person#
+@prefix quanHeTrucTiep: http://qlgp/quanHeTrucTiep#
+@prefix rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+@prefix ttgp: http://qlgp/thongTinGiaPha#
+
+### Quan hệ L3
+[
+  (?x quanHeTrucTiep:AnhTraiCuaBo ?y),
+  (?y quanHeTrucTiep:VoChong ?z)
+  ->
+  (?x quanHeTrucTiep:VoCuaAnhTraiCuaBo ?z),
+  (?z quanHeTrucTiep:ConCuaEmChong ?x)
+]
+
+[
+  (?x quanHeTrucTiep:AnhTraiCuaBo ?y),
+  (?z quanHeTrucTiep:Bo ?y)
+  ->
+  (?x quanHeTrucTiep:ConCaiCuaBac ?z)
+]
+
+[
+  (?x quanHeTrucTiep:ChiGaiCuaBo ?y),
+  (?y quanHeTrucTiep:VoChong ?z)
+  ->
+  (?x quanHeTrucTiep:ChongCuaChiGaiCuaBo ?z),
+  (?z quanHeTrucTiep:ConCuaEmVo ?x)
+]
+
+[
+  (?x quanHeTrucTiep:ChiGaiCuaBo ?y),
+  (?z quanHeTrucTiep:Me ?y)
+  ->
+  (?x quanHeTrucTiep:ConCaiCuaBac ?z)
+]
+
+[
+  (?x quanHeTrucTiep:EmTraiCuaBo ?y),
+  (?y quanHeTrucTiep:VoChong ?z)
+  ->
+  (?x quanHeTrucTiep:VoCuaEmTraiCuaBo ?z),
+  (?z quanHeTrucTiep:ConCuaAnhChong ?x)
+]
+
+[
+  (?x quanHeTrucTiep:EmTraiCuaBo ?y),
+  (?z quanHeTrucTiep:Bo ?y)
+  ->
+  (?x quanHeTrucTiep:ConCaiCuaChuThim ?z)
+]
+
+[
+  (?x quanHeTrucTiep:EmGaiCuaBo ?y),
+  (?y quanHeTrucTiep:VoChong ?z)
+  ->
+  (?x quanHeTrucTiep:ChongCuaEmGaiCuaBo ?z),
+  (?z quanHeTrucTiep:ConCuaAnhVo ?x)
+]
+
+[
+  (?x quanHeTrucTiep:EmGaiCuaBo ?y),
+  (?z quanHeTrucTiep:Me ?y)
+  ->
+  (?x quanHeTrucTiep:ConCaiCuaCoChu ?z)
+]
+
+[
+  (?x quanHeTrucTiep:AnhTraiCuaMe ?y),
+  (?y quanHeTrucTiep:VoChong ?z)
+  ->
+  (?x quanHeTrucTiep:VoCuaAnhTraiCuaMe ?z),
+  (?z quanHeTrucTiep:ConCuaEmChong ?x)
+]
+
+[
+  (?x quanHeTrucTiep:AnhTraiCuaMe ?y),
+  (?z quanHeTrucTiep:Bo ?y)
+  ->
+  (?x quanHeTrucTiep:ConCaiCuaBac ?z)
+]
+
+[
+  (?x quanHeTrucTiep:ChiGaiCuaMe ?y),
+  (?y quanHeTrucTiep:VoChong ?z)
+  ->
+  (?x quanHeTrucTiep:ChongCuaChiGaiCuaMe ?z),
+  (?z quanHeTrucTiep:ConCuaEmVo ?x)
+]
+
+[
+  (?x quanHeTrucTiep:ChiGaiCuaMe ?y),
+  (?z quanHeTrucTiep:Me ?y)
+  ->
+  (?x quanHeTrucTiep:ConCaiCuaBac ?z)
+]
+
+[
+  (?x quanHeTrucTiep:EmTraiCuaMe ?y),
+  (?y quanHeTrucTiep:VoChong ?z)
+  ->
+  (?x quanHeTrucTiep:VoCuaEmTraiCuaMe ?z),
+  (?z quanHeTrucTiep:ConCuaChiChong ?x)
+]
+
+[
+  (?x quanHeTrucTiep:EmTraiCuaMe ?y),
+  (?z quanHeTrucTiep:Bo ?y)
+  ->
+  (?x quanHeTrucTiep:ConCaiCuaCauMo ?z)
+]
+
+[
+  (?x quanHeTrucTiep:EmGaiCuaMe ?y),
+  (?y quanHeTrucTiep:VoChong ?z)
+  ->
+  (?x quanHeTrucTiep:ChongCuaEmGaiCuaMe ?z),
+  (?z quanHeTrucTiep:ConCuaChiVo ?x)
+]
+
+[
+  (?x quanHeTrucTiep:EmGaiCuaMe ?y),
+  (?z quanHeTrucTiep:Me ?y)
+  ->
+  (?x quanHeTrucTiep:ConCaiCuaChuDi ?z)
+]
+
+[
+  (?x quanHeTrucTiep:OngNoi ?y),
+  (?y quanHeTrucTiep:Bo ?z),
+  (:thongTinGiaPha ttgp:type "phaHe")
+  ->
+  (?x quanHeTrucTiep:OngCoNoi ?z),
+  (?z quanHeTrucTiep:ChatNoi ?x)
+]
+
+[
+  (?x quanHeTrucTiep:OngNoi ?y),
+  (?y quanHeTrucTiep:Me ?z),
+  (:thongTinGiaPha ttgp:type "phaHe")
+  ->
+  (?x quanHeTrucTiep:BaCoNoi ?z),
+  (?z quanHeTrucTiep:ChatNoi ?x)
+]
+
+[
+  (?x quanHeTrucTiep:OngNoi ?y),
+  (?y quanHeTrucTiep:Bo ?z),
+  (:thongTinGiaPha ttgp:type "mauHe")
+  ->
+  (?x quanHeTrucTiep:OngCoNgoai ?z),
+  (?z quanHeTrucTiep:ChatNgoai ?x)
+]
+
+[
+  (?x quanHeTrucTiep:OngNoi ?y),
+  (?y quanHeTrucTiep:Me ?z),
+  (:thongTinGiaPha ttgp:type "mauHe")
+  ->
+  (?x quanHeTrucTiep:BaCoNgoai ?z),
+  (?z quanHeTrucTiep:ChatNgoai ?x)
+]
+
+[
+  (?x quanHeTrucTiep:BaNoi ?y),
+  (?y quanHeTrucTiep:Bo ?z),
+  (:thongTinGiaPha ttgp:type "phaHe")
+  ->
+  (?x quanHeTrucTiep:OngCoNgoai ?z),
+  (?z quanHeTrucTiep:ChatNgoai ?x)
+]
+
+[
+  (?x quanHeTrucTiep:BaNoi ?y),
+  (?y quanHeTrucTiep:Me ?z),
+  (:thongTinGiaPha ttgp:type "phaHe")
+  ->
+  (?x quanHeTrucTiep:BaCoNgoai ?z),
+  (?z quanHeTrucTiep:ChatNgoai ?x)
+]
+
+[
+  (?x quanHeTrucTiep:BaNoi ?y),
+  (?y quanHeTrucTiep:Bo ?z),
+  (:thongTinGiaPha ttgp:type "mauHe")
+  ->
+  (?x quanHeTrucTiep:OngCoNoi ?z),
+  (?z quanHeTrucTiep:ChatNoi ?x)
+]
+
+[
+  (?x quanHeTrucTiep:BaNoi ?y),
+  (?y quanHeTrucTiep:Me ?z),
+  (:thongTinGiaPha ttgp:type "mauHe")
+  ->
+  (?x quanHeTrucTiep:BaCoNoi ?z),
+  (?z quanHeTrucTiep:ChatNoi ?x)
+]
