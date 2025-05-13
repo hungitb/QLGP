@@ -1,5 +1,6 @@
 @prefix : http://qlgp#
 @prefix person: http://qlgp/person#
+@prefix inferred: http://qlgp/inferred#
 @prefix quanHeTrucTiep: http://qlgp/quanHeTrucTiep#
 @prefix rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
 @prefix ttgp: http://qlgp/thongTinGiaPha#
@@ -68,7 +69,7 @@
 [
   (?x person:hasFather ?z),
   (?y person:hasFather ?z),
-  (?x person:lonTuoiHon ?y),
+  (?x inferred:lonTuoiHon ?y),
   (?x rdf:type :male)
   ->
   (?y quanHeTrucTiep:AnhTrai ?x),
@@ -78,7 +79,7 @@
 [
   (?x person:hasFather ?z),
   (?y person:hasFather ?z),
-  (?x person:lonTuoiHon ?y),
+  (?x inferred:lonTuoiHon ?y),
   (?x rdf:type :female)
   ->
   (?y quanHeTrucTiep:ChiGai ?x),
@@ -88,7 +89,7 @@
 [
   (?x person:hasMother ?z),
   (?y person:hasMother ?z),
-  (?x person:lonTuoiHon ?y),
+  (?x inferred:lonTuoiHon ?y),
   (?x rdf:type :male)
   ->
   (?y quanHeTrucTiep:AnhTrai ?x),
@@ -98,175 +99,9 @@
 [
   (?x person:hasMother ?z),
   (?y person:hasMother ?z),
-  (?x person:lonTuoiHon ?y),
+  (?x inferred:lonTuoiHon ?y),
   (?x rdf:type :female)
   ->
   (?y quanHeTrucTiep:ChiGai ?x),
   (?x quanHeTrucTiep:EmGai ?y)
 ]
-
-# LV2
-[
-  (?x quanHeTrucTiep:Bo ?y)
-  ->
-  [
-    (?x quanHeTrucTiep:MeKe ?t)
-    <-
-    (?x quanHeTrucTiep:Me ?z),
-    (?y quanHeTrucTiep:VoChong ?t)
-    notEqual(?z, ?t)
-  ],
-  [ (?x quanHeTrucTiep:EmTraiCuaBo ?z) <- (?y quanHeTrucTiep:EmTrai ?z) ],
-  [ (?z quanHeTrucTiep:ConCuaAnhTrai ?x) <- (?y quanHeTrucTiep:EmTrai ?z) ],
-  [ (?x quanHeTrucTiep:EmGaiCuaBo ?z) <- (?y quanHeTrucTiep:EmGai ?z) ],
-  [ (?z quanHeTrucTiep:ConCuaAnhTrai ?x) <- (?y quanHeTrucTiep:EmGai ?z) ],
-  [ (?x quanHeTrucTiep:AnhTraiCuaBo ?z) <- (?y quanHeTrucTiep:AnhTrai ?z) ],
-  [ (?z quanHeTrucTiep:ConCuaEmTrai ?x) <- (?y quanHeTrucTiep:AnhTrai ?z) ],
-  [ (?x quanHeTrucTiep:ChiGaiCuaBo ?z) <- (?y quanHeTrucTiep:ChiGai ?z) ],
-  [ (?z quanHeTrucTiep:ConCuaEmTrai ?x) <- (?y quanHeTrucTiep:ChiGai ?z) ],
-  [ (?x quanHeTrucTiep:OngNoi ?z) <- (?y quanHeTrucTiep:Bo ?z), (:thongTinGiaPha ttgp:type "phaHe") ],
-  [ (?z quanHeTrucTiep:ChauNoi ?x) <- (?y quanHeTrucTiep:Bo ?z), (:thongTinGiaPha ttgp:type "phaHe") ],
-  [ (?x quanHeTrucTiep:BaNoi ?z) <- (?y quanHeTrucTiep:Me ?z), (:thongTinGiaPha ttgp:type "phaHe") ],
-  [ (?z quanHeTrucTiep:ChauNoi ?x) <- (?y quanHeTrucTiep:Me ?z), (:thongTinGiaPha ttgp:type "phaHe") ],
-  [ (?x quanHeTrucTiep:OngNgoai ?z) <- (?y quanHeTrucTiep:Bo ?z), (:thongTinGiaPha ttgp:type "mauHe") ],
-  [ (?z quanHeTrucTiep:ChauNgoai ?x) <- (?y quanHeTrucTiep:Bo ?z), (:thongTinGiaPha ttgp:type "mauHe") ],
-  [ (?x quanHeTrucTiep:BaNgoai ?z) <- (?y quanHeTrucTiep:Me ?z), (:thongTinGiaPha ttgp:type "mauHe") ],
-  [ (?z quanHeTrucTiep:ChauNgoai ?x) <- (?y quanHeTrucTiep:Me ?z), (:thongTinGiaPha ttgp:type "mauHe") ]
-]
-
-[
-  (?x quanHeTrucTiep:Me ?y)
-  ->
-  [
-    (?x quanHeTrucTiep:ChaKe ?t)
-    <-
-    (?x quanHeTrucTiep:Bo ?z),
-    (?y quanHeTrucTiep:VoChong ?t)
-    notEqual(?z, ?t)
-  ],
-  [ (?x quanHeTrucTiep:EmTraiCuaMe ?z) <- (?y quanHeTrucTiep:EmTrai ?z) ],
-  [ (?z quanHeTrucTiep:ConCuaChiGai ?x) <- (?y quanHeTrucTiep:EmTrai ?z) ],
-  [ (?x quanHeTrucTiep:EmGaiCuaMe ?z) <- (?y quanHeTrucTiep:EmGai ?z) ],
-  [ (?z quanHeTrucTiep:ConCuaChiGai ?x) <- (?y quanHeTrucTiep:EmGai ?z) ],
-  [ (?x quanHeTrucTiep:AnhTraiCuaMe ?z) <- (?y quanHeTrucTiep:AnhTrai ?z) ],
-  [ (?z quanHeTrucTiep:ConCuaEmGai ?x) <- (?y quanHeTrucTiep:AnhTrai ?z) ],
-  [ (?x quanHeTrucTiep:ChiGaiCuaMe ?z) <- (?y quanHeTrucTiep:ChiGai ?z) ],
-  [ (?z quanHeTrucTiep:ConCuaEmGai ?x) <- (?y quanHeTrucTiep:ChiGai ?z) ],
-  [ (?x quanHeTrucTiep:OngNgoai ?z) <- (?y quanHeTrucTiep:Bo ?z), (:thongTinGiaPha ttgp:type "phaHe") ],
-  [ (?z quanHeTrucTiep:ChauNgoai ?x) <- (?y quanHeTrucTiep:Bo ?z), (:thongTinGiaPha ttgp:type "phaHe") ],
-  [ (?x quanHeTrucTiep:BaNgoai ?z) <- (?y quanHeTrucTiep:Me ?z), (:thongTinGiaPha ttgp:type "phaHe") ],
-  [ (?z quanHeTrucTiep:ChauNgoai ?x) <- (?y quanHeTrucTiep:Me ?z), (:thongTinGiaPha ttgp:type "phaHe") ],
-  [ (?x quanHeTrucTiep:OngNoi ?z) <- (?y quanHeTrucTiep:Bo ?z), (:thongTinGiaPha ttgp:type "mauHe") ],
-  [ (?z quanHeTrucTiep:ChauNoi ?x) <- (?y quanHeTrucTiep:Bo ?z), (:thongTinGiaPha ttgp:type "mauHe") ],
-  [ (?x quanHeTrucTiep:BaNoi ?z) <- (?y quanHeTrucTiep:Me ?z), (:thongTinGiaPha ttgp:type "mauHe") ],
-  [ (?z quanHeTrucTiep:ChauNoi ?x) <- (?y quanHeTrucTiep:Me ?z), (:thongTinGiaPha ttgp:type "mauHe") ]
-]
-
-[
-  (?x quanHeTrucTiep:ChiGai ?y),
-  (?y quanHeTrucTiep:VoChong ?z)
-  ->
-  (?x quanHeTrucTiep:AnhRe ?z),
-  (?z quanHeTrucTiep:EmVo ?x)
-]
-
-[
-  (?x quanHeTrucTiep:EmGai ?y),
-  (?y quanHeTrucTiep:VoChong ?z)
-  ->
-  (?x quanHeTrucTiep:EmRe ?z),
-  (?z quanHeTrucTiep:AnhVo ?x)
-]
-
-[
-  (?x quanHeTrucTiep:AnhTrai ?y),
-  (?y quanHeTrucTiep:VoChong ?z)
-  ->
-  (?x quanHeTrucTiep:ChiDau ?z),
-  (?z quanHeTrucTiep:EmChong ?x)
-]
-
-[
-  (?x quanHeTrucTiep:EmTrai ?y),
-  (?y quanHeTrucTiep:VoChong ?z)
-  ->
-  (?x quanHeTrucTiep:EmDau ?z),
-  (?z quanHeTrucTiep:AnhChong ?x)
-]
-
-# LV3
-[
-  (?x quanHeTrucTiep:AnhTraiCuaBo ?y)
-  ->
-  [ (?x quanHeTrucTiep:VoCuaAnhTraiCuaBo ?z) <- (?y quanHeTrucTiep:VoChong ?z) ],
-  [ (?x quanHeTrucTiep:ConCaiCuaBac ?z) <- (?z person:hasFather ?y) ]
-]
-
-[
-  (?x quanHeTrucTiep:ChiGaiCuaBo ?y)
-  ->
-  [ (?x quanHeTrucTiep:ChongCuaChiGaiCuaBo ?z) <- (?y quanHeTrucTiep:VoChong ?z) ],
-  [ (?x quanHeTrucTiep:ConCaiCuaBac ?z) <- (?z person:hasMother ?y) ]
-]
-
-[
-  (?x quanHeTrucTiep:EmTraiCuaBo ?y)
-  ->
-  [ (?x quanHeTrucTiep:VoCuaEmTraiCuaBo ?z) <- (?y quanHeTrucTiep:VoChong ?z) ],
-  [ (?x quanHeTrucTiep:ConCaiCuaChuThim ?z) <- (?z person:hasFather ?y) ]
-]
-
-[
-  (?x quanHeTrucTiep:EmGaiCuaBo ?y)
-  ->
-  [ (?x quanHeTrucTiep:ChongCuaEmGaiCuaBo ?z) <- (?y quanHeTrucTiep:VoChong ?z) ],
-  [ (?x quanHeTrucTiep:ConCaiCuaCoChu ?z) <- (?z person:hasMother ?y) ]
-]
-
-[
-  (?x quanHeTrucTiep:AnhTraiCuaMe ?y)
-  ->
-  [ (?x quanHeTrucTiep:VoCuaAnhTraiCuaMe ?z) <- (?y quanHeTrucTiep:VoChong ?z) ],
-  [ (?x quanHeTrucTiep:ConCaiCuaBac ?z) <- (?z person:hasFather ?y) ]
-]
-
-[
-  (?x quanHeTrucTiep:ChiGaiCuaMe ?y)
-  ->
-  [ (?x quanHeTrucTiep:ChongCuaChiGaiCuaMe ?z) <- (?y quanHeTrucTiep:VoChong ?z) ],
-  [ (?x quanHeTrucTiep:ConCaiCuaBac ?z) <- (?z person:hasMother ?y) ]
-]
-
-[
-  (?x quanHeTrucTiep:EmTraiCuaMe ?y)
-  ->
-  [ (?x quanHeTrucTiep:VoCuaEmTraiCuaMe ?z) <- (?y quanHeTrucTiep:VoChong ?z) ],
-  [ (?x quanHeTrucTiep:ConCaiCuaCauMo ?z) <- (?z person:hasFather ?y) ]
-]
-
-[
-  (?x quanHeTrucTiep:EmGaiCuaMe ?y)
-  ->
-  [ (?x quanHeTrucTiep:ChongCuaEmGaiCuaMe ?z) <- (?y quanHeTrucTiep:VoChong ?z) ],
-  [ (?x quanHeTrucTiep:ConCaiCuaChuDi ?z) <- (?z person:hasMother ?y) ]
-]
-
-[
-  (?x quanHeTrucTiep:OngNoi ?y)
-  ->
-  [(?x quanHeTrucTiep:OngCoNoi ?z) <- (?y quanHeTrucTiep:Bo ?z), (:thongTinGiaPha ttgp:type "phaHe")],
-  [(?x quanHeTrucTiep:BaCoNoi ?z) <- (?y quanHeTrucTiep:Me ?z), (:thongTinGiaPha ttgp:type "phaHe")],
-  [(?x quanHeTrucTiep:OngCoNgoai ?z) <- (?y quanHeTrucTiep:Bo ?z), (:thongTinGiaPha ttgp:type "mauHe")],
-  [(?x quanHeTrucTiep:BaCoNgoai ?z) <- (?y quanHeTrucTiep:Me ?z), (:thongTinGiaPha ttgp:type "mauHe")]
-]
-
-[
-  (?x quanHeTrucTiep:BaNoi ?y)
-  ->
-  [(?x quanHeTrucTiep:OngCoNgoai ?z) <- (?y quanHeTrucTiep:Bo ?z), (:thongTinGiaPha ttgp:type "phaHe")],
-  [(?x quanHeTrucTiep:BaCoNgoai ?z) <- (?y quanHeTrucTiep:Me ?z), (:thongTinGiaPha ttgp:type "phaHe")],
-  [(?x quanHeTrucTiep:OngCoNoi ?z) <- (?y quanHeTrucTiep:Bo ?z), (:thongTinGiaPha ttgp:type "mauHe")],
-  [(?x quanHeTrucTiep:BaCoNoi ?z) <- (?y quanHeTrucTiep:Me ?z), (:thongTinGiaPha ttgp:type "mauHe")]
-]
-
-# LV4

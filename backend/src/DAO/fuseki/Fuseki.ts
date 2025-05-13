@@ -43,14 +43,18 @@ function logDevelopmentMode(msg: string) {
 }
 
 let fusekiQueryPrefix: string | undefined = undefined;
-const allPrefixes: Record<string, string> = {
+const PREDEDINED_PREFIXES = {
     fuseki: "http://jena.apache.org/fuseki#",
     rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     rdfs: "http://www.w3.org/2000/01/rdf-schema#",
     xsd: "http://www.w3.org/2001/XMLSchema#",
     owl: "http://www.w3.org/2002/07/owl#",
-    "": "http://qlgp#"
-};
+    "": "http://qlgp#",
+    inferred: "http://qlgp/inferred#",
+    quanHeTrucTiep: "http://qlgp/quanHeTrucTiep#"
+} as const satisfies Record<string, string>;
+
+const allPrefixes: Record<string, string> = { ...PREDEDINED_PREFIXES };
 
 function registerPrefix(prefix: string, url: string) {
     allPrefixes[prefix] = url;
@@ -116,6 +120,7 @@ async function execPostQuery(query: string) {
 }
 
 const Fuseki = {
+    PREDEDINED_PREFIXES,
     registerPrefix,
     execSelectQuery,
     execPostQuery

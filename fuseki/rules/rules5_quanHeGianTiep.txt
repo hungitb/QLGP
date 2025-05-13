@@ -1,0 +1,65 @@
+@prefix : http://qlgp#
+@prefix person: http://qlgp/person#
+@prefix inferred: http://qlgp/inferred#
+@prefix quanHeTrucTiep: http://qlgp/quanHeTrucTiep#
+@prefix rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+@prefix ttgp: http://qlgp/thongTinGiaPha#
+
+# Số đời
+[
+  (:thongTinGiaPha ttgp:ancestor ?x)
+  ->
+  (?x inferred:doiThu "1"^^xsd:integer)
+]
+
+[
+    (?x inferred:doiThu ?soDoiX),
+    (?y person:hasFather ?x),
+    addOne(?soDoiX, ?soDoiY)
+    ->
+    (?y inferred:doiThu ?soDoiY)
+]
+
+[
+    (?x inferred:doiThu ?soDoiX),
+    (?y person:hasMother ?x),
+    addOne(?soDoiX, ?soDoiY)
+    ->
+    (?y inferred:doiThu ?soDoiY)
+]
+
+# Đời trên
+[
+    (?x person:hasFather ?y),
+    (:thongTinGiaPha ttgp:ancestor ?y)
+    ->
+    (?x inferred:doiTren ?y)
+]
+
+[
+    (?x person:hasMother ?y),
+    (:thongTinGiaPha ttgp:ancestor ?y)
+    ->
+    (?x inferred:doiTren ?y)
+]
+
+[
+    (?x person:hasFather ?y),
+    (?y inferred:doiTren ?z)
+    ->
+    (?x inferred:doiTren ?y)
+]
+
+[
+    (?x person:hasMother ?y),
+    (?y inferred:doiTren ?z)
+    ->
+    (?x inferred:doiTren ?y)
+]
+
+[
+    (?x inferred:doiTren ?y),
+    (?y inferred:doiTren ?z)
+    ->
+    (?x inferred:doiTren ?z)
+]
