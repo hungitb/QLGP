@@ -24,12 +24,15 @@
         Cách {{ $store.state.personMapping[id1].callname }} gọi
         {{ $store.state.personMapping[id2].callname }}
       </div>
-      <div>{{ calls[0] }}</div>
+      <div>{{ calls.p1 }}</div>
       <div class="text-h4 mt-6">
         Cách {{ $store.state.personMapping[id2].callname }} gọi
         {{ $store.state.personMapping[id1].callname }}
       </div>
-      <div>{{ calls[1] }}</div>
+      <div>{{ calls.p2 }}</div>
+      <div class="text-h4 mt-6">
+        {{ calls.relationshipDetailDesc }}
+      </div>
     </div>
   </div>
 </template>
@@ -38,6 +41,7 @@
 import { defineComponent } from "vue";
 import PersonInputGroup from "@/components/input/PersonInputGroup.vue";
 import { personApi } from "@/api/person";
+import { RelationshipAnalysisResult } from "../../../../backend/src/model/Person";
 
 export default defineComponent({
   components: {
@@ -48,7 +52,7 @@ export default defineComponent({
       id1: null as string | null,
       id2: null as string | null,
       isLoading: false,
-      calls: null as [string, string] | null,
+      calls: undefined as RelationshipAnalysisResult | null | undefined,
     };
   },
   watch: {
@@ -79,8 +83,7 @@ export default defineComponent({
       if ("data" in data) {
         this.calls = data.data;
       } else {
-        const msg = `Lỗi: ${data.msg}`;
-        this.calls = [msg, msg];
+        this.calls = null;
       }
 
       this.isLoading = false;

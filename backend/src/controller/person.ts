@@ -3,7 +3,7 @@ import { v4 as uuid } from "uuid";
 import { compareTwoDateString, datePlusDay, DateInputDB, isSomeValueStandardNormalDate, isSufixedLunarDate, lunarDateToNormalDate, normalDateToLunarDate, nowDate, shortenDateString, sortByStdDate, StandardNormalDate, sufixedLunarDateToNormalDate, todayDate, convertDateStoredDBToDateInputDB, convertDateInputDBToDateStoredDB } from "../utils/DateUtils";
 import { isStringPureInterger } from "../utils/ValidationUtils";
 import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR, Controller, ControllerHandler, applyUserGuards, CanWriteGuard, keysModel, SafeOmit } from "./utils";
-import { LifeStatus, Gender, type Person, PersonAdvanceDAO } from "../model/Person";
+import { LifeStatus, Gender, type Person, PersonAdvanceDAO, RelationshipAnalysisResult } from "../model/Person";
 import type { User } from "../model/User";
 import type { IDAO, IDASO } from "../model/IDAO";
 import { extractEvents, type Event } from "./event";
@@ -609,7 +609,7 @@ export default function getPersonController(
     const analyzeRelationship = applyUserGuards<
         {},
         { id1: string, id2: string },
-        { data: [string, string] }
+        { data: RelationshipAnalysisResult | null }
     >(async ({ query: { id1, id2 } }) => {
         const [p1, p2] = await Promise.all([
             personDAO.findOne({ where: { id: id1 } }),
@@ -618,11 +618,9 @@ export default function getPersonController(
 
         if (!p1 || !p2) return CommonResponse.BAD_REQUEST;
 
-        // Do somethings
-
         return {
             data: {
-                data: ["Không rõ", "Không rõ"]
+                data: await personAdvanceDAO.relationshipAnalysis(p1, p2)
             },
             status: 200
         };

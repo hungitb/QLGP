@@ -1,5 +1,16 @@
 import { User } from "../../model/User";
-import { ALL_QUAN_HE_TRUC_TIEP_INFO, Gender, isQuanHeTrucTiep, OPPOSITE_RELATIONSHIPS, Person, PersonAdvanceDAO, QuanHeTrucTiep, QuanHeTrucTiepHasEquivalintGianTiep, relationshipWithDoiTrenDesc, sortQuanHeByCloseness } from "../../model/Person";
+import {
+    ALL_QUAN_HE_TRUC_TIEP_INFO,
+    Gender,
+    isQuanHeTrucTiep,
+    OPPOSITE_RELATIONSHIPS,
+    Person,
+    PersonAdvanceDAO,
+    QuanHeTrucTiep,
+    relationshipWithDoiTrenDesc,
+    sortQuanHeByCloseness,
+    RelationshipAnalysisResult
+} from "../../model/Person";
 import { FieldDef } from "../../model/FieldDef";
 import { FieldVal } from "../../model/FieldVal";
 import { TableSchema, TableSchemaSingleRow } from "./TableSchema";
@@ -135,242 +146,142 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
         }, {} as Record<string, boolean>);
     };
 
-    type RelationshipAnalysisResult = {
-        p1: {
-            wayOfCallingTheOther: string | null;
-            relationshipWithTheOtherDesc: string | null;
-        },
-        p2: {
-            wayOfCallingTheOther: string | null;
-            relationshipWithTheOtherDesc: string | null;
-        },
-        relationshipDetailDesc: string | null;
-    };
-
-    /**
-     * Format object Person sang dạng text để in lỗi
-     */
-    const formatPersonAsText = (p: Person, capitalize = false) => {
-        return `${capitalize ? "Person" : "person"} has name ${p.callname} (${p.id})`;
-    };
-
-    /**
-     * Nhúng objêct Person như một chuỗi text, frontend sẽ xử lý để có thể bấm vào.
-     */
-    const escapePerson = (p: Person, text?: string) => {
-        return `$person{id=${p.id}, {{${text || p.callname}}}}`;
-    };
-
-    const uncapitalize = (x: string) => {
-        if (x.length == 0) return x;
-        return x.charAt(0).toLowerCase() + x.slice(1);
-    };
-
-    /**
-     * Tìm đường kết nối giữa hai người. Có thể xảy ra trường hợp có nhiều đường kết nối
-     * (do trong dòng họ có loạn luân), khi đó chỉ trả về kết quả thứ nhất.
-     */
-    const findConnectingPath = async (p1: Person, p2: Person, delta: number): Promise<{ id: string, gender: Gender }[]> => {
-        if (delta == 1) {
-            return [{ id: p1.id, gender: p1.gender }, { id: p2.id, gender: p2.gender }];
-        }
-
-        const tripples: string[] = [];
-        var selectStatement = "";
-        for (let i = 0; i < delta; i++) {
-            if (i == 0) {
-                tripples.push(
-                    `person:${p1.id} ?r ?x0`,
-                    "?x0 person:gender ?gx0"
-                );
-            } else if (i < delta - 1) {
-                tripples.push(
-                    `?x${i - 1} ?r ?x${i}`,
-                    `?x${i} person:gender ?gx${i}`
-                );
-            } else {
-                // i == delta - 1
-                tripples.push(
-                    `?x${i - 1} ?r person:${p2.id}`
-                );
-            }
-
-            if (i < delta - 1) {
-                if (selectStatement != "") selectStatement += " ";
-                selectStatement += `?x${i} ?gx${i}`;
-            }
-        }
-
-        const selectResult = await personSchema.execSelectQuery(`
-            SELECT ${selectStatement} WHERE {
-                ${tripples.join(" .\n")}
-                FILTER (?r in (person:hasFather, person:hasMother))
-            }
-        `);
-
-        if (selectResult.results.bindings.length == 0) {
-            throw Error(`Can't find connecting path between ${formatPersonAsText(p1)} and ${formatPersonAsText(p2)}`);
-        }
-
-        const result = [{ id: p1.id, gender: p1.gender }];
-        for (let i = 0; i < delta; i++) {
-            const vars = selectResult.results.bindings[0];
-
-            const id = personSchema.removeSelfPrefix(vars[`x${i}`].value);
-            const gender = vars[`gx${i}`].value;
-            
-            if (gender == Gender.MALE || gender == Gender.FEMALE) {
-                result.push({ id, gender });
-            } else {
-                throw Error(`Found invalid gender: ${gender}`);
-            }
-        }
-        result.push({ id: p2.id, gender: p2.gender });
-
-        return result;
-    };
-
-    const directlyRelationshipAnalysis = async (p1: Person, p2: Person) => {
-        const getDirectRelationships = async (id1: string, id2: string) => {
-            const result = await personSchema.execSelectQuery<"r">(`
-                SELECT ?r WHERE {
-                    person:${id1} ?r person:${id2}
-                    FILTER (CONTAINS(STR(?r), ${Fuseki.PREDEDINED_PREFIXES.quanHeTrucTiep}))
-                }
-            `);
-
-            const directRelationships: QuanHeTrucTiep[] = [];
-            result.results.bindings.forEach(o => {
-                const r = o.r.value.replace(Fuseki.PREDEDINED_PREFIXES.quanHeTrucTiep, "");
-                if (isQuanHeTrucTiep(r)) {
-                    directRelationships.push(r);
-                } else {
-                    if (isDevMode) {
-                        throw Error(`"${r} is not a direct relationship"`);
-                    }
-                }
-            });
-
-            return directRelationships;
-        };
-
-        const [_r2to1s, _r1to2s] = await Promise.all([
-            getDirectRelationships(p1.id, p2.id),
-            getDirectRelationships(p2.id, p1.id)
-        ]);
-
-        const r2to1s = sortQuanHeByCloseness(_r2to1s);
-        const r1to2s = sortQuanHeByCloseness(_r1to2s);
-
-        if (r2to1s.length == 0 || r1to2s.length == 0) {
-            return null;
-        }
-
-        var r2to1: QuanHeTrucTiep | undefined;
-        var r1to2: QuanHeTrucTiep | undefined;
-
-        if (r2to1s.length > 0) {
-            r2to1 = r2to1s[0];
-            const r2to1Opposite = OPPOSITE_RELATIONSHIPS[r2to1];
-            if (!r2to1Opposite) {
-                r1to2 = undefined;
-            } else {
-                r1to2 = r1to2s.find(r => {
-                    if (r == r2to1Opposite[0]) return true;
-                    if (r2to1Opposite[1]) {
-                        return r2to1Opposite[1].includes(r);
-                    }
-                    return false;
-                });
-            }
-        } else {
-            r1to2 = r1to2s[0];
-            r2to1 = undefined;
-        }
-
-        if (isDevMode) {
-            const test = (r: QuanHeTrucTiep, list: QuanHeTrucTiep[]) => {
-                const opposite = OPPOSITE_RELATIONSHIPS[r];
-                if (opposite) {
-                    const result = [opposite[0], ...(opposite[1] || [])].every(r2 => {
-                        if (list.includes(r2)) {
-                            return true;
-                        }
-                        return false;
-                    });
-
-                    return result;
-                }
-                return true;
-            };
-
-            r2to1s.forEach(r => {
-                if (!test(r, r1to2s)) {
-                    throw Error(`Relationship ${r} has opposite relationship, but not found!`)
-                }
-            });
-
-            r1to2s.forEach(r => {
-                if (!test(r, r1to2s)) {
-                    throw Error(`Relationship ${r} has opposite relationship, but not found!`)
-                }
-            });
-        }
-    };
-
-    /**
-     * Tìm xem p là đời thứ mấy. Nếu người đó có nhiều khả năng về số đời
-     * (do trong dòng họ có loạn luân) thì ưu tiên số cao hoặc thấp tùy vào biến getMin.
-     * Chú ý: Tổ tiên là đời thứ 1.
-     */
-    const findDoiThu = async (p: Person, getMin = false) => {
-        const result = await personSchema.execSelectQuery<"x">(`
-            SELECT ?x
-            WHERE {
-                person:${p.id} inferred:doiThu ?x
-            }
-        `);
-
-        if (result.results.bindings.length == 0) {
-            return null;
-        }
-
-        const values = result.results.bindings.map(o => parseInt(o.x.value));
-
-        return getMin ? Math.min(...values) : Math.max(...values);
-    };
-
-    /**
-     * Vừa tìm đời thứ của cặp p và đời trên của p, vừa check lỗi của cặp này.
-     */
-    const findDoiThuOfPairOfPeople = async (pDoiTren: Person, p: Person): Promise<[delta: number, doiThuCuaPDoiTren: number, doiThuCuaP: number]> => {
-        const [doiThuCuaPDoiTren, doiThuCuaP] = await Promise.all([
-            findDoiThu(pDoiTren, true),
-            findDoiThu(p)
-        ]);
-
-        if (!doiThuCuaPDoiTren) {
-            throw Error(`Can't find doiThu of ${formatPersonAsText(pDoiTren)}`);
-        }
-
-        if (!doiThuCuaP) {
-            throw Error(`Can't find doiThu of ${formatPersonAsText(p)}`);
-        }
-
-        const delta = doiThuCuaP - doiThuCuaPDoiTren;
-        if (delta <= 0) {
-            throw Error(
-                `${formatPersonAsText(pDoiTren, true)} is not "doiTren" of ${formatPersonAsText(p)}` +
-                `, because ${formatPersonAsText(pDoiTren)} has doiThu is ${doiThuCuaPDoiTren}` +
-                `, but ${formatPersonAsText(p)} has doiThu is ${doiThuCuaP}`
-            );
-        }
-
-        return [delta, doiThuCuaPDoiTren, doiThuCuaP] as const;
-    };
-
     const relationshipAnalysis = async (p1: Person, p2: Person) => {
         const ttgp = await ttgpDASO.get();
+
+        /**
+         * Format object Person sang dạng text để in lỗi
+         */
+        const formatPersonAsText = (p: Person, capitalize = false) => {
+            return `${capitalize ? "Person" : "person"} has name ${p.callname} (${p.id})`;
+        };
+    
+        /**
+         * Nhúng objêct Person như một chuỗi text, frontend sẽ xử lý để có thể bấm vào.
+         */
+        const escapePerson = (p: Person, text?: string) => {
+            return `$person{id=${p.id}, {{${text || p.callname}}}}`;
+        };
+    
+        const uncapitalize = (x: string) => {
+            if (x.length == 0) return x;
+            return x.charAt(0).toLowerCase() + x.slice(1);
+        };
+    
+        /**
+         * Tìm đường kết nối giữa hai người. Có thể xảy ra trường hợp có nhiều đường kết nối
+         * (do trong dòng họ có loạn luân), khi đó chỉ trả về kết quả thứ nhất.
+         */
+        const findConnectingPath = async (p1: Person, p2: Person, delta: number): Promise<{ id: string, gender: Gender }[]> => {
+            if (delta == 1) {
+                return [{ id: p1.id, gender: p1.gender }, { id: p2.id, gender: p2.gender }];
+            }
+    
+            const tripples: string[] = [];
+            var selectStatement = "";
+            for (let i = 0; i < delta; i++) {
+                if (i == 0) {
+                    tripples.push(
+                        `person:${p1.id} ?r ?x0`,
+                        "?x0 person:gender ?gx0"
+                    );
+                } else if (i < delta - 1) {
+                    tripples.push(
+                        `?x${i - 1} ?r ?x${i}`,
+                        `?x${i} person:gender ?gx${i}`
+                    );
+                } else {
+                    // i == delta - 1
+                    tripples.push(
+                        `?x${i - 1} ?r person:${p2.id}`
+                    );
+                }
+    
+                if (i < delta - 1) {
+                    if (selectStatement != "") selectStatement += " ";
+                    selectStatement += `?x${i} ?gx${i}`;
+                }
+            }
+    
+            const selectResult = await personSchema.execSelectQuery(`
+                SELECT ${selectStatement} WHERE {
+                    ${tripples.join(" .\n")}
+                    FILTER (?r in (person:hasFather, person:hasMother))
+                }
+            `);
+    
+            if (selectResult.results.bindings.length == 0) {
+                throw Error(`Can't find connecting path between ${formatPersonAsText(p1)} and ${formatPersonAsText(p2)}`);
+            }
+    
+            const result = [{ id: p1.id, gender: p1.gender }];
+            for (let i = 0; i < delta - 1; i++) {
+                const vars = selectResult.results.bindings[0];
+    
+                const id = personSchema.removeSelfPrefix(vars[`x${i}`].value);
+                const gender = vars[`gx${i}`].value;
+                
+                if (gender == Gender.MALE || gender == Gender.FEMALE) {
+                    result.push({ id, gender });
+                } else {
+                    throw Error(`Found invalid gender: ${gender}`);
+                }
+            }
+            result.push({ id: p2.id, gender: p2.gender });
+    
+            return result;
+        };
+    
+        /**
+         * Tìm xem p là đời thứ mấy. Nếu người đó có nhiều khả năng về số đời
+         * (do trong dòng họ có loạn luân) thì ưu tiên số cao hoặc thấp tùy vào biến getMin.
+         * Chú ý: Tổ tiên là đời thứ 1.
+         */
+        const findDoiThu = async (p: Person, getMin = false) => {
+            const result = await personSchema.execSelectQuery<"x">(`
+                SELECT ?x
+                WHERE {
+                    person:${p.id} inferred:doiThu ?x
+                }
+            `);
+    
+            if (result.results.bindings.length == 0) {
+                return null;
+            }
+    
+            const values = result.results.bindings.map(o => parseInt(o.x.value));
+    
+            return getMin ? Math.min(...values) : Math.max(...values);
+        };
+    
+        /**
+         * Vừa tìm đời thứ của cặp p và đời trên của p, vừa check lỗi của cặp này.
+         */
+        const findDoiThuOfPairOfPeople = async (pDoiTren: Person, p: Person): Promise<[delta: number, doiThuCuaPDoiTren: number, doiThuCuaP: number]> => {
+            const [doiThuCuaPDoiTren, doiThuCuaP] = await Promise.all([
+                findDoiThu(pDoiTren, true),
+                findDoiThu(p)
+            ]);
+    
+            if (!doiThuCuaPDoiTren) {
+                throw Error(`Can't find doiThu of ${formatPersonAsText(pDoiTren)}`);
+            }
+    
+            if (!doiThuCuaP) {
+                throw Error(`Can't find doiThu of ${formatPersonAsText(p)}`);
+            }
+    
+            const delta = doiThuCuaP - doiThuCuaPDoiTren;
+            if (delta <= 0) {
+                throw Error(
+                    `${formatPersonAsText(pDoiTren, true)} is not "doiTren" of ${formatPersonAsText(p)}` +
+                    `, because ${formatPersonAsText(pDoiTren)} has doiThu is ${doiThuCuaPDoiTren}` +
+                    `, but ${formatPersonAsText(p)} has doiThu is ${doiThuCuaP}`
+                );
+            }
+    
+            return [delta, doiThuCuaPDoiTren, doiThuCuaP] as const;
+        };
 
         const alalysisIndirectlyRelationship = async (p1: Person, p2: Person): Promise<RelationshipAnalysisResult | null> => {
             /**
@@ -450,7 +361,19 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
 
             type CaseNoPersonIsNotDoiTrenOfTheOtherResult = {
                 data: RelationshipAnalysisResult,
-                quanHeTrucTiepEquivalint: QuanHeTrucTiepHasEquivalintGianTiep | null
+                /** Tất cả "Spouse" đề cập bên dưới là vợ chồng chứ không phải bạn đời đồng tính */
+                p1Spouse: {
+                    // The other here refers to P2
+                    wayOfCallingTheOther: string | null,
+                    wayOfCallingByTheOther: string | null,
+                    wayOfCallingBySpouseTheOther: string | null
+                },
+                p2Spouse: {
+                    // The other here refers to P1
+                    wayOfCallingTheOther: string | null,
+                    wayOfCallingByTheOther: string | null,
+                    wayOfCallingBySpouseTheOther: string | null
+                }
             };
 
             const handleCaseNoPersonIsNotDoiTrenOfTheOther = async (p1: Person, p2: Person): Promise<CaseNoPersonIsNotDoiTrenOfTheOtherResult | null> => {
@@ -459,27 +382,27 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                 ] as const satisfies QuanHeTrucTiep[];
                 type QuanHeAnhEmTrucTiep = (typeof preferRelationships)[number];
                 const preferRelationshipsData: Record<QuanHeAnhEmTrucTiep, {
-                    isVaiLon: boolean,
+                    isVaiLon: boolean, // Banch of P1 is bigger
                     desc1: string;
-                    desc2: string
+                    desc2: string // Role of P4
                 }> = {
                     AnhTrai: {
-                        isVaiLon: true,
+                        isVaiLon: false,
                         desc1: "Anh em ruột",
                         desc2: "Anh"
                     },
                     EmTrai: {
-                        isVaiLon: false,
+                        isVaiLon: true,
                         desc1: "Anh em ruột",
                         desc2: "Em"
                     },
                     ChiGai: {
-                        isVaiLon: true,
+                        isVaiLon: false,
                         desc1: "Chị em ruột",
                         desc2: "Chị"
                     },
                     EmGai: {
-                        isVaiLon: false,
+                        isVaiLon: true,
                         desc1: "Chị em ruột",
                         desc2: "Em"
                     }
@@ -705,50 +628,53 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
 
                 var vaiLon: Person;
                 var vaiBe: Person;
-                var p1IsVaiLon: boolean;
+                var p1IsVaiTren: boolean;
                 const branchOfP1Bigger = preferRelationshipsData[data.relationshipP3P4].isVaiLon;
 
                 if (data.doiThuP1 == data.doiThuP2) {
                     if (branchOfP1Bigger) {
                         vaiLon = p1;
                         vaiBe = p2;
-                        p1IsVaiLon = true;
+                        p1IsVaiTren = true;
                     } else {
                         vaiLon = p2;
                         vaiBe = p1;
-                        p1IsVaiLon = false;
+                        p1IsVaiTren = false;
                     }
                 } else if (data.doiThuP1 > data.doiThuP2) {
                     vaiLon = p2;
                     vaiBe = p1;
-                    p1IsVaiLon = false;
+                    p1IsVaiTren = false;
                 } else {
                     vaiLon = p1;
                     vaiBe = p2;
-                    p1IsVaiLon = true;
+                    p1IsVaiTren = true;
                 }
 
                 const delta = Math.abs(data.doiThuP1 - data.doiThuP2);
-                var vaiTrenCallvaiDuoi: string | null;
-                var vaiDuoiCallvaiTren: string | null;
-                var quanHeTrucTiepEquivalint: QuanHeTrucTiepHasEquivalintGianTiep | null = null;
+                var vaiTrenCallVaiDuoi: string | null;
+                var vaiDuoiCallVaiTren: string | null;
+                /** Spouse là vợ chồng chứ không phải bạn đời đồng tính */
+                var vaiDuoiCallSpouseVaiTren: string | null;
 
                 if (delta == 0) {
-                    vaiTrenCallvaiDuoi = "Em";
-                    if (vaiLon.gender == Gender.MALE) {
-                        vaiDuoiCallvaiTren = "Anh";
-                    } else if (vaiLon.gender == Gender.FEMALE) {
-                        vaiDuoiCallvaiTren = "Chị";
+                    vaiTrenCallVaiDuoi = "Em";
+
+                    if (vaiLon.gender == Gender.FEMALE) {
+                        vaiDuoiCallVaiTren = "Chị";
+                        vaiDuoiCallSpouseVaiTren = "Anh";
                     } else {
-                        if (isDevMode) {
+                        vaiDuoiCallVaiTren = "Anh";
+                        vaiDuoiCallSpouseVaiTren = "Chị";
+
+                        if (vaiLon.gender != Gender.MALE && isDevMode) {
                             throw Error("Missing gender case");
                         }
-                        vaiDuoiCallvaiTren = "Anh";
                     }
                 } else if (delta == 1) {
                     const vaiBeIsMale = vaiBe.gender == Gender.MALE;
                     var parentVaiBeIsMale: boolean;
-                    if (p1IsVaiLon) {
+                    if (p1IsVaiTren) {
                         if ("connectingPathP2P4" in data) {
                             parentVaiBeIsMale = data.connectingPathP2P4[1].gender == Gender.MALE;
                         } else {
@@ -761,88 +687,95 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                             throw Error("Data must contains connectingPathP1P3, because P1 is vai be");
                         }
                     }
-                    const parentVaiBeIsVaiLonHon = p1IsVaiLon ? (!branchOfP1Bigger) : (branchOfP1Bigger);
+                    const parentVaiBeIsVaiLonHon = p1IsVaiTren ? (!branchOfP1Bigger) : (branchOfP1Bigger);
 
-                    vaiTrenCallvaiDuoi = "Cháu";
+                    vaiTrenCallVaiDuoi = "Cháu";
                     if (parentVaiBeIsMale) {
                         if (parentVaiBeIsVaiLonHon) {
                             if (vaiBeIsMale) {
-                                const temp: QuanHeTrucTiepHasEquivalintGianTiep = "EmTraiCuaBo";
-                                vaiDuoiCallvaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO[temp][1];
-                                quanHeTrucTiepEquivalint = temp;
+                                vaiDuoiCallVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["EmTraiCuaBo"].wayOfCalling;
+                                vaiDuoiCallSpouseVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["VoCuaEmTraiCuaBo"].wayOfCalling;
                             } else {
-                                const temp: QuanHeTrucTiepHasEquivalintGianTiep = "EmGaiCuaBo";
-                                vaiDuoiCallvaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO[temp][1];
-                                quanHeTrucTiepEquivalint = temp;
+                                vaiDuoiCallVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["EmGaiCuaBo"].wayOfCalling;
+                                vaiDuoiCallSpouseVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["ChongCuaEmGaiCuaBo"].wayOfCalling;
                             }
                         } else {
                             if (vaiBeIsMale) {
-                                const temp: QuanHeTrucTiepHasEquivalintGianTiep = "AnhTraiCuaBo";
-                                vaiDuoiCallvaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO[temp][1];
-                                quanHeTrucTiepEquivalint = temp;
+                                vaiDuoiCallVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["AnhTraiCuaBo"].wayOfCalling;
+                                vaiDuoiCallSpouseVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["VoCuaAnhTraiCuaBo"].wayOfCalling;
                             } else {
-                                const temp: QuanHeTrucTiepHasEquivalintGianTiep = "ChiGaiCuaBo";
-                                vaiDuoiCallvaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO[temp][1];
-                                quanHeTrucTiepEquivalint = temp;
+                                vaiDuoiCallVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["ChiGaiCuaBo"].wayOfCalling;
+                                vaiDuoiCallSpouseVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["ChongCuaChiGaiCuaBo"].wayOfCalling;
                             }
                         }
                     } else {
                         if (parentVaiBeIsVaiLonHon) {
                             if (vaiBeIsMale) {
-                                const temp: QuanHeTrucTiepHasEquivalintGianTiep = "EmTraiCuaMe";
-                                vaiDuoiCallvaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO[temp][1];
-                                quanHeTrucTiepEquivalint = temp;
+                                vaiDuoiCallVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["EmTraiCuaMe"].wayOfCalling;
+                                vaiDuoiCallSpouseVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["VoCuaEmTraiCuaMe"].wayOfCalling;
                             } else {
-                                const temp: QuanHeTrucTiepHasEquivalintGianTiep = "EmGaiCuaMe";
-                                vaiDuoiCallvaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO[temp][1];
-                                quanHeTrucTiepEquivalint = temp;
+                                vaiDuoiCallVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["EmGaiCuaMe"].wayOfCalling;
+                                vaiDuoiCallSpouseVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["ChongCuaEmGaiCuaMe"].wayOfCalling;
                             }
                         } else {
                             if (vaiBeIsMale) {
-                                const temp: QuanHeTrucTiepHasEquivalintGianTiep = "AnhTraiCuaMe";
-                                vaiDuoiCallvaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO[temp][1];
-                                quanHeTrucTiepEquivalint = temp;
+                                vaiDuoiCallVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["AnhTraiCuaMe"].wayOfCalling;
+                                vaiDuoiCallSpouseVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["VoCuaAnhTraiCuaMe"].wayOfCalling;
                             } else {
-                                const temp: QuanHeTrucTiepHasEquivalintGianTiep = "ChiGaiCuaMe";
-                                vaiDuoiCallvaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO[temp][1];
-                                quanHeTrucTiepEquivalint = temp;
+                                vaiDuoiCallVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["ChiGaiCuaMe"].wayOfCalling;
+                                vaiDuoiCallSpouseVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["ChongCuaChiGaiCuaMe"].wayOfCalling;
                             }
                         }
                     }
                 } else if (delta == 2) {
-                    vaiDuoiCallvaiTren = vaiLon.gender == Gender.MALE ? "Ông" : "Bà";
-                    vaiTrenCallvaiDuoi = "Cháu";
+                    vaiDuoiCallVaiTren = vaiLon.gender == Gender.MALE ? "Ông" : "Bà";
+                    vaiDuoiCallSpouseVaiTren = vaiLon.gender == Gender.MALE ? "Bà" : "Ông";
+                    vaiTrenCallVaiDuoi = "Cháu";
                 } else if (delta == 3) {
-                    vaiDuoiCallvaiTren = vaiLon.gender == Gender.MALE ? "Ông cố" : "Bà cố";
-                    vaiTrenCallvaiDuoi = null;
+                    vaiDuoiCallVaiTren = vaiLon.gender == Gender.MALE ? "Ông cố" : "Bà cố";
+                    vaiDuoiCallSpouseVaiTren = vaiLon.gender == Gender.MALE ? "Bà cố" : "Ông cố";
+                    vaiTrenCallVaiDuoi = null;
                 } else if (delta == 4) {
-                    vaiDuoiCallvaiTren = vaiLon.gender == Gender.MALE ? "Ông kỵ" : "Bà kỵ";
-                    vaiTrenCallvaiDuoi = null;
+                    vaiDuoiCallVaiTren = vaiLon.gender == Gender.MALE ? "Ông kỵ" : "Bà kỵ";
+                    vaiDuoiCallSpouseVaiTren = vaiLon.gender == Gender.MALE ? "Bà kỵ" : "Ông kỵ";
+                    vaiTrenCallVaiDuoi = null;
                 } else {
-                    vaiDuoiCallvaiTren = "Cụ";
-                    vaiTrenCallvaiDuoi = null;
+                    vaiDuoiCallVaiTren = "Cụ";
+                    vaiDuoiCallSpouseVaiTren = "Cụ";
+                    vaiTrenCallVaiDuoi = null;
                 }
 
                 const vaiTrenInfo: RelationshipAnalysisResult["p1"] = {
-                    wayOfCallingTheOther: vaiTrenCallvaiDuoi,
+                    wayOfCallingTheOther: vaiTrenCallVaiDuoi,
                     relationshipWithTheOtherDesc: null
+                };
+                const vaiTrenSpouseInfo: CaseNoPersonIsNotDoiTrenOfTheOtherResult["p1Spouse"] = {
+                    wayOfCallingTheOther: vaiTrenCallVaiDuoi,
+                    wayOfCallingByTheOther: vaiDuoiCallSpouseVaiTren,
+                    wayOfCallingBySpouseTheOther: vaiDuoiCallSpouseVaiTren
                 };
                 const vaiDuoiInfo: RelationshipAnalysisResult["p1"] = {
-                    wayOfCallingTheOther: vaiDuoiCallvaiTren,
+                    wayOfCallingTheOther: vaiDuoiCallVaiTren,
                     relationshipWithTheOtherDesc: null
                 };
+                const vaiDuoiSpouseInfo: CaseNoPersonIsNotDoiTrenOfTheOtherResult["p1Spouse"] = {
+                    wayOfCallingTheOther: vaiDuoiCallVaiTren,
+                    wayOfCallingByTheOther: vaiTrenCallVaiDuoi,
+                    wayOfCallingBySpouseTheOther: vaiTrenCallVaiDuoi
+                };
 
-                const s1 = data.p3IsP1 ? escapePerson(p1) : `${data.relationshipOfP3WithP1Desc} là của ${escapePerson(p1)}`;
-                const s2 = data.p4IsP2 ? escapePerson(p2) : `${data.relationshipOfP4WithP2Desc} là của ${escapePerson(p2)}`;
+                const s1 = data.p3IsP1 ? escapePerson(p1) : `${escapePerson(data.p3)} (${uncapitalize(data.relationshipOfP3WithP1Desc)} của ${escapePerson(p1)})`;
+                const s2 = data.p4IsP2 ? escapePerson(p2) : `${escapePerson(data.p4)} (${uncapitalize(data.relationshipOfP4WithP2Desc)} của ${escapePerson(p2)})`;
 
                 return {
                     data: {
-                        p1: p1IsVaiLon ? vaiTrenInfo : vaiDuoiInfo,
-                        p2: p1IsVaiLon ? vaiDuoiInfo : vaiTrenInfo,
+                        p1: p1IsVaiTren ? vaiTrenInfo : vaiDuoiInfo,
+                        p2: p1IsVaiTren ? vaiDuoiInfo : vaiTrenInfo,
                         relationshipDetailDesc: `${s1} và ${s2} là hai ${uncapitalize(preferRelationshipsData[data.relationshipP3P4].desc1)}`
-                            + ` (${(data.p3IsP1 ? p1 : data.p3).callname} là ${uncapitalize(preferRelationshipsData[data.relationshipP3P4].desc2)})`
+                            + ` (${(data.p4IsP2 ? p2 : data.p4).callname} là ${uncapitalize(preferRelationshipsData[data.relationshipP3P4].desc2)})`
                     },
-                    quanHeTrucTiepEquivalint: quanHeTrucTiepEquivalint
+                    p1Spouse: p1IsVaiTren ? vaiTrenSpouseInfo : vaiDuoiSpouseInfo,
+                    p2Spouse: p1IsVaiTren ? vaiDuoiSpouseInfo : vaiTrenSpouseInfo
                 };
             };
 
@@ -860,29 +793,240 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                 return null;
             }
 
+            const vaiTroVoHayChong = (p: Person, capitalize = false) => {
+                const x = p.gender == Gender.MALE ? "Chồng" : "Vợ";
+                if (capitalize) {
+                    return x;
+                }
+                return uncapitalize(x);
+            };
+
             if (spouseP1) {
                 const r2 = await handleCaseNoPersonIsNotDoiTrenOfTheOther(spouseP1, p2);
                 if (r2) {
-
+                    if (spouseP1.gender == p1.gender) {
+                        return {
+                            p1: {
+                                wayOfCallingTheOther: null,
+                                relationshipWithTheOtherDesc: null
+                            },
+                            p2: {
+                                wayOfCallingTheOther: null,
+                                relationshipWithTheOtherDesc: null
+                            },
+                            relationshipDetailDesc: `${escapePerson(p1)} có bạn đời đồng tính là ${escapePerson(spouseP1)}. ${r2.data.relationshipDetailDesc}`
+                        };
+                    } else {
+                        return {
+                            p1: {
+                                wayOfCallingTheOther: r2.p1Spouse.wayOfCallingTheOther,
+                                relationshipWithTheOtherDesc: null
+                            },
+                            p2: {
+                                wayOfCallingTheOther: r2.p1Spouse.wayOfCallingByTheOther,
+                                relationshipWithTheOtherDesc: null
+                            },
+                            relationshipDetailDesc: `${escapePerson(p1)} có ${vaiTroVoHayChong(spouseP1)} là ${escapePerson(spouseP1)}. ${r2.data.relationshipDetailDesc}`
+                        };
+                    }
                 }
             }
 
             if (spouseP2) {
                 const r2 = await handleCaseNoPersonIsNotDoiTrenOfTheOther(p1, spouseP2);
                 if (r2) {
-                    
+                    if (spouseP2.gender == p2.gender) {
+                        return {
+                            p1: {
+                                wayOfCallingTheOther: null,
+                                relationshipWithTheOtherDesc: null
+                            },
+                            p2: {
+                                wayOfCallingTheOther: null,
+                                relationshipWithTheOtherDesc: null
+                            },
+                            relationshipDetailDesc: `${escapePerson(p2)} có bạn đời đồng tính là ${escapePerson(spouseP2)}. ${r2.data.relationshipDetailDesc}`
+                        };
+                    } else {
+                        return {
+                            p1: {
+                                wayOfCallingTheOther: r2.p2Spouse.wayOfCallingByTheOther,
+                                relationshipWithTheOtherDesc: null
+                            },
+                            p2: {
+                                wayOfCallingTheOther: r2.p2Spouse.wayOfCallingTheOther,
+                                relationshipWithTheOtherDesc: null
+                            },
+                            relationshipDetailDesc: `${escapePerson(p2)} có ${vaiTroVoHayChong(spouseP2)} là ${escapePerson(spouseP2)}. ${r2.data.relationshipDetailDesc}`
+                        };
+                    }
                 }
             }
 
             if (spouseP1 && spouseP2) {
                 const r2 = await handleCaseNoPersonIsNotDoiTrenOfTheOther(spouseP1, spouseP2);
                 if (r2) {
-                    
+                    if (spouseP1.gender == p1.gender || spouseP2.gender == p2.gender) {
+                        return {
+                            p1: {
+                                wayOfCallingTheOther: null,
+                                relationshipWithTheOtherDesc: null
+                            },
+                            p2: {
+                                wayOfCallingTheOther: null,
+                                relationshipWithTheOtherDesc: null
+                            },
+                            relationshipDetailDesc: `${escapePerson(p1)} có ${p1.gender == spouseP1.gender ? "bạn đời đồng tính" : vaiTroVoHayChong(spouseP1)} là ${escapePerson(spouseP1)}`
+                                + `, ${escapePerson(p2)} có ${p2.gender == spouseP2.gender ? "bạn đời đồng tính" : vaiTroVoHayChong(spouseP2)} là ${escapePerson(spouseP2)}`
+                                + `. ${r2.data.relationshipDetailDesc}`
+                        };
+                    } else {
+                        return {
+                            p1: {
+                                wayOfCallingTheOther: r2.p1Spouse.wayOfCallingBySpouseTheOther,
+                                relationshipWithTheOtherDesc: null
+                            },
+                            p2: {
+                                wayOfCallingTheOther: r2.p2Spouse.wayOfCallingBySpouseTheOther,
+                                relationshipWithTheOtherDesc: null
+                            },
+                            relationshipDetailDesc: `${escapePerson(p1)} có ${vaiTroVoHayChong(spouseP1)} là ${escapePerson(spouseP1)}`
+                                + `, ${escapePerson(p2)} có ${vaiTroVoHayChong(spouseP2)} là ${escapePerson(spouseP2)}`
+                                + `. ${r2.data.relationshipDetailDesc}`
+                        };
+                    }
                 }
             }
 
             return null;
         };
+    
+        const directlyRelationshipAnalysis = async (p1: Person, p2: Person): Promise<RelationshipAnalysisResult | null> => {
+            const getDirectRelationships = async (id1: string, id2: string) => {
+                const result = await personSchema.execSelectQuery<"r">(`
+                    SELECT ?r WHERE {
+                        person:${id1} ?r person:${id2}
+                        FILTER (CONTAINS(STR(?r), "${Fuseki.PREDEDINED_PREFIXES.quanHeTrucTiep}"))
+                    }
+                `);
+    
+                const directRelationships: QuanHeTrucTiep[] = [];
+                result.results.bindings.forEach(o => {
+                    const r = o.r.value.replace(Fuseki.PREDEDINED_PREFIXES.quanHeTrucTiep, "");
+                    if (isQuanHeTrucTiep(r)) {
+                        directRelationships.push(r);
+                    } else {
+                        if (isDevMode) {
+                            throw Error(`"${r} is not a direct relationship"`);
+                        }
+                    }
+                });
+    
+                return directRelationships;
+            };
+    
+            const [_r2to1s, _r1to2s] = await Promise.all([
+                getDirectRelationships(p1.id, p2.id),
+                getDirectRelationships(p2.id, p1.id)
+            ]);
+    
+            const r2to1s = sortQuanHeByCloseness(_r2to1s);
+            const r1to2s = sortQuanHeByCloseness(_r1to2s);
+    
+            if (r2to1s.length == 0 || r1to2s.length == 0) {
+                return null;
+            }
+    
+            var r2to1: QuanHeTrucTiep | undefined;
+            var r1to2: QuanHeTrucTiep | undefined;
+    
+            if (r2to1s.length > 0) {
+                r2to1 = r2to1s[0];
+                const r2to1Opposite = OPPOSITE_RELATIONSHIPS[r2to1];
+                if (!r2to1Opposite) {
+                    r1to2 = undefined;
+                } else {
+                    r1to2 = r1to2s.find(r => {
+                        if (r == r2to1Opposite[0]) return true;
+                        if (r2to1Opposite[1]) {
+                            return r2to1Opposite[1].includes(r);
+                        }
+                        return false;
+                    });
+                }
+            } else {
+                r1to2 = r1to2s[0];
+                r2to1 = undefined;
+            }
+    
+            if (isDevMode) {
+                const test = (r: QuanHeTrucTiep, list: QuanHeTrucTiep[]) => {
+                    const opposite = OPPOSITE_RELATIONSHIPS[r];
+                    if (opposite) {
+                        const result = [opposite[0], ...(opposite[1] || [])].some(r2 => {
+                            if (list.includes(r2)) {
+                                return true;
+                            }
+                            return false;
+                        });
+    
+                        return result;
+                    }
+                    return true;
+                };
+    
+                r2to1s.forEach(r => {
+                    if (!test(r, r1to2s)) {
+                        throw Error(`Relationship ${r} has opposite relationship, but not found!`)
+                    }
+                });
+    
+                r1to2s.forEach(r => {
+                    if (!test(r, r2to1s)) {
+                        throw Error(`Relationship ${r} has opposite relationship, but not found!`)
+                    }
+                });
+            }
+
+            const resultQuanHeGianTiep = await alalysisIndirectlyRelationship(p1, p2);
+
+            const temp1 = r2to1 ? ALL_QUAN_HE_TRUC_TIEP_INFO[r2to1].wayOfCalling : null;
+            const temp2 = r1to2 ? ALL_QUAN_HE_TRUC_TIEP_INFO[r1to2].wayOfCalling : null;
+
+            return {
+                p1: r2to1
+                    ? {
+                        wayOfCallingTheOther: temp1
+                            ? (typeof temp1 == "string" ? temp1 : temp1(p2))
+                            : (resultQuanHeGianTiep?.p1.wayOfCallingTheOther || null),
+                        relationshipWithTheOtherDesc: ALL_QUAN_HE_TRUC_TIEP_INFO[r2to1].desc || resultQuanHeGianTiep?.p1.relationshipWithTheOtherDesc || null
+                    }
+                    : {
+                        wayOfCallingTheOther: resultQuanHeGianTiep?.p1.wayOfCallingTheOther || null,
+                        relationshipWithTheOtherDesc: resultQuanHeGianTiep?.p1.relationshipWithTheOtherDesc || null
+                    },
+                p2: r1to2
+                    ? {
+                        wayOfCallingTheOther: temp2
+                            ? (typeof temp2 == "string" ? temp2 : temp2(p1))
+                            : (resultQuanHeGianTiep?.p2.wayOfCallingTheOther || null),
+                        relationshipWithTheOtherDesc: ALL_QUAN_HE_TRUC_TIEP_INFO[r1to2].desc || resultQuanHeGianTiep?.p2.relationshipWithTheOtherDesc || null
+                    }
+                    : {
+                        wayOfCallingTheOther: resultQuanHeGianTiep?.p2.wayOfCallingTheOther || null,
+                        relationshipWithTheOtherDesc: resultQuanHeGianTiep?.p2.relationshipWithTheOtherDesc || null
+                    },
+                relationshipDetailDesc: resultQuanHeGianTiep?.relationshipDetailDesc || null
+            };
+        };
+
+        const r1 = await directlyRelationshipAnalysis(p1, p2);
+        if (r1) return r1;
+
+        const r2 = await alalysisIndirectlyRelationship(p1, p2);
+        if (r2) return r2;
+
+        return null;
     };
 
     return {

@@ -10,9 +10,22 @@ export enum LifeStatus {
     DEAD = "Đã mất"
 };
 
+export type RelationshipAnalysisResult = {
+    p1: {
+        wayOfCallingTheOther: string | null;
+        relationshipWithTheOtherDesc: string | null;
+    },
+    p2: {
+        wayOfCallingTheOther: string | null;
+        relationshipWithTheOtherDesc: string | null;
+    },
+    relationshipDetailDesc: string | null;
+};
+
 export type PersonAdvanceDAO = {
     isPersonBelongToFamily(id: string): Promise<boolean>;
     isPeopleBelongToFamily(ids: string[]): Promise<Record<string, boolean>>;
+    relationshipAnalysis(p1: Person, p2: Person): Promise<RelationshipAnalysisResult | null>;
 };
 
 export type Person = {
@@ -31,87 +44,84 @@ export type Person = {
 };
 
 export const ALL_QUAN_HE_TRUC_TIEP_INFO = {
-    VoChong: ["Vợ chồng", p => p.gender == Gender.MALE ? "Chồng" : "Vợ"],
-    BanDoiDongTinh: ["Bạn đời đồng tính"],
-    Bo: ["Bố", "Bố"],
-    Me: ["Mẹ", "Mẹ"],
-    ConTrai: ["Con trai", "Con"],
-    ConGai: ["Con gái", "Con"],
-    AnhTrai: ["Anh Trai", "Anh"],
-    EmTrai: ["Em trai", "Em"],
-    ChiGai: ["Chi gái", "Chị"],
-    EmGai: ["Em gái", "Em"],
-    MeKe: ["Mẹ kế", "Mẹ"],
-    EmTraiCuaBo: ["Em trai của bố", "Chú"],
-    EmGaiCuaBo: ["Em gái của bố", "Cô"],
-    ConCuaAnhTrai: ["Con của anh trai"],
-    AnhTraiCuaBo: ["Anh trai của bố", "Bác"],
-    ConCuaEmTrai: ["Con của em trai"],
-    ChiGaiCuaBo: ["Chị gái của bố", "Bác"],
-    OngNoi: ["Ông nội"],
-    BaNoi: ["Bà nội"],
-    ChauNoi: ["Cháu nội"],
-    OngNgoai: ["Ông ngoại"],
-    BaNgoai: ["Bà Ngoại"],
-    ChauNgoai: ["Cháu ngoại"],
-    ChaKe: ["Cha kế", "Bố"],
-    EmTraiCuaMe: ["Em trai của mẹ", "Cậu"],
-    ConCuaChiGai: ["Con của chị gái"],
-    EmGaiCuaMe: ["Em gái của mẹ", "Dì"],
-    AnhTraiCuaMe: ["Anh trai của mẹ", "Bác"],
-    ChiGaiCuaMe: ["Chị gái của mẹ", "Bác"],
-    ConCuaEmGai: ["Con của em gái"],
-    AnhRe: ["Anh rể", "Anh"],
-    EmVo: ["Em vợ", "Em"],
-    EmRe: ["Em rể", "Em"],
-    AnhVo: ["Anh vợ", "Anh"],
-    ChiDau: ["Chị dâu", "Chị"],
-    EmChong: ["Em chồng", "Em"],
-    EmDau: ["Em dâu", "Em"],
-    AnhChong: ["Anh chồng", "Anh"],
-    ConDau: ["Con dâu", "Con"],
-    BoChong: ["Bố chồng", "Bố"],
-    MeChong: ["Mẹ chồng", "Mẹ"],
-    ConRe: ["Con rể", "Con"],
-    BoVo: ["Bố vợ", "Bố"],
-    MeVo: ["Mẹ vợ", "Mẹ"],
-    VoCuaAnhTraiCuaBo: ["Vợ của anh trai của bố"],
-    ConCuaEmChong: ["Con của em chồng"],
-    ConCaiCuaBac: ["Con cái của bác"],
-    ConCuaEmVo: ["Con của em vợ"],
-    VoCuaEmTraiCuaBo: ["Vợ của em trai của bố"],
-    ConCuaAnhChong: ["Con của anh trai của chồng"],
-    ConCaiCuaChuThim: ["Con cái của chú thím"],
-    ChongCuaChiGaiCuaBo: ["Chồng của chị gái của bố"],
-    ChongCuaEmGaiCuaBo: ["Chồng của em gái của bố"],
-    ConCuaAnhVo: ["Con của anh vợ"],
-    ConCaiCuaCoChu: ["Con cái của cô chú"],
-    VoCuaAnhTraiCuaMe: ["Vợ của anh trai của mẹ"],
-    ChongCuaChiGaiCuaMe: ["Chồng của chị gái của mẹ"],
-    VoCuaEmTraiCuaMe: ["Vợ của em trai của mẹ"],
-    ConCuaChiChong: ["Con của chị của chồng"],
-    ConCaiCuaCauMo: ["Con cái của cậu mợ"],
-    ChongCuaEmGaiCuaMe: ["Chồng của em gái của mẹ"],
-    ConCuaChiVo: ["Con cái của chị của vợ"],
-    ConCaiCuaChuDi: ["Con cái của chú dì"],
-    OngCoNoi: ["Ông cố nội"],
-    BaCoNoi: ["Bà cố nội"],
-    ChatNoi: ["Chắt nội"],
-    OngCoNgoai: ["Ông cố ngoại"],
-    BaCoNgoai: ["Bà cố ngoại"],
-    ChatNgoai: ["Chắt ngoại"],
-    OngKyNoi: ["Ông kỵ nội"],
-    BaKyNoi: ["Bà kỵ nội"],
-    ChutNoi: ["Chút nội"],
-    OngKyNgoai: ["Ông kỵ Ngoại"],
-    BaKyNgoai: ["Bà kỵ ngoại"],
-    ChutNgoai: ["Chút ngoại"]
-} as const satisfies Record<string, [
-    desc: string,
-    wayOfCalling?: string | ((target: Person) => string),
-]>;
+    VoChong: { desc: "Vợ chồng", wayOfCalling: (p: Person) => p.gender == Gender.MALE ? "Chồng" : "Vợ" },
+    BanDoiDongTinh: { desc: "Bạn đời đồng tính", wayOfCalling: null },
+    Bo: { desc: "Bố", wayOfCalling: "Bố" },
+    Me: { desc: "Mẹ", wayOfCalling: "Mẹ" },
+    ConTrai: { desc: "Con trai", wayOfCalling: "Con" },
+    ConGai: { desc: "Con gái", wayOfCalling: "Con" },
+    AnhTrai: { desc: "Anh Trai", wayOfCalling: "Anh" },
+    EmTrai: { desc: "Em trai", wayOfCalling: "Em" },
+    ChiGai: { desc: "Chi gái", wayOfCalling: "Chị" },
+    EmGai: { desc: "Em gái", wayOfCalling: "Em" },
+    MeKe: { desc: "Mẹ kế", wayOfCalling: "Mẹ" },
+    EmTraiCuaBo: { desc: "Em trai của bố", wayOfCalling: "Chú" },
+    EmGaiCuaBo: { desc: "Em gái của bố", wayOfCalling: "Cô" },
+    ConCuaAnhTrai: { desc: "Con của anh trai", wayOfCalling: null },
+    AnhTraiCuaBo: { desc: "Anh trai của bố", wayOfCalling: "Bác" },
+    ConCuaEmTrai: { desc: "Con của em trai", wayOfCalling: null },
+    ChiGaiCuaBo: { desc: "Chị gái của bố", wayOfCalling: "Bác" },
+    OngNoi: { desc: "Ông nội", wayOfCalling: null },
+    BaNoi: { desc: "Bà nội", wayOfCalling: null },
+    ChauNoi: { desc: "Cháu nội", wayOfCalling: null },
+    OngNgoai: { desc: "Ông ngoại", wayOfCalling: null },
+    BaNgoai: { desc: "Bà Ngoại", wayOfCalling: null },
+    ChauNgoai: { desc: "Cháu ngoại", wayOfCalling: null },
+    ChaKe: { desc: "Cha kế", wayOfCalling: "Bố" },
+    EmTraiCuaMe: { desc: "Em trai của mẹ", wayOfCalling: "Cậu" },
+    ConCuaChiGai: { desc: "Con của chị gái", wayOfCalling: null },
+    EmGaiCuaMe: { desc: "Em gái của mẹ", wayOfCalling: "Dì" },
+    AnhTraiCuaMe: { desc: "Anh trai của mẹ", wayOfCalling: "Bác" },
+    ChiGaiCuaMe: { desc: "Chị gái của mẹ", wayOfCalling: "Bác" },
+    ConCuaEmGai: { desc: "Con của em gái", wayOfCalling: null },
+    AnhRe: { desc: "Anh rể", wayOfCalling: "Anh" },
+    EmVo: { desc: "Em vợ", wayOfCalling: "Em" },
+    EmRe: { desc: "Em rể", wayOfCalling: "Em" },
+    AnhVo: { desc: "Anh vợ", wayOfCalling: "Anh" },
+    ChiDau: { desc: "Chị dâu", wayOfCalling: "Chị" },
+    EmChong: { desc: "Em chồng", wayOfCalling: "Em" },
+    EmDau: { desc: "Em dâu", wayOfCalling: "Em" },
+    AnhChong: { desc: "Anh chồng", wayOfCalling: "Anh" },
+    ConDau: { desc: "Con dâu", wayOfCalling: "Con" },
+    BoChong: { desc: "Bố chồng", wayOfCalling: "Bố" },
+    MeChong: { desc: "Mẹ chồng", wayOfCalling: "Mẹ" },
+    ConRe: { desc: "Con rể", wayOfCalling: "Con" },
+    BoVo: { desc: "Bố vợ", wayOfCalling: "Bố" },
+    MeVo: { desc: "Mẹ vợ", wayOfCalling: "Mẹ" },
+    VoCuaAnhTraiCuaBo: { desc: "Vợ của anh trai của bố", wayOfCalling: "Bác" },
+    ConCuaEmChong: { desc: "Con của em chồng", wayOfCalling: null },
+    ConCaiCuaBac: { desc: "Con cái của bác", wayOfCalling: null },
+    ConCuaEmVo: { desc: "Con của em vợ", wayOfCalling: null },
+    VoCuaEmTraiCuaBo: { desc: "Vợ của em trai của bố", wayOfCalling: "Thím" },
+    ConCuaAnhChong: { desc: "Con của anh trai của chồng", wayOfCalling: null },
+    ConCaiCuaChuThim: { desc: "Con cái của chú thím", wayOfCalling: null },
+    ChongCuaChiGaiCuaBo: { desc: "Chồng của chị gái của bố", wayOfCalling: "Bác" },
+    ChongCuaEmGaiCuaBo: { desc: "Chồng của em gái của bố", wayOfCalling: "Chú" },
+    ConCuaAnhVo: { desc: "Con của anh vợ", wayOfCalling: null },
+    ConCaiCuaCoChu: { desc: "Con cái của cô chú", wayOfCalling: null },
+    VoCuaAnhTraiCuaMe: { desc: "Vợ của anh trai của mẹ", wayOfCalling: "Bác" },
+    ChongCuaChiGaiCuaMe: { desc: "Chồng của chị gái của mẹ", wayOfCalling: "Bác" },
+    VoCuaEmTraiCuaMe: { desc: "Vợ của em trai của mẹ", wayOfCalling: "Mợ" },
+    ConCuaChiChong: { desc: "Con của chị của chồng", wayOfCalling: null },
+    ConCaiCuaCauMo: { desc: "Con cái của cậu mợ", wayOfCalling: null },
+    ChongCuaEmGaiCuaMe: { desc: "Chồng của em gái của mẹ", wayOfCalling: "Chú" },
+    ConCuaChiVo: { desc: "Con cái của chị của vợ", wayOfCalling: null },
+    ConCaiCuaChuDi: { desc: "Con cái của chú dì", wayOfCalling: null },
+    OngCoNoi: { desc: "Ông cố nội", wayOfCalling: null },
+    BaCoNoi: { desc: "Bà cố nội", wayOfCalling: null },
+    ChatNoi: { desc: "Chắt nội", wayOfCalling: null },
+    OngCoNgoai: { desc: "Ông cố ngoại", wayOfCalling: null },
+    BaCoNgoai: { desc: "Bà cố ngoại", wayOfCalling: null },
+    ChatNgoai: { desc: "Chắt ngoại", wayOfCalling: null },
+    OngKyNoi: { desc: "Ông kỵ nội", wayOfCalling: null },
+    BaKyNoi: { desc: "Bà kỵ nội", wayOfCalling: null },
+    ChutNoi: { desc: "Chút nội", wayOfCalling: null },
+    OngKyNgoai: { desc: "Ông kỵ Ngoại", wayOfCalling: null },
+    BaKyNgoai: { desc: "Bà kỵ ngoại", wayOfCalling: null },
+    ChutNgoai: { desc: "Chút ngoại", wayOfCalling: null },
+} as const;
 
-export const OPPOSITE_RELATIONSHIPS: Record<QuanHeTrucTiep, [QuanHeTrucTiep, remaining?: QuanHeTrucTiep[]] | undefined> = {
+export const OPPOSITE_RELATIONSHIPS: Record<QuanHeTrucTiep, [first: QuanHeTrucTiep, remaining?: QuanHeTrucTiep[]] | undefined> = {
     VoChong: ["VoChong"],
     BanDoiDongTinh: ["BanDoiDongTinh"],
     Bo: ["ConTrai", ["ConGai"]],
@@ -188,13 +198,6 @@ export const OPPOSITE_RELATIONSHIPS: Record<QuanHeTrucTiep, [QuanHeTrucTiep, rem
     BaKyNgoai: ["ChutNgoai"],
     ChutNgoai: ["OngKyNgoai", ["BaKyNgoai"]]
 };
-
-const HAS_EQUIVALINT_INDIRECTLY_RELATIONSHIP = [
-    "EmTraiCuaBo", "EmGaiCuaBo", "AnhTraiCuaBo", "ChiGaiCuaBo",
-    "EmTraiCuaMe", "EmGaiCuaMe", "AnhTraiCuaMe", "ChiGaiCuaMe"
-] as const satisfies QuanHeTrucTiep[];
-
-export type QuanHeTrucTiepHasEquivalintGianTiep = (typeof HAS_EQUIVALINT_INDIRECTLY_RELATIONSHIP)[number];
 
 export type QuanHeTrucTiep = keyof typeof ALL_QUAN_HE_TRUC_TIEP_INFO;
 
