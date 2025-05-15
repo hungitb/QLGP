@@ -74,7 +74,7 @@ ChartJS.register(
 
 import { personApi } from "@/api/person";
 import FullViewLoading from "@/components/FullViewLoading.vue";
-import { Gender, LifeStatus } from "../../../../backend/src/model/Person";
+import { ALL_GENDERS, ALL_LIFE_STATES, genderDisplayText, lifeStateDisplayText } from "../../../../backend/src/model/Person";
 
 function getSampleData({
   arrayBackgroundColor = false,
@@ -246,14 +246,11 @@ export default defineComponent({
     }
 
     this.dataGender = {
-      labels: ["Nam", "Nữ"],
+      labels: ALL_GENDERS.map(g => genderDisplayText[g]),
       datasets: [
         {
           label: "",
-          data: [Gender.MALE, Gender.FEMALE].map((k) => {
-            if (!data.gender) return 0;
-            return data.gender[k as Gender.MALE | Gender.FEMALE];
-          }),
+          data: ALL_GENDERS.map((g) => data.gender[g]),
           backgroundColor: ["#1976d2", "#e91e63"],
         },
       ],
@@ -261,16 +258,11 @@ export default defineComponent({
     assignMaxYValue(this.dataGender, this.chartGenderOptions);
 
     this.dataStatus = {
-      labels: ["Còn sống", "Đã mất", "Không rõ"],
+      labels: ALL_LIFE_STATES.map(ls => lifeStateDisplayText[ls]),
       datasets: [
         {
           label: "Số người",
-          data: [LifeStatus.ALIVE, LifeStatus.DEAD, "unknown"].map((k) => {
-            if (!data.status) return 0;
-            return data.status[
-              k as LifeStatus.ALIVE | LifeStatus.DEAD | "unknown"
-            ];
-          }),
+          data: ALL_LIFE_STATES.map((ls) => data.status[ls]),
           backgroundColor: ["lightgreen", "rgb(255, 99, 132)", "darkgray"],
         },
       ],

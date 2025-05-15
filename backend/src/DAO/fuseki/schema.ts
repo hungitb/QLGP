@@ -221,7 +221,7 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                 const id = personSchema.removeSelfPrefix(vars[`x${i}`].value);
                 const gender = vars[`gx${i}`].value;
                 
-                if (gender == Gender.MALE || gender == Gender.FEMALE) {
+                if (gender == "MALE" || gender == "FEMALE") {
                     result.push({ id, gender });
                 } else {
                     throw Error(`Found invalid gender: ${gender}`);
@@ -582,7 +582,7 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                         switch (test2Result.relationshipPXPZ) {
                             case "AnhTrai":
                             case "ChiGai":
-                                if (test2Result.pz.gender == Gender.MALE) {
+                                if (test2Result.pz.gender == "MALE") {
                                     relationshipP3P4 = "EmTrai";
                                 } else {
                                     relationshipP3P4 = "EmGai";
@@ -590,7 +590,7 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                                 break;
                             case "EmTrai":
                             case "EmGai":
-                                if (test2Result.pz.gender == Gender.MALE) {
+                                if (test2Result.pz.gender == "MALE") {
                                     relationshipP3P4 = "AnhTrai";
                                 } else {
                                     relationshipP3P4 = "ChiGai";
@@ -660,29 +660,29 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                 if (delta == 0) {
                     vaiTrenCallVaiDuoi = "Em";
 
-                    if (vaiLon.gender == Gender.FEMALE) {
+                    if (vaiLon.gender == "FEMALE") {
                         vaiDuoiCallVaiTren = "Chị";
                         vaiDuoiCallSpouseVaiTren = "Anh";
                     } else {
                         vaiDuoiCallVaiTren = "Anh";
                         vaiDuoiCallSpouseVaiTren = "Chị";
 
-                        if (vaiLon.gender != Gender.MALE && isDevMode) {
+                        if (vaiLon.gender != "MALE" && isDevMode) {
                             throw Error("Missing gender case");
                         }
                     }
                 } else if (delta == 1) {
-                    const vaiBeIsMale = vaiBe.gender == Gender.MALE;
+                    const vaiBeIsMale = vaiBe.gender == "MALE";
                     var parentVaiBeIsMale: boolean;
                     if (p1IsVaiTren) {
                         if ("connectingPathP2P4" in data) {
-                            parentVaiBeIsMale = data.connectingPathP2P4[1].gender == Gender.MALE;
+                            parentVaiBeIsMale = data.connectingPathP2P4[1].gender == "MALE";
                         } else {
                             throw Error("Data must contains connectingPathP2P4, because P2 is vai be");
                         }
                     } else {
                         if ("connectingPathP1P3" in data) {
-                            parentVaiBeIsMale = data.connectingPathP1P3[1].gender == Gender.MALE;
+                            parentVaiBeIsMale = data.connectingPathP1P3[1].gender == "MALE";
                         } else {
                             throw Error("Data must contains connectingPathP1P3, because P1 is vai be");
                         }
@@ -728,16 +728,16 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                         }
                     }
                 } else if (delta == 2) {
-                    vaiDuoiCallVaiTren = vaiLon.gender == Gender.MALE ? "Ông" : "Bà";
-                    vaiDuoiCallSpouseVaiTren = vaiLon.gender == Gender.MALE ? "Bà" : "Ông";
+                    vaiDuoiCallVaiTren = vaiLon.gender == "MALE" ? "Ông" : "Bà";
+                    vaiDuoiCallSpouseVaiTren = vaiLon.gender == "MALE" ? "Bà" : "Ông";
                     vaiTrenCallVaiDuoi = "Cháu";
                 } else if (delta == 3) {
-                    vaiDuoiCallVaiTren = vaiLon.gender == Gender.MALE ? "Ông cố" : "Bà cố";
-                    vaiDuoiCallSpouseVaiTren = vaiLon.gender == Gender.MALE ? "Bà cố" : "Ông cố";
+                    vaiDuoiCallVaiTren = vaiLon.gender == "MALE" ? "Ông cố" : "Bà cố";
+                    vaiDuoiCallSpouseVaiTren = vaiLon.gender == "MALE" ? "Bà cố" : "Ông cố";
                     vaiTrenCallVaiDuoi = null;
                 } else if (delta == 4) {
-                    vaiDuoiCallVaiTren = vaiLon.gender == Gender.MALE ? "Ông kỵ" : "Bà kỵ";
-                    vaiDuoiCallSpouseVaiTren = vaiLon.gender == Gender.MALE ? "Bà kỵ" : "Ông kỵ";
+                    vaiDuoiCallVaiTren = vaiLon.gender == "MALE" ? "Ông kỵ" : "Bà kỵ";
+                    vaiDuoiCallSpouseVaiTren = vaiLon.gender == "MALE" ? "Bà kỵ" : "Ông kỵ";
                     vaiTrenCallVaiDuoi = null;
                 } else {
                     vaiDuoiCallVaiTren = "Cụ";
@@ -794,7 +794,7 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
             }
 
             const vaiTroVoHayChong = (p: Person, capitalize = false) => {
-                const x = p.gender == Gender.MALE ? "Chồng" : "Vợ";
+                const x = p.gender == "MALE" ? "Chồng" : "Vợ";
                 if (capitalize) {
                     return x;
                 }

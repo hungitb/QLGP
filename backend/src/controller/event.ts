@@ -18,7 +18,7 @@ import {
     convertDateStoredDBToDateInputDB,
     DateStoredDB
 } from "../utils/DateUtils";
-import { LifeStatus, type Person } from "../model/Person";
+import { type Person } from "../model/Person";
 
 export enum EventTargetType {
     ALL = "ALL",
@@ -152,7 +152,7 @@ export function extractEvents(startDate: StandardNormalDate, endDate: StandardNo
                         explain = `Sinh nhật bị lùi 1 ngày do năm ${year} không có ngày 29/2`;
                     }
 
-                    if (isInTimeRange(date) && (person.status != LifeStatus.DEAD || (!person.deathdate) || compareTwoDateString(date, person.deathdate) <= 0)) {
+                    if (isInTimeRange(date) && (person.status != "DEAD" || (!person.deathdate) || compareTwoDateString(date, person.deathdate) <= 0)) {
                         events.push({
                             type: EventType.BIRTHDAY,
                             normalDate: date,

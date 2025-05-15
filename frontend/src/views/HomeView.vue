@@ -53,7 +53,7 @@
                 </template>
 
                 <template v-slot:item.gender="{ value }">
-                  {{ value != Gender.MALE ? "Nữ" : "Nam" }}
+                  {{ genderDisplayText[value] }}
                 </template>
 
                 <template
@@ -88,12 +88,12 @@
                 </template>
 
                 <template v-slot:item.status_deathdate="{ item }">
-                  <template v-if="item.status == LifeStatus.ALIVE">
-                    <span style="color: green">Còn sống</span>
+                  <template v-if="item.status == 'ALIVE'">
+                    <span :style="{ color: lifeStateHightlightColor[item.status] }">Còn sống</span>
                   </template>
 
-                  <template v-else-if="item.status == LifeStatus.DEAD">
-                    <span style="color: red">Đã mất</span>
+                  <template v-else-if="item.status == 'DEAD'">
+                    <span :style="{ color: lifeStateHightlightColor[item.status] }">Đã mất</span>
                     <span v-if="item.deathdate" class="ml-2">
                       {{
                         transformDateString(item.deathdate, {
@@ -126,7 +126,7 @@
                       <template v-else>
                         {{
                           $store.state.people.filter(
-                            (p) => p.gender == Gender.MALE
+                            (p) => p.gender == "MALE"
                           ).length
                         }}
                       </template>
@@ -135,7 +135,7 @@
                   <v-spacer></v-spacer>
                   <CustomPersonAvatar
                     :person="{
-                      gender: Gender.MALE,
+                      gender: 'MALE',
                       avatarUrl: null,
                       callname: '',
                     }"
@@ -159,7 +159,7 @@
                       <template v-else>
                         {{
                           $store.state.people.filter(
-                            (p) => p.gender == Gender.FEMALE
+                            (p) => p.gender == "FEMALE"
                           ).length
                         }}
                       </template>
@@ -168,7 +168,7 @@
                   <v-spacer></v-spacer>
                   <CustomPersonAvatar
                     :person="{
-                      gender: Gender.FEMALE,
+                      gender: 'FEMALE',
                       avatarUrl: null,
                       callname: '',
                     }"
@@ -257,7 +257,7 @@
 <script lang="ts">
 import Vue from "vue";
 
-import { Gender, LifeStatus, Person } from "../../../backend/src/model/Person";
+import { Gender, genderDisplayText, LifeState, Person } from "../../../backend/src/model/Person";
 import { type Event } from "../../../backend/src/controller/event";
 import { allEventTypes } from "../../../backend/src/controller/event";
 import {
@@ -286,9 +286,13 @@ export default Vue.extend({
   data: function () {
     return {
       allEventTypes,
-      Gender,
-      LifeStatus,
       userFriendlyDateFormat,
+      genderDisplayText,
+      lifeStateHightlightColor: {
+        ALIVE: "green",
+        DEAD: "red",
+        UNKNOWN: null
+      } as Record<LifeState, string | null>,
 
       search: "",
       page: 1,
@@ -350,7 +354,7 @@ export default Vue.extend({
       if (sortField == "status") {
         compare = (v1, v2, k1, k2) => {
           if (v1 != v2) {
-            return v1 == LifeStatus.ALIVE ? -1 : 1;
+            return v1 == "ALIVE" ? -1 : 1;
           }
           return compareTwoDateString(k1.deathdate, k2.deathdate, sortDesc[0]);
         };

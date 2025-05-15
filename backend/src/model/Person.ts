@@ -1,13 +1,18 @@
 import { DateStoredDB, StdDate } from "../utils/DateUtils";
 
-export enum Gender {
-    MALE = "Nam",
-    FEMALE = "Nữ"
+export const ALL_GENDERS = ["MALE", "FEMALE"] as const;
+export type Gender = (typeof ALL_GENDERS)[number];
+export const genderDisplayText: Record<Gender, string> = {
+    MALE: "Nam",
+    FEMALE: "Nữ"
 };
 
-export enum LifeStatus {
-    ALIVE = "Còn sống",
-    DEAD = "Đã mất"
+export const ALL_LIFE_STATES = ["ALIVE", "DEAD", "UNKNOWN"] as const;
+export type LifeState = (typeof ALL_LIFE_STATES)[number];
+export const lifeStateDisplayText: Record<LifeState, string> = {
+    ALIVE: "Còn sống",
+    DEAD: "Đã mất",
+    UNKNOWN: "Không rõ"
 };
 
 export type RelationshipAnalysisResult = {
@@ -35,7 +40,7 @@ export type Person = {
     avatarUrl: string | null;
     birthdate: DateStoredDB | null;
     deathdate: DateStoredDB | null;
-    status: LifeStatus | null;
+    status: LifeState;
     spouseId: string | null;
     fatherId: string | null;
     motherId: string | null;
@@ -44,7 +49,7 @@ export type Person = {
 };
 
 export const ALL_QUAN_HE_TRUC_TIEP_INFO = {
-    VoChong: { desc: "Vợ chồng", wayOfCalling: (p: Person) => p.gender == Gender.MALE ? "Chồng" : "Vợ" },
+    VoChong: { desc: "Vợ chồng", wayOfCalling: (p: Person) => p.gender == "MALE" ? "Chồng" : "Vợ" },
     BanDoiDongTinh: { desc: "Bạn đời đồng tính", wayOfCalling: null },
     Bo: { desc: "Bố", wayOfCalling: "Bố" },
     Me: { desc: "Mẹ", wayOfCalling: "Mẹ" },
@@ -212,7 +217,7 @@ export function relationshipWithDoiTrenDesc(connectingPath: { id: string, gender
 
     const delta = connectingPath.length - 1;
     if (delta == 1) {
-        return connectingPath[1].gender == Gender.MALE ? "Bố" : "Mẹ";
+        return connectingPath[1].gender == "MALE" ? "Bố" : "Mẹ";
     }
 
     const persistantDoiTrenGender = connectingPath.every((p, index, cp) => {
@@ -227,19 +232,19 @@ export function relationshipWithDoiTrenDesc(connectingPath: { id: string, gender
 
     const benNoi = persistantDoiTrenGender && (
         isPhaHe
-            ? (connectingPath[1].gender == Gender.MALE)
-            : (connectingPath[1].gender == Gender.FEMALE)
+            ? (connectingPath[1].gender == "MALE")
+            : (connectingPath[1].gender == "FEMALE")
     );
 
     const suffix = benNoi ? " nội" : " ngoại";
     if (delta == 2) {
-        return (connectingPath[2].gender == Gender.MALE ? "Ông" : "Bà") + suffix;
+        return (connectingPath[2].gender == "MALE" ? "Ông" : "Bà") + suffix;
     }
     if (delta == 3) {
-        return (connectingPath[3].gender == Gender.MALE ? "Ông cố" : "Bà cố") + suffix;
+        return (connectingPath[3].gender == "MALE" ? "Ông cố" : "Bà cố") + suffix;
     }
     if (delta == 4) {
-        return (connectingPath[4].gender == Gender.MALE ? "Ông kỵ" : "Bà kỵ") + suffix;
+        return (connectingPath[4].gender == "MALE" ? "Ông kỵ" : "Bà kỵ") + suffix;
     }
 
     return `Cụ tổ${benNoi ? "" : " bên ngoại"} trực tiếp ở trên ${delta} đời`;

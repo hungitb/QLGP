@@ -38,8 +38,7 @@
             v-model="gender"
             :disabled="isConstant('gender')"
           >
-            <v-radio label="Nam" :value="Gender.MALE"></v-radio>
-            <v-radio label="Nữ" :value="Gender.FEMALE"></v-radio>
+            <v-radio v-for="gender in ALL_GENDERS" :key="gender" :label="genderDisplayText[gender]" :value="gender"></v-radio>
           </v-radio-group>
         </v-col>
         <v-col cols="12">
@@ -63,7 +62,7 @@
           <DateInputGroup
             label="Ngày mất"
             v-model="deathdateDataObj"
-            :disabled="status != LifeStatus.DEAD || isConstant('deathdate')"
+            :disabled="status != 'DEAD' || isConstant('deathdate')"
             ref="di2"
           />
         </v-col>
@@ -103,7 +102,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { LifeStatus, Gender, Person } from "../../../backend/src/model/Person";
+import { Person, genderDisplayText, ALL_GENDERS, Gender, LifeState, ALL_LIFE_STATES, lifeStateDisplayText } from "../../../backend/src/model/Person";
 import CustomDialog from "./CustomDialog.vue";
 import { type CustomDialogButtonProp, DateFormat } from "./types";
 import DateInputGroup from "./input/DateInputGroup.vue";
@@ -148,17 +147,17 @@ export default defineComponent({
   data() {
     return {
       isLoading: false,
-      LifeStatus,
-      Gender,
+      ALL_GENDERS,
+      genderDisplayText,
 
       avartarSrc: null as string | null,
       callname: "",
-      gender: Gender.MALE,
+      gender: "MALE" as Gender,
       birthdateDataObj: ["", DateFormat.dmy] as [
         date: string,
         type: DateFormat
       ],
-      status: LifeStatus.ALIVE as LifeStatus | "null",
+      status: "ALIVE" as LifeState,
       deathdateDataObj: ["", DateFormat.dmyAL] as [
         date: string,
         type: DateFormat
@@ -166,14 +165,8 @@ export default defineComponent({
       fatherId: null as string | null,
       motherId: null as string | null,
       spouseId: null as string | null,
-
       callnameRules: [(v: string) => !!v || "Không được để trống"],
-
-      lifeStatusItems: [
-        { value: "null", text: "Không rõ" },
-        { value: LifeStatus.ALIVE, text: "Còn sống" },
-        { value: LifeStatus.DEAD, text: "Đã mất" },
-      ],
+      lifeStatusItems: ALL_LIFE_STATES.map(ls => ({ value: ls, text: lifeStateDisplayText[ls] })),
     };
   },
   computed: {
@@ -199,7 +192,7 @@ export default defineComponent({
       this.resetForm();
     },
     status(val) {
-      if (val != LifeStatus.DEAD) {
+      if (val != "DEAD") {
         this.deathdateDataObj = ["", DateFormat.dmyAL];
       }
     },
@@ -238,7 +231,7 @@ export default defineComponent({
           });
         };
         if (role == "child") {
-          if (this.$store.state.personMapping[id].gender == Gender.MALE) {
+          if (this.$store.state.personMapping[id].gender == "MALE") {
             addForTypes("mother", "spouse");
           } else {
             addForTypes("father", "spouse");
@@ -275,13 +268,13 @@ export default defineComponent({
         ? initData.avatarUrl
         : null;
       this.callname = this.isConstant("callname") ? initData.callname : "";
-      this.gender = this.isConstant("gender") ? initData.gender : Gender.MALE;
+      this.gender = this.isConstant("gender") ? initData.gender : "MALE";
       this.birthdateDataObj = this.isConstant("birthdate")
         ? convertToDateInputValue(initData.birthdate, DateFormat.dmy)
         : ["", DateFormat.dmy];
       this.status = this.isConstant("status")
-        ? initData.status || "null"
-        : LifeStatus.ALIVE;
+        ? initData.status
+        : "ALIVE";
       this.deathdateDataObj = this.isConstant("deathdate")
         ? convertToDateInputValue(initData.deathdate, DateFormat.dmyAL)
         : ["", DateFormat.dmyAL];
@@ -310,11 +303,11 @@ export default defineComponent({
             this.$store.state.personMapping[targetPerson.spouseId].gender !=
               targetPerson.gender
           ) {
-            if (targetPerson.gender == Gender.MALE) {
+            if (targetPerson.gender == "MALE") {
               if (!this.isConstant("motherId")) {
                 this.motherId = targetPerson.spouseId;
               }
-            } else if (targetPerson.gender == Gender.FEMALE) {
+            } else if (targetPerson.gender == "FEMALE") {
               if (!this.isConstant("fatherId")) {
                 this.fatherId = targetPerson.spouseId;
               }
@@ -354,9 +347,9 @@ export default defineComponent({
           handleDateInputValue(this.birthdateDataObj) != this.person.birthdate
         )
           data.birthdate = handleDateInputValue(this.birthdateDataObj);
-        if (this.status == "null" && this.person.status) data.status = null;
-        if (this.status != "null" && this.status != this.person.status)
-          data.status = this.status as LifeStatus;
+        if (this.status != this.person.status) {
+          data.status = this.status;
+        }
         if (handleDateInputValue(this.deathdateDataObj) != this.person.gender)
           data.deathdate = handleDateInputValue(this.deathdateDataObj);
         if (this.fatherId != this.person.fatherId)
@@ -378,7 +371,7 @@ export default defineComponent({
             callname: this.callname,
             gender: this.gender,
             birthdate: handleDateInputValue(this.birthdateDataObj),
-            status: this.status == "null" ? null : (this.status as LifeStatus),
+            status: this.status,
             deathdate: handleDateInputValue(this.deathdateDataObj),
             fatherId: this.fatherId,
             motherId: this.motherId,

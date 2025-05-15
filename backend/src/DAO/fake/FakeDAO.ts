@@ -1,7 +1,7 @@
 import type { IDAO, IDASO } from "../../model/IDAO";
 import type { User } from "../../model/User";
 import type { Person } from "../../model/Person";
-import { Gender, LifeStatus } from "../../model/Person";
+import { Gender } from "../../model/Person";
 import type { FieldDef } from "../../model/FieldDef";
 import type { FieldVal } from "../../model/FieldVal";
 import { DEFAUT_ADMIN_PASSWORD, DEFAUT_ADMIN_USERNAME } from "../../controller/auth";
@@ -466,12 +466,12 @@ function getData(): Promise<Dict[]>[] {
         const status =
           random() > 0.1
             ? random() < DEATH_RATE
-              ? LifeStatus.DEAD
-              : LifeStatus.ALIVE
-            : null;
+              ? "DEAD"
+              : "ALIVE"
+            : "UNKNOWN";
     
         const deathdate =
-          (status == LifeStatus.DEAD
+          (status == "DEAD"
             ? random() < 0.1
               ? null
               : random() < 0.3
@@ -481,13 +481,13 @@ function getData(): Promise<Dict[]>[] {
               : [day, month, year + randInt(1, 90)].join("/")
             : null) as DateStoredDB | null;
     
-        const gender = random() < MALE_RATE ? Gender.MALE : Gender.FEMALE;
+        const gender = random() < MALE_RATE ? "MALE" : "FEMALE";
     
         fakePeople.push({
           id: randomId(),
           callname: [
             sampleOne(["Nguyễn", "Lê", "Đinh", "Phạm"]),
-            gender == Gender.MALE ? "Văn" : "Thị",
+            gender == "MALE" ? "Văn" : "Thị",
             sampleOne("ABCDEFGHIKLMNOPQRSTWZYJ".split("")),
           ].join(" "),
           gender,
@@ -536,7 +536,7 @@ function getData(): Promise<Dict[]>[] {
           continue;
         }
   
-        if (p1.gender == Gender.MALE) {
+        if (p1.gender == "MALE") {
           p2.fatherId = p1.id;
         } else {
           p2.motherId = p1.id;
