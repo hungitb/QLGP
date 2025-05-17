@@ -38,7 +38,12 @@
             v-model="gender"
             :disabled="isConstant('gender')"
           >
-            <v-radio v-for="gender in ALL_GENDERS" :key="gender" :label="genderDisplayText[gender]" :value="gender"></v-radio>
+            <v-radio
+              v-for="gender in ALL_GENDERS"
+              :key="gender"
+              :label="genderDisplayText[gender]"
+              :value="gender"
+            ></v-radio>
           </v-radio-group>
         </v-col>
         <v-col cols="12">
@@ -102,7 +107,15 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { Person, genderDisplayText, ALL_GENDERS, Gender, LifeState, ALL_LIFE_STATES, lifeStateDisplayText } from "../../../backend/src/model/Person";
+import {
+  Person,
+  genderDisplayText,
+  ALL_GENDERS,
+  Gender,
+  LifeState,
+  ALL_LIFE_STATES,
+  lifeStateDisplayText,
+} from "../../../backend/src/model/Person";
 import CustomDialog from "./CustomDialog.vue";
 import { type CustomDialogButtonProp, DateFormat } from "./types";
 import DateInputGroup from "./input/DateInputGroup.vue";
@@ -166,7 +179,10 @@ export default defineComponent({
       motherId: null as string | null,
       spouseId: null as string | null,
       callnameRules: [(v: string) => !!v || "Không được để trống"],
-      lifeStatusItems: ALL_LIFE_STATES.map(ls => ({ value: ls, text: lifeStateDisplayText[ls] })),
+      lifeStatusItems: ALL_LIFE_STATES.map((ls) => ({
+        value: ls,
+        text: lifeStateDisplayText[ls],
+      })),
     };
   },
   computed: {
@@ -272,9 +288,7 @@ export default defineComponent({
       this.birthdateDataObj = this.isConstant("birthdate")
         ? convertToDateInputValue(initData.birthdate, DateFormat.dmy)
         : ["", DateFormat.dmy];
-      this.status = this.isConstant("status")
-        ? initData.status
-        : "ALIVE";
+      this.status = this.isConstant("status") ? initData.status : "ALIVE";
       this.deathdateDataObj = this.isConstant("deathdate")
         ? convertToDateInputValue(initData.deathdate, DateFormat.dmyAL)
         : ["", DateFormat.dmyAL];

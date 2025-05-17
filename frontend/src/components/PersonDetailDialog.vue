@@ -18,9 +18,7 @@
         </v-col>
         <v-col cols="12" sm="9">
           <div class="text-h5">{{ person.callname }}</div>
-          <div>
-            Giới tính: {{ genderDisplayText[person.gender] }}
-          </div>
+          <div>Giới tính: {{ genderDisplayText[person.gender] }}</div>
           <div>
             Ngày sinh:
             <template v-if="person.birthdate">
@@ -32,7 +30,9 @@
           </div>
           <div>
             Tình trạng:
-            <template v-if="person.status != 'DEAD'">{{ lifeStateDisplayText[person.status] }}</template>
+            <template v-if="person.status != 'DEAD'">{{
+              lifeStateDisplayText[person.status]
+            }}</template>
             <template v-else>
               {{ lifeStateDisplayText[person.status] }}
               <template v-if="person.deathdate">
@@ -192,7 +192,12 @@ import { defineComponent } from "vue";
 import CustomDialog from "./CustomDialog.vue";
 import { personApi } from "@/api/person";
 import CustomPersonAvatar from "./CustomPersonAvatar.vue";
-import { Person, Gender, genderDisplayText, lifeStateDisplayText } from "../../../backend/src/model/Person";
+import {
+  Person,
+  Gender,
+  genderDisplayText,
+  lifeStateDisplayText,
+} from "../../../backend/src/model/Person";
 import { transformDateString } from "../../../backend/src/utils/DateUtils";
 import {
   showDialogConfirm,

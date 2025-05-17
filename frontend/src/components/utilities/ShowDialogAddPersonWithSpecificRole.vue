@@ -158,9 +158,7 @@ export default defineComponent({
         showDialogAddOrCreatePerson({
           initData: {
             ...(roleOfPersonWillAdd == "father" ? { gender: "MALE" } : {}),
-            ...(roleOfPersonWillAdd == "mother"
-              ? { gender: "FEMALE" }
-              : {}),
+            ...(roleOfPersonWillAdd == "mother" ? { gender: "FEMALE" } : {}),
             ...(roleOfPersonWillAdd == "spouse" ? { spouseId: person.id } : {}),
             ...(roleOfPersonWillAdd == "child"
               ? person.gender == "MALE"

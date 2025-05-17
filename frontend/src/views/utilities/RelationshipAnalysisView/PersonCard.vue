@@ -14,27 +14,32 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import CustomPersonAvatar from "@/components/CustomPersonAvatar.vue";
-import { genderDisplayText, Person } from "../../../../../backend/src/model/Person";
+import {
+  genderDisplayText,
+  Person,
+} from "../../../../../backend/src/model/Person";
 
 export default defineComponent({
   components: {
-    CustomPersonAvatar
+    CustomPersonAvatar,
   },
   props: {
     id: {
       type: String,
-      required: true
-    }
+      required: true,
+    },
   },
   data() {
     return {
-      genderDisplayText
+      genderDisplayText,
     };
   },
   computed: {
     person() {
-      return (this as any).$store.state.personMapping[(this as any).id] as Person;
-    }
+      return (this as any).$store.state.personMapping[
+        (this as any).id
+      ] as Person;
+    },
   },
 });
 </script>

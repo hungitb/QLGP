@@ -89,11 +89,17 @@
 
                 <template v-slot:item.status_deathdate="{ item }">
                   <template v-if="item.status == 'ALIVE'">
-                    <span :style="{ color: lifeStateHightlightColor[item.status] }">Còn sống</span>
+                    <span
+                      :style="{ color: lifeStateHightlightColor[item.status] }"
+                      >Còn sống</span
+                    >
                   </template>
 
                   <template v-else-if="item.status == 'DEAD'">
-                    <span :style="{ color: lifeStateHightlightColor[item.status] }">Đã mất</span>
+                    <span
+                      :style="{ color: lifeStateHightlightColor[item.status] }"
+                      >Đã mất</span
+                    >
                     <span v-if="item.deathdate" class="ml-2">
                       {{
                         transformDateString(item.deathdate, {
@@ -125,9 +131,8 @@
                       ></v-skeleton-loader>
                       <template v-else>
                         {{
-                          $store.state.people.filter(
-                            (p) => p.gender == "MALE"
-                          ).length
+                          $store.state.people.filter((p) => p.gender == "MALE")
+                            .length
                         }}
                       </template>
                     </div>
@@ -257,7 +262,12 @@
 <script lang="ts">
 import Vue from "vue";
 
-import { Gender, genderDisplayText, LifeState, Person } from "../../../backend/src/model/Person";
+import {
+  Gender,
+  genderDisplayText,
+  LifeState,
+  Person,
+} from "../../../backend/src/model/Person";
 import { type Event } from "../../../backend/src/controller/event";
 import { allEventTypes } from "../../../backend/src/controller/event";
 import {
@@ -291,7 +301,7 @@ export default Vue.extend({
       lifeStateHightlightColor: {
         ALIVE: "green",
         DEAD: "red",
-        UNKNOWN: null
+        UNKNOWN: null,
       } as Record<LifeState, string | null>,
 
       search: "",

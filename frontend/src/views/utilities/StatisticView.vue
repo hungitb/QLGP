@@ -74,7 +74,12 @@ ChartJS.register(
 
 import { personApi } from "@/api/person";
 import FullViewLoading from "@/components/FullViewLoading.vue";
-import { ALL_GENDERS, ALL_LIFE_STATES, genderDisplayText, lifeStateDisplayText } from "../../../../backend/src/model/Person";
+import {
+  ALL_GENDERS,
+  ALL_LIFE_STATES,
+  genderDisplayText,
+  lifeStateDisplayText,
+} from "../../../../backend/src/model/Person";
 
 function getSampleData({
   arrayBackgroundColor = false,
@@ -246,7 +251,7 @@ export default defineComponent({
     }
 
     this.dataGender = {
-      labels: ALL_GENDERS.map(g => genderDisplayText[g]),
+      labels: ALL_GENDERS.map((g) => genderDisplayText[g]),
       datasets: [
         {
           label: "",
@@ -258,7 +263,7 @@ export default defineComponent({
     assignMaxYValue(this.dataGender, this.chartGenderOptions);
 
     this.dataStatus = {
-      labels: ALL_LIFE_STATES.map(ls => lifeStateDisplayText[ls]),
+      labels: ALL_LIFE_STATES.map((ls) => lifeStateDisplayText[ls]),
       datasets: [
         {
           label: "Số người",

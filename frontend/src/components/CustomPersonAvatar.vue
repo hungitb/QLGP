@@ -26,9 +26,7 @@
 
     <v-icon dark v-else large>
       {{
-        person.gender != "MALE"
-          ? "mdi-account-tie-woman"
-          : "mdi-account-tie"
+        person.gender != "MALE" ? "mdi-account-tie-woman" : "mdi-account-tie"
       }}
     </v-icon>
   </v-avatar>
@@ -75,8 +73,8 @@ export default defineComponent({
     return {
       defaultBgColorMapping: {
         MALE: "primary",
-        FEMALE: "pink"
-      } as Record<Gender, string>
+        FEMALE: "pink",
+      } as Record<Gender, string>,
     };
   },
   computed: {

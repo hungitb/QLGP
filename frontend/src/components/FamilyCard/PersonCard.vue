@@ -41,7 +41,9 @@
           <div class="text-h6" v-if="config.show.name">
             {{ person.callname }}
           </div>
-          <div v-if="config.show.gender">{{ genderDisplayText[person.gender] }}</div>
+          <div v-if="config.show.gender">
+            {{ genderDisplayText[person.gender] }}
+          </div>
           <div v-if="config.show.birthdate">
             Ngày sinh:
             {{

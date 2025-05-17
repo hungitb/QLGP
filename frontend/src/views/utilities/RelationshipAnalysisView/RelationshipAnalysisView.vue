@@ -30,27 +30,49 @@
         <div class="mx-auto" style="max-width: max(30%, 600px)">
           <div v-if="relationship.relationshipDetailDesc" class="mb-8">
             <div class="text-center px-4 text-h5">
-              <template v-for="g, i in splitRelationshipDetailDesc(relationship.relationshipDetailDesc)">
-                <template v-if="g.type == 'text'">{{ g.value }}</template>
-                <span v-else @click="showPersonDetailInfo(g.id)" class="green--text" style="cursor: pointer">{{ g.value }}</span>
-              </template>.
+              <template
+                v-for="(g, i) in splitRelationshipDetailDesc(
+                  relationship.relationshipDetailDesc
+                )"
+              >
+                <span v-if="g.type == 'text'" :key="i">{{ g.value }}</span>
+                <span
+                  v-else
+                  @click="showPersonDetailInfo(g.id)"
+                  class="green--text"
+                  style="cursor: pointer"
+                  :key="i"
+                >
+                  {{ g.value }}
+                </span> </template
+              >.
             </div>
           </div>
           <div>
             <RelationshipDesc
-              v-if="relationship.p2.wayOfCallingTheOther || relationship.p2.relationshipWithTheOtherDesc"
+              v-if="
+                relationship.p2.wayOfCallingTheOther ||
+                relationship.p2.relationshipWithTheOtherDesc
+              "
               :from-id="id1"
               :to-id="id2"
               :way-of-calling-the-other="relationship.p2.wayOfCallingTheOther"
-              :relationship-with-the-other-desc="relationship.p2.relationshipWithTheOtherDesc"
+              :relationship-with-the-other-desc="
+                relationship.p2.relationshipWithTheOtherDesc
+              "
             ></RelationshipDesc>
             <RelationshipDesc
-              v-if="relationship.p1.wayOfCallingTheOther || relationship.p1.relationshipWithTheOtherDesc"
+              v-if="
+                relationship.p1.wayOfCallingTheOther ||
+                relationship.p1.relationshipWithTheOtherDesc
+              "
               class="mt-8"
               :from-id="id2"
               :to-id="id1"
               :way-of-calling-the-other="relationship.p1.wayOfCallingTheOther"
-              :relationship-with-the-other-desc="relationship.p1.relationshipWithTheOtherDesc"
+              :relationship-with-the-other-desc="
+                relationship.p1.relationshipWithTheOtherDesc
+              "
             ></RelationshipDesc>
           </div>
         </div>
@@ -63,7 +85,6 @@
 import { defineComponent } from "vue";
 import PersonInputGroup from "@/components/input/PersonInputGroup.vue";
 import { personApi } from "@/api/person";
-import PersonCard from "./PersonCard.vue";
 import { RelationshipAnalysisResult } from "../../../../../backend/src/model/Person";
 import { showDialogPersonDetailInfo } from "@/components/utilities";
 import RelationshipDesc from "./RelationshipDesc.vue";
@@ -72,7 +93,8 @@ import RelationshipDesc from "./RelationshipDesc.vue";
 
 export default defineComponent({
   components: {
-    PersonInputGroup, PersonCard, RelationshipDesc
+    PersonInputGroup,
+    RelationshipDesc,
   },
   data() {
     return {
@@ -97,7 +119,10 @@ export default defineComponent({
   methods: {
     splitRelationshipDetailDesc(desc: string) {
       const regex = /\$person{id=([\s\S]*?),\s*\{\{([\s\S]*?)\}\}}/g;
-      const result: ({ type: "text", value: string } | { type: "person", id: string, value: string })[] = [];
+      const result: (
+        | { type: "text"; value: string }
+        | { type: "person"; id: string; value: string }
+      )[] = [];
       let lastIndex = 0;
       let match: RegExpExecArray | null = null;
 
@@ -107,14 +132,14 @@ export default defineComponent({
         if (matchStart > lastIndex) {
           result.push({
             type: "text",
-            value: desc.slice(lastIndex, matchStart)
+            value: desc.slice(lastIndex, matchStart),
           });
         }
 
         result.push({
           type: "person",
           id: match[1].trim(),
-          value: match[2].trim()
+          value: match[2].trim(),
         });
 
         lastIndex = regex.lastIndex;
@@ -123,7 +148,7 @@ export default defineComponent({
       if (lastIndex < desc.length) {
         result.push({
           type: "text",
-          value: desc.slice(lastIndex)
+          value: desc.slice(lastIndex),
         });
       }
 
@@ -131,7 +156,7 @@ export default defineComponent({
     },
     showPersonDetailInfo(id: string) {
       showDialogPersonDetailInfo({
-        personId: id
+        personId: id,
       });
     },
     async analyze() {

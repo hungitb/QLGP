@@ -9,11 +9,19 @@
           là
           <template v-if="wayOfCallingTheOther">
             <span class="green--text">{{ wayOfCallingTheOther }}</span>
-            <template v-if="relationshipWithTheOtherDesc && relationshipWithTheOtherDesc != wayOfCallingTheOther">
-              (<span>{{ uncapitalie(relationshipWithTheOtherDesc) }}</span>)
+            <template
+              v-if="
+                relationshipWithTheOtherDesc &&
+                relationshipWithTheOtherDesc != wayOfCallingTheOther
+              "
+            >
+              (<span>{{ uncapitalie(relationshipWithTheOtherDesc) }}</span
+              >)
             </template>
           </template>
-          <span v-else>{{ uncapitalie(relationshipWithTheOtherDesc || "") }}</span>
+          <span v-else>{{
+            uncapitalie(relationshipWithTheOtherDesc || "")
+          }}</span>
           của
         </div>
         <div :style="dividerStyle"></div>
@@ -31,16 +39,16 @@ import PersonCard from "./PersonCard.vue";
 
 export default defineComponent({
   components: {
-    PersonCard
+    PersonCard,
   },
   props: {
     fromId: {
       type: String,
-      required: true
+      required: true,
     },
     toId: {
       type: String,
-      required: true
+      required: true,
     },
     wayOfCallingTheOther: {
       type: [String, null] as PropType<string | null>,
@@ -53,15 +61,15 @@ export default defineComponent({
     return {
       dividerStyle: {
         height: "2px",
-        backgroundColor: "grey"
-      }
+        backgroundColor: "grey",
+      },
     };
   },
   methods: {
     uncapitalie(x: string) {
       if (!x) return x;
       return x[0].toLowerCase() + x.slice(1);
-    }
-  }
+    },
+  },
 });
 </script>
