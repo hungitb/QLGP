@@ -171,8 +171,23 @@
   (?x quanHeTrucTiep:EmGai ?y),
   (?y quanHeTrucTiep:VoChong ?z)
   ->
-  (?x quanHeTrucTiep:EmRe ?z),
+  (?x quanHeTrucTiep:EmRe ?z)
+]
+
+[
+  (?x quanHeTrucTiep:EmGai ?y),
+  (?y quanHeTrucTiep:VoChong ?z),
+  (?x rdf:type :male)
+  ->
   (?z quanHeTrucTiep:AnhVo ?x)
+]
+
+[
+  (?x quanHeTrucTiep:EmGai ?y),
+  (?y quanHeTrucTiep:VoChong ?z),
+  (?x rdf:type :female)
+  ->
+  (?z quanHeTrucTiep:ChiVo ?x)
 ]
 
 [
@@ -187,8 +202,23 @@
   (?x quanHeTrucTiep:EmTrai ?y),
   (?y quanHeTrucTiep:VoChong ?z)
   ->
-  (?x quanHeTrucTiep:EmDau ?z),
+  (?x quanHeTrucTiep:EmDau ?z)
+]
+
+[
+  (?x quanHeTrucTiep:EmTrai ?y),
+  (?y quanHeTrucTiep:VoChong ?z),
+  (?x rdf:type :male)
+  ->
   (?z quanHeTrucTiep:AnhChong ?x)
+]
+
+[
+  (?x quanHeTrucTiep:EmTrai ?y),
+  (?y quanHeTrucTiep:VoChong ?z),
+  (?x rdf:type :female)
+  ->
+  (?z quanHeTrucTiep:ChiChong ?x)
 ]
 
 [

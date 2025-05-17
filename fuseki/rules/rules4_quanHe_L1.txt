@@ -72,7 +72,15 @@
   (?x inferred:lonTuoiHon ?y),
   (?x rdf:type :male)
   ->
-  (?y quanHeTrucTiep:AnhTrai ?x),
+  (?y quanHeTrucTiep:AnhTrai ?x)
+]
+
+[
+  (?x person:hasFather ?z),
+  (?y person:hasFather ?z),
+  (?x inferred:lonTuoiHon ?y),
+  (?y rdf:type :male)
+  ->
   (?x quanHeTrucTiep:EmTrai ?y)
 ]
 
@@ -82,7 +90,15 @@
   (?x inferred:lonTuoiHon ?y),
   (?x rdf:type :female)
   ->
-  (?y quanHeTrucTiep:ChiGai ?x),
+  (?y quanHeTrucTiep:ChiGai ?x)
+]
+
+[
+  (?x person:hasFather ?z),
+  (?y person:hasFather ?z),
+  (?x inferred:lonTuoiHon ?y),
+  (?y rdf:type :female)
+  ->
   (?x quanHeTrucTiep:EmGai ?y)
 ]
 
@@ -92,7 +108,15 @@
   (?x inferred:lonTuoiHon ?y),
   (?x rdf:type :male)
   ->
-  (?y quanHeTrucTiep:AnhTrai ?x),
+  (?y quanHeTrucTiep:AnhTrai ?x)
+]
+
+[
+  (?x person:hasMother ?z),
+  (?y person:hasMother ?z),
+  (?x inferred:lonTuoiHon ?y),
+  (?y rdf:type :male)
+  ->
   (?x quanHeTrucTiep:EmTrai ?y)
 ]
 
@@ -102,6 +126,14 @@
   (?x inferred:lonTuoiHon ?y),
   (?x rdf:type :female)
   ->
-  (?y quanHeTrucTiep:ChiGai ?x),
+  (?y quanHeTrucTiep:ChiGai ?x)
+]
+
+[
+  (?x person:hasMother ?z),
+  (?y person:hasMother ?z),
+  (?x inferred:lonTuoiHon ?y),
+  (?y rdf:type :female)
+  ->
   (?x quanHeTrucTiep:EmGai ?y)
 ]

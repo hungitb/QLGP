@@ -8,11 +8,6 @@
     ></CustomPersonAvatar>
     <v-card-title>{{ person.callname }}</v-card-title>
     <v-card-subtitle>{{ genderDisplayText[person.gender] }}</v-card-subtitle>
-    <v-card-text>
-      <div class="text-subtitle-1">
-        {{ genderDisplayText[person.gender] }}
-      </div>
-    </v-card-text>
   </v-card>
 </template>
 

@@ -15,6 +15,7 @@
       validate-on-blur
       chips
       :disabled="disabled"
+      :hide-details="hideDetails"
     >
       <template v-slot:selection="{ selected, attrs, item }">
         <v-chip
@@ -55,6 +56,7 @@
         validate-on-blur
         chips
         :disabled="disabled"
+        :hide-details="hideDetails"
         @click="dialogChoosePerson = true"
       >
         <template v-slot:selection="{ selected, attrs, item }">
@@ -202,6 +204,10 @@ export default defineComponent({
       default: false,
     },
     disabled: {
+      type: Boolean,
+      default: false,
+    },
+    hideDetails: {
       type: Boolean,
       default: false,
     },

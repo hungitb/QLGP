@@ -179,21 +179,22 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
     
             const tripples: string[] = [];
             var selectStatement = "";
+            var filterPart = "";
             for (let i = 0; i < delta; i++) {
                 if (i == 0) {
                     tripples.push(
-                        `person:${p1.id} ?r ?x0`,
+                        `person:${p1.id} ?r0 ?x0`,
                         "?x0 person:gender ?gx0"
                     );
                 } else if (i < delta - 1) {
                     tripples.push(
-                        `?x${i - 1} ?r ?x${i}`,
+                        `?x${i - 1} ?r${i} ?x${i}`,
                         `?x${i} person:gender ?gx${i}`
                     );
                 } else {
                     // i == delta - 1
                     tripples.push(
-                        `?x${i - 1} ?r person:${p2.id}`
+                        `?x${i - 1} ?r${i} person:${p2.id}`
                     );
                 }
     
@@ -201,12 +202,15 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                     if (selectStatement != "") selectStatement += " ";
                     selectStatement += `?x${i} ?gx${i}`;
                 }
+
+                if (filterPart != "") filterPart += " && ";
+                filterPart += `?r${i} in (person:hasFather, person:hasMother)`;
             }
     
             const selectResult = await personSchema.execSelectQuery(`
                 SELECT ${selectStatement} WHERE {
                     ${tripples.join(" .\n")}
-                    FILTER (?r in (person:hasFather, person:hasMother))
+                    FILTER (${filterPart})
                 }
             `);
     
@@ -383,27 +387,27 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                 type QuanHeAnhEmTrucTiep = (typeof preferRelationships)[number];
                 const preferRelationshipsData: Record<QuanHeAnhEmTrucTiep, {
                     isVaiLon: boolean, // Banch of P1 is bigger
-                    desc1: string;
+                    desc1: (p3: Person, p4: Person) => string;
                     desc2: string // Role of P4
                 }> = {
                     AnhTrai: {
                         isVaiLon: false,
-                        desc1: "Anh em ruột",
+                        desc1: () => "Anh em ruột",
                         desc2: "Anh"
                     },
                     EmTrai: {
                         isVaiLon: true,
-                        desc1: "Anh em ruột",
+                        desc1: (p3: Person) => p3.gender == "MALE" ? "Anh em ruột" : "Chị em ruột",
                         desc2: "Em"
                     },
                     ChiGai: {
                         isVaiLon: false,
-                        desc1: "Chị em ruột",
+                        desc1: () => "Chị em ruột",
                         desc2: "Chị"
                     },
                     EmGai: {
                         isVaiLon: true,
-                        desc1: "Chị em ruột",
+                        desc1: (p3: Person) => p3.gender == "MALE" ? "Anh em ruột" : "Chị em ruột",
                         desc2: "Em"
                     }
                 };
@@ -766,12 +770,16 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
 
                 const s1 = data.p3IsP1 ? escapePerson(p1) : `${escapePerson(data.p3)} (${uncapitalize(data.relationshipOfP3WithP1Desc)} của ${escapePerson(p1)})`;
                 const s2 = data.p4IsP2 ? escapePerson(p2) : `${escapePerson(data.p4)} (${uncapitalize(data.relationshipOfP4WithP2Desc)} của ${escapePerson(p2)})`;
+                const desc1 = preferRelationshipsData[data.relationshipP3P4].desc1(
+                    data.p3IsP1 ? p1 : data.p3,
+                    data.p4IsP2 ? p2 : data.p4
+                );
 
                 return {
                     data: {
                         p1: p1IsVaiTren ? vaiTrenInfo : vaiDuoiInfo,
                         p2: p1IsVaiTren ? vaiDuoiInfo : vaiTrenInfo,
-                        relationshipDetailDesc: `${s1} và ${s2} là hai ${uncapitalize(preferRelationshipsData[data.relationshipP3P4].desc1)}`
+                        relationshipDetailDesc: `${s1} và ${s2} là hai ${uncapitalize(desc1)}`
                             + ` (${(data.p4IsP2 ? p2 : data.p4).callname} là ${uncapitalize(preferRelationshipsData[data.relationshipP3P4].desc2)})`
                     },
                     p1Spouse: p1IsVaiTren ? vaiTrenSpouseInfo : vaiDuoiSpouseInfo,
@@ -1016,7 +1024,10 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                         wayOfCallingTheOther: resultQuanHeGianTiep?.p2.wayOfCallingTheOther || null,
                         relationshipWithTheOtherDesc: resultQuanHeGianTiep?.p2.relationshipWithTheOtherDesc || null
                     },
-                relationshipDetailDesc: resultQuanHeGianTiep?.relationshipDetailDesc || null
+                relationshipDetailDesc: (
+                    (r2to1 ? ALL_QUAN_HE_TRUC_TIEP_INFO[r2to1].needMoreDesc : true) ||
+                    (r1to2 ? ALL_QUAN_HE_TRUC_TIEP_INFO[r1to2].needMoreDesc : true)
+                ) ? resultQuanHeGianTiep?.relationshipDetailDesc || null : null
             };
         };
 

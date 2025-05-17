@@ -7,6 +7,7 @@
           label="Thành viên 1"
           one
           :exception-ids="id2 ? [id2] : []"
+          hide-details
         />
       </v-col>
       <v-col cols="12" md="6">
@@ -15,43 +16,42 @@
           label="Thành viên 2"
           one
           :exception-ids="id1 ? [id1] : []"
+          hide-details
         />
       </v-col>
     </v-row>
 
-    <div v-if="!isLoading && id1 && id2 && relationship">
+    <div v-if="relationship === null" class="text-center text-h5 mt-8">
+      Không rõ mối quan hệ giữa hai người này
+    </div>
+
+    <div v-if="!isLoading && id1 && id2 && relationship" class="mt-8 pb-8">
       <div>
         <div class="mx-auto" style="max-width: max(30%, 600px)">
-          <div class="d-flex">
-            <div>
-              <PersonCard :id="id1" />
-            </div>
-            <div class="d-flex flex-column justify-space-around" style="flex: 1">
-              <div v-if="relationship.p1.relationshipWithTheOtherDesc || relationship.p1.wayOfCallingTheOther">
-                <ConnectingLine
-                  :wayOfCallingTheOther="relationship.p1.wayOfCallingTheOther"
-                  :relationshipWithTheOtherDesc="relationship.p1.relationshipWithTheOtherDesc"
-                  is-upper-line>
-                </ConnectingLine>
-              </div>
-              <div v-if="relationship.p2.relationshipWithTheOtherDesc || relationship.p2.wayOfCallingTheOther">
-                <ConnectingLine
-                  :wayOfCallingTheOther="relationship.p2.wayOfCallingTheOther"
-                  :relationshipWithTheOtherDesc="relationship.p2.relationshipWithTheOtherDesc">
-                </ConnectingLine>
-              </div>
-            </div>
-            <div>
-              <PersonCard :id="id2" />
-            </div>
-          </div>
-          <div v-if="relationship.relationshipDetailDesc">
-            <div class="text-center pa-4">
+          <div v-if="relationship.relationshipDetailDesc" class="mb-8">
+            <div class="text-center px-4 text-h5">
               <template v-for="g, i in splitRelationshipDetailDesc(relationship.relationshipDetailDesc)">
                 <template v-if="g.type == 'text'">{{ g.value }}</template>
                 <span v-else @click="showPersonDetailInfo(g.id)" class="green--text" style="cursor: pointer">{{ g.value }}</span>
               </template>.
             </div>
+          </div>
+          <div>
+            <RelationshipDesc
+              v-if="relationship.p2.wayOfCallingTheOther || relationship.p2.relationshipWithTheOtherDesc"
+              :from-id="id1"
+              :to-id="id2"
+              :way-of-calling-the-other="relationship.p2.wayOfCallingTheOther"
+              :relationship-with-the-other-desc="relationship.p2.relationshipWithTheOtherDesc"
+            ></RelationshipDesc>
+            <RelationshipDesc
+              v-if="relationship.p1.wayOfCallingTheOther || relationship.p1.relationshipWithTheOtherDesc"
+              class="mt-8"
+              :from-id="id2"
+              :to-id="id1"
+              :way-of-calling-the-other="relationship.p1.wayOfCallingTheOther"
+              :relationship-with-the-other-desc="relationship.p1.relationshipWithTheOtherDesc"
+            ></RelationshipDesc>
           </div>
         </div>
       </div>
@@ -65,14 +65,14 @@ import PersonInputGroup from "@/components/input/PersonInputGroup.vue";
 import { personApi } from "@/api/person";
 import PersonCard from "./PersonCard.vue";
 import { RelationshipAnalysisResult } from "../../../../../backend/src/model/Person";
-import ConnectingLine from "./ConnectingLine.vue";
 import { showDialogPersonDetailInfo } from "@/components/utilities";
+import RelationshipDesc from "./RelationshipDesc.vue";
 
-throw Error("2 and 3");
+// throw Error("5 and 7");
 
 export default defineComponent({
   components: {
-    PersonInputGroup, PersonCard, ConnectingLine
+    PersonInputGroup, PersonCard, RelationshipDesc
   },
   data() {
     return {
