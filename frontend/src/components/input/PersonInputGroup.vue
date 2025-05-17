@@ -15,6 +15,7 @@
       validate-on-blur
       chips
       :disabled="disabled"
+      :hide-details="hideDetails"
     >
       <template v-slot:selection="{ selected, attrs, item }">
         <v-chip
@@ -34,7 +35,7 @@
         </v-list-item-avatar>
         <v-list-item-content>
           <v-list-item-title v-text="item.callname"></v-list-item-title>
-          <v-list-item-subtitle v-text="item.gender"></v-list-item-subtitle>
+          <v-list-item-subtitle v-text="genderDisplayText[item.gender]"></v-list-item-subtitle>
         </v-list-item-content>
       </template>
     </v-autocomplete>
@@ -55,6 +56,7 @@
         validate-on-blur
         chips
         :disabled="disabled"
+        :hide-details="hideDetails"
         @click="dialogChoosePerson = true"
       >
         <template v-slot:selection="{ selected, attrs, item }">
@@ -164,7 +166,7 @@ import { defineComponent } from "vue";
 import CustomPersonAvatar from "../CustomPersonAvatar.vue";
 import CustomDialog from "../CustomDialog.vue";
 import { checkIfIsMobile } from "@/utils";
-import { Gender, Person } from "../../../../backend/src/model/Person";
+import { Gender, genderDisplayText, Person } from "../../../../backend/src/model/Person";
 
 function copy(x: any) {
   if (Array.isArray(x)) return [...x];
@@ -205,6 +207,10 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    hideDetails: {
+      type: Boolean,
+      default: false,
+    },
     skipPeopleHasRelationshipWith: {
       // type: Object as () => Person,
       default: null,
@@ -216,6 +222,7 @@ export default defineComponent({
   },
   data() {
     return {
+      genderDisplayText,
       isMobile: checkIfIsMobile(),
       dialogChoosePerson: false,
       dialogChoosePersonSelectedIds: copy(this.value) as
@@ -255,10 +262,10 @@ export default defineComponent({
       return people.filter?.((p) => {
         if (exceptionIds.has(p.id)) return false;
         if (this.male) {
-          return p.gender == Gender.MALE;
+          return p.gender == "MALE";
         }
         if (this.female) {
-          return p.gender == Gender.FEMALE;
+          return p.gender == "FEMALE";
         }
         return true;
       });

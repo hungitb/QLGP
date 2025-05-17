@@ -1,0 +1,268 @@
+@prefix : http://qlgp#
+@prefix person: http://qlgp/person#
+@prefix quanHeTrucTiep: http://qlgp/quanHeTrucTiep#
+@prefix rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+@prefix ttgp: http://qlgp/thongTinGiaPha#
+
+### Quan hệ L2
+[
+  (?x quanHeTrucTiep:Bo ?y),
+  (?x quanHeTrucTiep:Me ?z),
+  (?y quanHeTrucTiep:VoChong ?t),
+  notEqual(?z, ?t)
+  ->
+  (?x quanHeTrucTiep:MeKe ?t)
+]
+
+[
+  (?x quanHeTrucTiep:Bo ?y),
+  (?y quanHeTrucTiep:EmTrai ?z)
+  ->
+  (?x quanHeTrucTiep:EmTraiCuaBo ?z),
+  (?z quanHeTrucTiep:ConCuaAnhTrai ?x)
+]
+
+[
+  (?x quanHeTrucTiep:Bo ?y),
+  (?y quanHeTrucTiep:EmGai ?z)
+  ->
+  (?x quanHeTrucTiep:EmGaiCuaBo ?z),
+  (?z quanHeTrucTiep:ConCuaAnhTrai ?x)
+]
+
+[
+  (?x quanHeTrucTiep:Bo ?y),
+  (?y quanHeTrucTiep:AnhTrai ?z)
+  ->
+  (?x quanHeTrucTiep:AnhTraiCuaBo ?z),
+  (?z quanHeTrucTiep:ConCuaEmTrai ?x)
+]
+
+[
+  (?x quanHeTrucTiep:Bo ?y),
+  (?y quanHeTrucTiep:ChiGai ?z)
+  ->
+  (?x quanHeTrucTiep:ChiGaiCuaBo ?z),
+  (?z quanHeTrucTiep:ConCuaEmTrai ?x)
+]
+
+[
+  (?x quanHeTrucTiep:Bo ?y),
+  (?y quanHeTrucTiep:Bo ?z),
+  (:thongTinGiaPha ttgp:type "phaHe")
+  ->
+  (?x quanHeTrucTiep:OngNoi ?z),
+  (?z quanHeTrucTiep:ChauNoi ?x)
+]
+
+[
+  (?x quanHeTrucTiep:Bo ?y),
+  (?y quanHeTrucTiep:Me ?z),
+  (:thongTinGiaPha ttgp:type "phaHe")
+  ->
+  (?x quanHeTrucTiep:BaNoi ?z),
+  (?z quanHeTrucTiep:ChauNoi ?x)
+]
+
+[
+  (?x quanHeTrucTiep:Bo ?y),
+  (?y quanHeTrucTiep:Bo ?z),
+  (:thongTinGiaPha ttgp:type "mauHe")
+  ->
+  (?x quanHeTrucTiep:OngNgoai ?z),
+  (?z quanHeTrucTiep:ChauNgoai ?x)
+]
+
+[
+  (?x quanHeTrucTiep:Bo ?y),
+  (?y quanHeTrucTiep:Me ?z),
+  (:thongTinGiaPha ttgp:type "mauHe")
+  ->
+  (?x quanHeTrucTiep:BaNgoai ?z),
+  (?z quanHeTrucTiep:ChauNgoai ?x)
+]
+
+[
+  (?x quanHeTrucTiep:Me ?y),
+  (?x quanHeTrucTiep:Bo ?z),
+  (?y quanHeTrucTiep:VoChong ?t),
+  notEqual(?z, ?t)
+  ->
+  (?x quanHeTrucTiep:ChaKe ?t)
+]
+
+[
+  (?x quanHeTrucTiep:Me ?y),
+  (?y quanHeTrucTiep:EmTrai ?z)
+  ->
+  (?x quanHeTrucTiep:EmTraiCuaMe ?z),
+  (?z quanHeTrucTiep:ConCuaChiGai ?x)
+]
+
+[
+  (?x quanHeTrucTiep:Me ?y),
+  (?y quanHeTrucTiep:EmGai ?z)
+  ->
+  (?x quanHeTrucTiep:EmGaiCuaMe ?z),
+  (?z quanHeTrucTiep:ConCuaChiGai ?x)
+]
+
+[
+  (?x quanHeTrucTiep:Me ?y),
+  (?y quanHeTrucTiep:AnhTrai ?z)
+  ->
+  (?x quanHeTrucTiep:AnhTraiCuaMe ?z),
+  (?z quanHeTrucTiep:ConCuaEmGai ?x)
+]
+
+[
+  (?x quanHeTrucTiep:Me ?y),
+  (?y quanHeTrucTiep:ChiGai ?z)
+  ->
+  (?x quanHeTrucTiep:ChiGaiCuaMe ?z),
+  (?z quanHeTrucTiep:ConCuaEmGai ?x)
+]
+
+[
+  (?x quanHeTrucTiep:Me ?y),
+  (?y quanHeTrucTiep:Bo ?z),
+  (:thongTinGiaPha ttgp:type "phaHe")
+  ->
+  (?x quanHeTrucTiep:OngNgoai ?z),
+  (?z quanHeTrucTiep:ChauNgoai ?x)
+]
+
+[
+  (?x quanHeTrucTiep:Me ?y),
+  (?y quanHeTrucTiep:Me ?z),
+  (:thongTinGiaPha ttgp:type "phaHe")
+  ->
+  (?x quanHeTrucTiep:BaNgoai ?z),
+  (?z quanHeTrucTiep:ChauNgoai ?x)
+]
+
+[
+  (?x quanHeTrucTiep:Me ?y),
+  (?y quanHeTrucTiep:Bo ?z),
+  (:thongTinGiaPha ttgp:type "mauHe")
+  ->
+  (?x quanHeTrucTiep:OngNoi ?z),
+  (?z quanHeTrucTiep:ChauNoi ?x)
+]
+
+[
+  (?x quanHeTrucTiep:Me ?y),
+  (?y quanHeTrucTiep:Me ?z),
+  (:thongTinGiaPha ttgp:type "mauHe")
+  ->
+  (?x quanHeTrucTiep:BaNoi ?z),
+  (?z quanHeTrucTiep:ChauNoi ?x)
+]
+
+[
+  (?x quanHeTrucTiep:ChiGai ?y),
+  (?y quanHeTrucTiep:VoChong ?z)
+  ->
+  (?x quanHeTrucTiep:AnhRe ?z),
+  (?z quanHeTrucTiep:EmVo ?x)
+]
+
+[
+  (?x quanHeTrucTiep:EmGai ?y),
+  (?y quanHeTrucTiep:VoChong ?z)
+  ->
+  (?x quanHeTrucTiep:EmRe ?z)
+]
+
+[
+  (?x quanHeTrucTiep:EmGai ?y),
+  (?y quanHeTrucTiep:VoChong ?z),
+  (?x rdf:type :male)
+  ->
+  (?z quanHeTrucTiep:AnhVo ?x)
+]
+
+[
+  (?x quanHeTrucTiep:EmGai ?y),
+  (?y quanHeTrucTiep:VoChong ?z),
+  (?x rdf:type :female)
+  ->
+  (?z quanHeTrucTiep:ChiVo ?x)
+]
+
+[
+  (?x quanHeTrucTiep:AnhTrai ?y),
+  (?y quanHeTrucTiep:VoChong ?z)
+  ->
+  (?x quanHeTrucTiep:ChiDau ?z),
+  (?z quanHeTrucTiep:EmChong ?x)
+]
+
+[
+  (?x quanHeTrucTiep:EmTrai ?y),
+  (?y quanHeTrucTiep:VoChong ?z)
+  ->
+  (?x quanHeTrucTiep:EmDau ?z)
+]
+
+[
+  (?x quanHeTrucTiep:EmTrai ?y),
+  (?y quanHeTrucTiep:VoChong ?z),
+  (?x rdf:type :male)
+  ->
+  (?z quanHeTrucTiep:AnhChong ?x)
+]
+
+[
+  (?x quanHeTrucTiep:EmTrai ?y),
+  (?y quanHeTrucTiep:VoChong ?z),
+  (?x rdf:type :female)
+  ->
+  (?z quanHeTrucTiep:ChiChong ?x)
+]
+
+[
+  (?x quanHeTrucTiep:ConTrai ?y),
+  (?y quanHeTrucTiep:VoChong ?z)
+  ->
+  (?x quanHeTrucTiep:ConDau ?z)
+]
+
+[
+  (?x quanHeTrucTiep:ConTrai ?y),
+  (?y quanHeTrucTiep:VoChong ?z),
+  (?x rdf:type :male)
+  ->
+  (?z quanHeTrucTiep:BoChong ?x)
+]
+
+[
+  (?x quanHeTrucTiep:ConTrai ?y),
+  (?y quanHeTrucTiep:VoChong ?z),
+  (?x rdf:type :female)
+  ->
+  (?z quanHeTrucTiep:MeChong ?x)
+]
+
+[
+  (?x quanHeTrucTiep:ConGai ?y),
+  (?y quanHeTrucTiep:VoChong ?z)
+  ->
+  (?x quanHeTrucTiep:ConRe ?z)
+]
+
+[
+  (?x quanHeTrucTiep:ConGai ?y),
+  (?y quanHeTrucTiep:VoChong ?z),
+  (?x rdf:type :male)
+  ->
+  (?z quanHeTrucTiep:BoVo ?x)
+]
+
+[
+  (?x quanHeTrucTiep:ConGai ?y),
+  (?y quanHeTrucTiep:VoChong ?z),
+  (?x rdf:type :female)
+  ->
+  (?z quanHeTrucTiep:MeVo ?x)
+]

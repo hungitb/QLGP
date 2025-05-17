@@ -1,5 +1,6 @@
 @prefix : http://qlgp#
 @prefix person: http://qlgp/person#
+@prefix inferred: http://qlgp/inferred#
 @prefix rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
 @prefix ttgp: http://qlgp/thongTinGiaPha#
 
@@ -7,10 +8,10 @@
 ### Tuổi tác
 
 # Sinh trước thì lớn tuổi hơn
-[ruleTuoiTac1:
+[
   (?x person:youngnessLevel ?doTreChungX),
   (?y person:youngnessLevel ?doTreChungY),
   lessThan(?doTreChungX, ?doTreChungY) 
   ->
-  (?x person:lonTuoiHon ?y)
+  (?x inferred:lonTuoiHon ?y)
 ]

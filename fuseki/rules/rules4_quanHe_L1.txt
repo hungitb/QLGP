@@ -1,0 +1,139 @@
+@prefix : http://qlgp#
+@prefix person: http://qlgp/person#
+@prefix inferred: http://qlgp/inferred#
+@prefix quanHeTrucTiep: http://qlgp/quanHeTrucTiep#
+@prefix rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+@prefix ttgp: http://qlgp/thongTinGiaPha#
+
+### Quan hệ L1
+[
+  (?x person:hasSpouse ?y),
+  (?x person:gender ?gioiTinhX),
+  (?y person:gender ?gioiTinhY),
+  notEqual(?gioiTinhX, ?gioiTinhY)
+  ->
+  (?x quanHeTrucTiep:VoChong ?y),
+  (?y quanHeTrucTiep:VoChong ?x)
+]
+
+[
+  (?x person:hasSpouse ?y),
+  (?x person:gender ?gioiTinhX),
+  (?y person:gender ?gioiTinhY),
+  equal(?gioiTinhX, ?gioiTinhY)
+  ->
+  (?x quanHeTrucTiep:BanDoiDongTinh ?y),
+  (?y quanHeTrucTiep:BanDoiDongTinh ?x)
+]
+
+[
+  (?x person:hasFather ?y)
+  ->
+  (?x quanHeTrucTiep:Bo ?y)
+]
+
+[
+  (?x person:hasFather ?y),
+  (?x rdf:type :male)
+  ->
+  (?y quanHeTrucTiep:ConTrai ?x)
+]
+
+[
+  (?x person:hasFather ?y),
+  (?x rdf:type :female)
+  ->
+  (?y quanHeTrucTiep:ConGai ?x)
+]
+
+[
+  (?x person:hasMother ?y)
+  ->
+  (?x quanHeTrucTiep:Me ?y)
+]
+
+[
+  (?x person:hasMother ?y),
+  (?x rdf:type :male)
+  ->
+  (?y quanHeTrucTiep:ConTrai ?x)
+]
+
+[
+  (?x person:hasMother ?y),
+  (?x rdf:type :female)
+  ->
+  (?y quanHeTrucTiep:ConGai ?x)
+]
+
+[
+  (?x person:hasFather ?z),
+  (?y person:hasFather ?z),
+  (?x inferred:lonTuoiHon ?y),
+  (?x rdf:type :male)
+  ->
+  (?y quanHeTrucTiep:AnhTrai ?x)
+]
+
+[
+  (?x person:hasFather ?z),
+  (?y person:hasFather ?z),
+  (?x inferred:lonTuoiHon ?y),
+  (?y rdf:type :male)
+  ->
+  (?x quanHeTrucTiep:EmTrai ?y)
+]
+
+[
+  (?x person:hasFather ?z),
+  (?y person:hasFather ?z),
+  (?x inferred:lonTuoiHon ?y),
+  (?x rdf:type :female)
+  ->
+  (?y quanHeTrucTiep:ChiGai ?x)
+]
+
+[
+  (?x person:hasFather ?z),
+  (?y person:hasFather ?z),
+  (?x inferred:lonTuoiHon ?y),
+  (?y rdf:type :female)
+  ->
+  (?x quanHeTrucTiep:EmGai ?y)
+]
+
+[
+  (?x person:hasMother ?z),
+  (?y person:hasMother ?z),
+  (?x inferred:lonTuoiHon ?y),
+  (?x rdf:type :male)
+  ->
+  (?y quanHeTrucTiep:AnhTrai ?x)
+]
+
+[
+  (?x person:hasMother ?z),
+  (?y person:hasMother ?z),
+  (?x inferred:lonTuoiHon ?y),
+  (?y rdf:type :male)
+  ->
+  (?x quanHeTrucTiep:EmTrai ?y)
+]
+
+[
+  (?x person:hasMother ?z),
+  (?y person:hasMother ?z),
+  (?x inferred:lonTuoiHon ?y),
+  (?x rdf:type :female)
+  ->
+  (?y quanHeTrucTiep:ChiGai ?x)
+]
+
+[
+  (?x person:hasMother ?z),
+  (?y person:hasMother ?z),
+  (?x inferred:lonTuoiHon ?y),
+  (?y rdf:type :female)
+  ->
+  (?x quanHeTrucTiep:EmGai ?y)
+]

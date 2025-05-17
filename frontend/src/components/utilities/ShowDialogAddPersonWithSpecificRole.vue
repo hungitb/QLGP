@@ -116,8 +116,8 @@ export default defineComponent({
         if (roleOfPersonWillAdd == "child") {
           await personApi.updatePerson({
             id: this.pickedPersonId,
-            ...(person.gender == Gender.MALE ? { fatherId: person.id } : {}),
-            ...(person.gender == Gender.FEMALE ? { motherId: person.id } : {}),
+            ...(person.gender == "MALE" ? { fatherId: person.id } : {}),
+            ...(person.gender == "FEMALE" ? { motherId: person.id } : {}),
           });
         } else {
           await personApi.updatePerson({
@@ -157,13 +157,13 @@ export default defineComponent({
       this.clickAddPerson = () => {
         showDialogAddOrCreatePerson({
           initData: {
-            ...(roleOfPersonWillAdd == "father" ? { gender: Gender.MALE } : {}),
+            ...(roleOfPersonWillAdd == "father" ? { gender: "MALE" } : {}),
             ...(roleOfPersonWillAdd == "mother"
-              ? { gender: Gender.FEMALE }
+              ? { gender: "FEMALE" }
               : {}),
             ...(roleOfPersonWillAdd == "spouse" ? { spouseId: person.id } : {}),
             ...(roleOfPersonWillAdd == "child"
-              ? person.gender == Gender.MALE
+              ? person.gender == "MALE"
                 ? { fatherId: person.id }
                 : { motherId: person.id }
               : {}),

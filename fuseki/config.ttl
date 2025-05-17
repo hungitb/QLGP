@@ -44,7 +44,11 @@ PREFIX tdb2:    <http://jena.apache.org/2016/tdb#>
         ja:rulesFrom <file:rules/rules1_gioiTinh.txt>;
         ja:rulesFrom <file:rules/rules2_thuocGiaPha.txt>;
         ja:rulesFrom <file:rules/rules3_tuoiTac.txt>;
-        ja:rulesFrom <file:rules/rules4_quanHe.txt>;
+        ja:rulesFrom <file:rules/rules4_quanHe_L1.txt>;
+        ja:rulesFrom <file:rules/rules4_quanHe_L2.txt>;
+        ja:rulesFrom <file:rules/rules4_quanHe_L3.txt>;
+        ja:rulesFrom <file:rules/rules4_quanHe_L4.txt>;
+        ja:rulesFrom <file:rules/rules5_quanHeGianTiep.txt>;
     ] .
 
 :baseModel a ja:MemoryModel ; .

@@ -41,9 +41,7 @@
           <div class="text-h6" v-if="config.show.name">
             {{ person.callname }}
           </div>
-          <div v-if="config.show.gender">
-            {{ person.gender == Gender.MALE ? "Nam" : "Nữ" }}
-          </div>
+          <div v-if="config.show.gender">{{ genderDisplayText[person.gender] }}</div>
           <div v-if="config.show.birthdate">
             Ngày sinh:
             {{
@@ -56,11 +54,11 @@
           </div>
           <div v-if="config.show.status">
             Tình trạng:
-            <template v-if="person.status == LifeStatus.ALIVE">
-              Còn sống
+            <template v-if="person.status != 'DEAD'">
+              {{ lifeStateDisplayText[person.status] }}
             </template>
-            <template v-else-if="person.status == LifeStatus.DEAD">
-              Đã mất
+            <template v-else>
+              {{ lifeStateDisplayText[person.status] }}
               <template v-if="person.deathdate">
                 -
                 {{
@@ -70,7 +68,6 @@
                 }}
               </template>
             </template>
-            <template v-else>Không rõ</template>
           </div>
         </div>
       </div>
@@ -115,7 +112,8 @@ import Vue from "vue";
 import PersonCardButton from "./PersonCardButton.vue";
 import {
   Gender,
-  LifeStatus,
+  genderDisplayText,
+  lifeStateDisplayText,
   Person,
 } from "../../../../backend/src/model/Person";
 import { FamilyCardConfig, PersonCardLayout } from "../types";
@@ -154,8 +152,8 @@ export default Vue.extend({
   data() {
     return {
       PersonCardLayout,
-      Gender,
-      LifeStatus,
+      genderDisplayText,
+      lifeStateDisplayText,
       isMobile: checkIfIsMobile(),
       showingMobileOverlay: false,
       showControl: false,

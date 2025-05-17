@@ -1,7 +1,7 @@
 <template>
   <v-avatar
     :size="size"
-    :color="person.gender != Gender.MALE ? 'pink' : 'primary'"
+    :color="defaultBgColorMapping[person.gender]"
     :left="left"
     :tile="tile"
   >
@@ -26,7 +26,7 @@
 
     <v-icon dark v-else large>
       {{
-        person.gender != Gender.MALE
+        person.gender != "MALE"
           ? "mdi-account-tie-woman"
           : "mdi-account-tie"
       }}
@@ -73,7 +73,10 @@ export default defineComponent({
   },
   data() {
     return {
-      Gender,
+      defaultBgColorMapping: {
+        MALE: "primary",
+        FEMALE: "pink"
+      } as Record<Gender, string>
     };
   },
   computed: {

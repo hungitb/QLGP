@@ -60,7 +60,7 @@ export default defineComponent({
           icon: "mdi-account-switch",
           title: "Phân tích mối quan hệ",
           subtitle: "Phân tích mối quan hệ giữa các thành viên",
-          url: "/utilities/relationship_analyze",
+          url: "/utilities/relationship_analysis",
         },
         {
           icon: "mdi-calendar-month",

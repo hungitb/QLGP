@@ -3,7 +3,7 @@ import { v4 as uuid } from "uuid";
 import { compareTwoDateString, datePlusDay, DateInputDB, isSomeValueStandardNormalDate, isSufixedLunarDate, lunarDateToNormalDate, normalDateToLunarDate, nowDate, shortenDateString, sortByStdDate, StandardNormalDate, sufixedLunarDateToNormalDate, todayDate, convertDateStoredDBToDateInputDB, convertDateInputDBToDateStoredDB } from "../utils/DateUtils";
 import { isStringPureInterger } from "../utils/ValidationUtils";
 import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR, Controller, ControllerHandler, applyUserGuards, CanWriteGuard, keysModel, SafeOmit } from "./utils";
-import { LifeStatus, Gender, type Person, PersonAdvanceDAO } from "../model/Person";
+import { Gender, type Person, PersonAdvanceDAO, RelationshipAnalysisResult, LifeState } from "../model/Person";
 import type { User } from "../model/User";
 import type { IDAO, IDASO } from "../model/IDAO";
 import { extractEvents, type Event } from "./event";
@@ -143,7 +143,7 @@ export default function getPersonController(
 
             compare = (v1, v2, k1, k2) => {
                 if (v1 != v2) {
-                    return v1 == LifeStatus.ALIVE ? -1 : 1;
+                    return v1 == "ALIVE" ? -1 : 1;
                 }
                 return compareTwoDateString(
                     k1.deathdate,
@@ -188,7 +188,7 @@ export default function getPersonController(
         const [peopleHasSameFather, peopleHasSameMother, children] = await Promise.all([
             person.fatherId ? personDAO.findAll({ where: { fatherId: person.fatherId } }) : Promise.resolve([]),
             person.motherId ? personDAO.findAll({ where: { motherId: person.motherId } }) : Promise.resolve([]),
-            person.gender == Gender.MALE ?
+            person.gender == "MALE" ?
                 personDAO.findAll({ where: { fatherId: person.id } }) :
                 personDAO.findAll({ where: { motherId: person.id } })
         ]);
@@ -297,7 +297,7 @@ export default function getPersonController(
             if (!path) path = new Set([person.id]);
             else path.add(person.id);
 
-            if (mapIdToOriginPerson[person.id].gender == Gender.MALE || levelInt > 2) {
+            if (mapIdToOriginPerson[person.id].gender == "MALE" || levelInt > 2) {
                 childrenIdsOf[person.id].forEach(childId => {
                     if (!path) {
                         return; // By pass typescript error
@@ -357,13 +357,13 @@ export default function getPersonController(
         if (data.role) {
             const { roleName, roleWithTargetPersonId } = data.role;
             if (roleName == "father") {
-                newPerson.gender = Gender.MALE; // Đảm bảo giới tính đúng
+                newPerson.gender = "MALE"; // Đảm bảo giới tính đúng
                 promises.push(
                     personDAO.update({ fatherId: newPerson.id }, { where: { id: roleWithTargetPersonId } })
                 );
             }
             else if (roleName == "mother") {
-                newPerson.gender = Gender.FEMALE; // Đảm bảo giới tính đúng
+                newPerson.gender = "FEMALE"; // Đảm bảo giới tính đúng
                 promises.push(
                     personDAO.update({ motherId: newPerson.id }, { where: { id: roleWithTargetPersonId } })
                 );
@@ -472,12 +472,12 @@ export default function getPersonController(
                 }
             }
             else if (field == "status") {
-                if (value != LifeStatus.DEAD) {
+                if (value != "DEAD") {
                     data.deathdate = null;
                 }
             }
             else if (field == "deathdate" && value) {
-                data.status = LifeStatus.DEAD;
+                data.status = "DEAD";
             }
         }));
 
@@ -490,15 +490,8 @@ export default function getPersonController(
         {},
         {},
         {
-            status: {
-                [LifeStatus.ALIVE]: number,
-                [LifeStatus.DEAD]: number,
-                unknown: number
-            },
-            gender: {
-                [Gender.MALE]: number,
-                [Gender.FEMALE]: number,
-            },
+            status: Record<LifeState, number>,
+            gender: Record<Gender, number>,
             agesOfLiving: { [age: string]: number },
             agesOfDeceased: { [age: string]: number },
             birthMonths: { [month: string]: number },
@@ -508,14 +501,14 @@ export default function getPersonController(
         }
     >(async () => {
         const status = {
-            [LifeStatus.ALIVE]: 0,
-            [LifeStatus.DEAD]: 0,
-            unknown: 0
+            ALIVE: 0,
+            DEAD: 0,
+            UNKNOWN: 0
         };
         const gender = {
-            [Gender.MALE]: 0,
-            [Gender.FEMALE]: 0,
-        }
+            MALE: 0,
+            FEMALE: 0,
+        };
         const agesOfLiving: { [age: string]: number } = {};
         const agesOfDeceased: { [age: string]: number } = {};
         const birthMonths : { [month: string]: number } = {};
@@ -567,7 +560,7 @@ export default function getPersonController(
                 if (age < 0) age = 0;
                 increaseKeyValue(birthYears, y);
 
-                if (person.status == LifeStatus.ALIVE) {
+                if (person.status == "ALIVE") {
                     increaseKeyValue(agesOfLiving, age);
                     if (!checkIfMissingMonth(person.birthdate)) {
                         increaseKeyValue(birthMonths, m);
@@ -575,7 +568,7 @@ export default function getPersonController(
                 }
             }
 
-            if (person.status == LifeStatus.DEAD) {
+            if (person.status == "DEAD") {
                 if (person.deathdate) {
                     const [d, m, y] = extractNormalDayMonthYear(convertDateStoredDBToDateInputDB(person.deathdate));
 
@@ -609,7 +602,7 @@ export default function getPersonController(
     const analyzeRelationship = applyUserGuards<
         {},
         { id1: string, id2: string },
-        { data: [string, string] }
+        { data: RelationshipAnalysisResult | null }
     >(async ({ query: { id1, id2 } }) => {
         const [p1, p2] = await Promise.all([
             personDAO.findOne({ where: { id: id1 } }),
@@ -618,11 +611,9 @@ export default function getPersonController(
 
         if (!p1 || !p2) return CommonResponse.BAD_REQUEST;
 
-        // Do somethings
-
         return {
             data: {
-                data: ["Không rõ", "Không rõ"]
+                data: await personAdvanceDAO.relationshipAnalysis(p1, p2)
             },
             status: 200
         };

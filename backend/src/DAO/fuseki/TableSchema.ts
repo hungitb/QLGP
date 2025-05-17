@@ -124,15 +124,18 @@ class BaseTableSchema<Model extends ValidModel> {
     protected readonly name: string;
     protected readonly fields: TableSchemaFieldDefs<Model>;
     protected readonly urlBase: string;
+    protected readonly useNullAnnotationForMissingValueField: boolean;
     private readonly fieldMapping: Record<Key<Model>, string> = {} as any;
     private readonly aliasMapping: Record<string, Key<Model>> = {};
 
     constructor({
         name,
-        fields
+        fields,
+        useNullAnnotationForMissingValueField = false
     }: {
         name: string,
-        fields: TableSchemaFieldDefs<Model>
+        fields: TableSchemaFieldDefs<Model>,
+        useNullAnnotationForMissingValueField?: boolean
     }) {
         if (state.syncing || state.synced) {
             throw Error("It's too late to create a schema");
@@ -141,10 +144,10 @@ class BaseTableSchema<Model extends ValidModel> {
         this.name = name;
         this.urlBase = utils.getBaseUrl(name);
         this.fields = fields;
+        this.useNullAnnotationForMissingValueField = useNullAnnotationForMissingValueField;
 
         if (state.allCompleteSchemas.some(schema => schema.name == name)) {
-            // Now allow duplicate schema name
-            // throw Error("Duplicate schema name: " + name);
+            throw Error("Duplicate schema name: " + name);
         }
 
         const allFields = utils.keys(fields);
@@ -200,6 +203,9 @@ class BaseTableSchema<Model extends ValidModel> {
 
     protected tripleObjectRepr(field: Key<Model>, value: any) {
         if (utils.isNullOrUndefined(value)) {
+            if (!this.useNullAnnotationForMissingValueField) {
+                throw Error(`Can't process value ${value} for field ${field}, schema ${this.name}`);
+            }
             return `"${NULL_ANNOTATION}"`;
         }
 
@@ -268,10 +274,12 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
 
     constructor({
         name,
-        fields
+        fields,
+        useNullAnnotationForMissingValueField
     }: {
         name: string,
-        fields: TableSchemaFieldDefs<Model>
+        fields: TableSchemaFieldDefs<Model>,
+        useNullAnnotationForMissingValueField?: boolean
     }) {
         const allFields = utils.keys(fields);
         let primaryKey: Key<Model> | undefined = undefined;
@@ -305,7 +313,7 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
             throw Error(`Missing primary key in schema ${name}`);
         }
 
-        super({ name, fields });
+        super({ name, fields, useNullAnnotationForMissingValueField });
 
         this.primaryKey = primaryKey;
 
@@ -321,9 +329,9 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
         });
     }
 
-    private filterInvalidProps(obj: Partial<Model>, filterPrimaryKey = false) {
+    private filterNullOrUndefinedFields(obj: Partial<Model>) {
         return Object.entries(obj)
-            .filter(([key, value]) => value !== undefined && value !== null && (!filterPrimaryKey || key != this.primaryKey))
+            .filter(([_, value]) => !utils.isNullOrUndefined(value))
             .reduce((result, [key, value]) => {
                 result[key as keyof Model] = value;
                 return result;
@@ -345,7 +353,11 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
             ]);
         }
 
-        utils.entries(obj).forEach(([key, value]) => {
+        utils.entries(
+            this.useNullAnnotationForMissingValueField
+            ? obj
+            : this.filterNullOrUndefinedFields(obj)
+        ).forEach(([key, value]) => {
             if (key == this.primaryKey) return;
 
             triples.push([
@@ -432,7 +444,7 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
             return [];
         }
 
-        match = this.filterInvalidProps(match || {});
+        match = this.filterNullOrUndefinedFields(match || {});
 
         const triples: Triple[] = (match && Object.keys(match).length > 0)
             ? utils.entriesPartialModel(match).map(([k, v]) => {
@@ -469,6 +481,9 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
         
         ids.forEach(id => {
             dataValidKeys.forEach(field => {
+                if (!data[field] && !this.useNullAnnotationForMissingValueField) {
+                    return;
+                }
                 triples.push([
                     `${this.name}:${id}`,
                     `${this.name}:${this.convertModelFieldToFusekiField(field)}`,
@@ -575,11 +590,13 @@ export class TableSchemaSingleRow<Model extends ValidModel> extends BaseTableSch
     constructor({
         name,
         fields,
-        initValue
+        initValue,
+        useNullAnnotationForMissingValueField
     }: {
         name: string,
         fields: TableSchemaFieldDefs<Model>,
-        initValue: Model
+        initValue: Model,
+        useNullAnnotationForMissingValueField?: boolean
     }) {
         const allFields = utils.keys(fields);
         for (let i = 0; i < allFields.length; i++) {
@@ -595,7 +612,7 @@ export class TableSchemaSingleRow<Model extends ValidModel> extends BaseTableSch
             }
         }
 
-        super({ name, fields });
+        super({ name, fields, useNullAnnotationForMissingValueField });
 
         this.initValue = initValue;
 
@@ -626,6 +643,10 @@ export class TableSchemaSingleRow<Model extends ValidModel> extends BaseTableSch
         const triples: Triple[] = [];
 
         utils.entries(this.initValue).forEach(([key, value]) => {
+            if (utils.isNullOrUndefined(value) && !this.useNullAnnotationForMissingValueField) {
+                return;
+            }
+
             triples.push([
                 `:${this.name}`,
                 `${this.name}:${this.convertModelFieldToFusekiField(key)}`,
@@ -689,6 +710,10 @@ export class TableSchemaSingleRow<Model extends ValidModel> extends BaseTableSch
         const triples: Triple[] = [];
         
         utils.keys(data).forEach(field => {
+            if (!data[field] && !this.useNullAnnotationForMissingValueField) {
+                return;
+            }
+
             triples.push([
                 `:${this.name}`,
                 `${this.name}:${this.convertModelFieldToFusekiField(field)}`,
