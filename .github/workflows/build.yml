@@ -11,6 +11,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Extract commit SHA
+        id: commit
+        run: echo "sha_tag=$(echo ${{ github.sha }} | cut -c1-7)" >> "$GITHUB_OUTPUT"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -22,10 +26,12 @@ jobs:
 
       - name: Build and push BE & FE docker image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/qlgp-be:latest .
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/qlgp-be:${{ steps.commit.outputs.sha_tag }} -t ${{ secrets.DOCKERHUB_USERNAME }}/qlgp-be:latest .
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/qlgp-be:${{ steps.commit.outputs.sha_tag }}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/qlgp-be:latest
 
       - name: Build and push fuseki docker image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/qlgp-fuseki:latest fuseki
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/qlgp-fuseki:${{ steps.commit.outputs.sha_tag }} -t ${{ secrets.DOCKERHUB_USERNAME }}/qlgp-fuseki:latest fuseki
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/qlgp-fuseki:${{ steps.commit.outputs.sha_tag }}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/qlgp-fuseki:latest
