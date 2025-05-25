@@ -28,7 +28,7 @@
     (?y inferred:doiThu ?soDoiY)
 ]
 
-# Đời trên
+# Đời trên, chỉ xác định với những người thuộc gia phả (vì thuật toán xđ mqh dùng cái này cùng với số đời)
 [
     (?x person:hasFather ?y),
     (:thongTinGiaPha ttgp:ancestor ?y)
@@ -43,6 +43,8 @@
     (?x inferred:doiTren ?y)
 ]
 
+# Người có bố tồn tại đời trên thì mới có bố là đời trên
+# Dùng để giới hạn chỉ trong gia phả
 [
     (?x person:hasFather ?y),
     (?y inferred:doiTren ?z)
@@ -50,6 +52,7 @@
     (?x inferred:doiTren ?y)
 ]
 
+# Tương tự như phần của bố
 [
     (?x person:hasMother ?y),
     (?y inferred:doiTren ?z)
