@@ -518,10 +518,7 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
         return (await this.filter(where)).length;
     }
 
-    async findAll(match?: { where: PartialNonNullable<Model> }) {
-        await syncSchemas();
-
-        const ids = await this.filter(match ? match.where : undefined);
+    async findAllIdsIn(ids: string[]) {
         if (ids.length == 0) {
             return [];
         }
@@ -537,6 +534,13 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
         const triples = response.results.bindings.map(data => [data.s.value, data.p.value, data.o.value] as Triple);
 
         return this.buildObjects(triples);
+    }
+
+    async findAll(match?: { where: PartialNonNullable<Model> }) {
+        await syncSchemas();
+
+        const ids = await this.filter(match ? match.where : undefined);
+        return await this.findAllIdsIn(ids);
     }
 
     async findOne({ where }: { where: PartialNonNullable<Model> }) {
@@ -576,6 +580,7 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
             count: this.count.bind(this),
             findByPk: this.findByPk.bind(this),
             findAll: this.findAll.bind(this),
+            findAllIdsIn: this.findAllIdsIn.bind(this),
             findOne: this.findOne.bind(this),
             destroy: this.destroy.bind(this)
         };

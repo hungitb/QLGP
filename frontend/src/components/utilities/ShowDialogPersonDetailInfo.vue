@@ -12,7 +12,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import PersonDetailDialog from "../PersonDetailDialog.vue";
+import PersonDetailDialog from "../PersonDetailDialog/PersonDetailDialog.vue";
 import { permissionMixin } from "@/utils";
 
 type ShowDialogPersonDetailInfoParams = {

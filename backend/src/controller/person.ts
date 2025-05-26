@@ -8,6 +8,8 @@ import type { User } from "../model/User";
 import type { IDAO, IDASO } from "../model/IDAO";
 import { extractEvents, type Event } from "./event";
 import { ThongTinGiaPha } from "../model/ThongTinGiaPha";
+import { FieldDef } from "../model/FieldDef";
+import { FieldVal } from "../model/FieldVal";
 
 export type FamilyTreePerson = {
     id: string,
@@ -122,7 +124,9 @@ export default function getPersonController(
     personDAO: IDAO<Person>,
     userDAO: IDAO<User>,
     ttgpDASO: IDASO<ThongTinGiaPha>,
-    personAdvanceDAO: PersonAdvanceDAO
+    personAdvanceDAO: PersonAdvanceDAO,
+    fieldDefDAO: IDAO<FieldDef>,
+    fieldValDAO: IDAO<FieldVal>
 ) {
     const getAllPeopleBaseInfo = applyUserGuards<
         {},
@@ -178,7 +182,8 @@ export default function getPersonController(
                 personIdsOnlySameFather: string[],
                 personIdsOnlySameMother: string[],
                 personIdsSameBothFatherAndMother: string[],
-                childIds: string[]
+                childIds: string[],
+                additionalData: (FieldVal & { fieldDef: FieldDef })[]
             }
         }
     >(async ({ query: { id } }) => {
@@ -201,6 +206,15 @@ export default function getPersonController(
         const personIdsOnlySameFather = personIdsSameFather.filter(id => !setPersonIdsSameMother.has(id));
         const personIdsOnlySameMother = personIdsSameMother.filter(id => !setPersonIdsSameFather.has(id));
         const personIdsSameBothFatherAndMother = personIdsSameFather.filter(id => setPersonIdsSameMother.has(id));
+
+        const fieldVals = await fieldValDAO.findAll({ where: { personId: id } });
+        const fieldDefs = await fieldDefDAO.findAllIdsIn(fieldVals.map(fv => fv.fieldDefId));
+        const additionalData = fieldVals.map(fv => {
+            return {
+                ...fv,
+                fieldDef: fieldDefs.find(fd => fd.id == fv.fieldDefId)!
+            };
+        });
         
         return {
             data: {
@@ -210,6 +224,7 @@ export default function getPersonController(
                     personIdsOnlySameMother,
                     personIdsSameBothFatherAndMother,
                     childIds: children.sort((p1, p2) => p1.youngnessLevel - p2.youngnessLevel).map(p => p.id),
+                    additionalData,
                 }
             },
             status: 200

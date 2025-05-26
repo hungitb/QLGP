@@ -235,6 +235,14 @@ function createDAO(key: `QLGP.${(typeof tableNames)[number]}`, pkName: string, i
     );
   };
 
+  const findAllIdsIn = async (ids: string[]) => {
+    await init();
+    const idsSet = new Set(ids);
+    return await createPromiseResolve(
+      makeCopy(rows.find((row) => idsSet.has(row[pkName])))
+    );
+  };
+
   const findOne = async ({ where }: { where: Record<string, any> }) => {
     await init();
     return await createPromiseResolve(
@@ -309,6 +317,7 @@ function createDAO(key: `QLGP.${(typeof tableNames)[number]}`, pkName: string, i
   return {
     findByPk,
     findOne,
+    findAllIdsIn,
     findAll,
     count,
     create,

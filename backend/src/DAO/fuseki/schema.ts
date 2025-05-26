@@ -87,6 +87,33 @@ const personSchema = new TableSchema<Person>({
     }
 });
 
+const fieldDefSchema = new TableSchema<FieldDef>({
+    name: "fieldDef",
+    fields: {
+        id: {
+            type: "string",
+            primaryKey: true
+        },
+        name: "string",
+        description: "string",
+        type: "string",
+        isForAll: "boolean"
+    }
+});
+
+const fieldValSchema = new TableSchema<FieldVal>({
+    name: "fieldVal",
+    fields: {
+        id: {
+            type: "string",
+            primaryKey: true
+        },
+        personId: personSchema,
+        fieldDefId: fieldDefSchema,
+        value: "string"
+    }
+});
+
 const ttgpSchema = new TableSchemaSingleRow<ThongTinGiaPha>({
     name: "thongTinGiaPha",
     fields: {
@@ -114,6 +141,8 @@ const ttgpSchema = new TableSchemaSingleRow<ThongTinGiaPha>({
 export const personDAO = personSchema.getDAO();
 export const userDAO = userSchema.getDAO();
 export const ttgpDASO = ttgpSchema.getDASO();
+export const fieldDefDAO = fieldDefSchema.getDAO();
+export const fieldValDAO = fieldValSchema.getDAO();
 
 export const personAdvanceDAO: PersonAdvanceDAO = (() => {
     const isDevMode = process.env.NODE_ENV == "development";
