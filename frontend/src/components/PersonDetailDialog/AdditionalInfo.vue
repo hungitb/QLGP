@@ -13,17 +13,17 @@
       <v-card-subtitle v-if="data && data.length == 0">
         Không có thông tin khác
       </v-card-subtitle>
-      <v-card-text v-if="data && data.length > 0">
-        Hello
-      </v-card-text>
-      <v-card-actions v-if="!isLoading">
+      <v-card-text v-if="data && data.length > 0"> Hello </v-card-text>
+      <v-card-actions v-if="!isLoading && canWrite()">
         <v-btn text color="primary">
           <v-icon left>mdi-pen</v-icon>
           Chỉnh sửa
         </v-btn>
-        <v-btn text color="primary">
+        <v-btn text color="primary" @click="dialogFieldManagement = true">
           <v-icon left>mdi-menu</v-icon>
           Quản lý
+
+          <FieldManagementDialog v-model="dialogFieldManagement" />
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -34,8 +34,14 @@
 import { defineComponent, PropType } from "vue";
 import { FieldVal } from "../../../../backend/src/model/FieldVal";
 import { FieldDef } from "../../../../backend/src/model/FieldDef";
+import { permissionMixin } from "@/utils";
+import FieldManagementDialog from "./FieldManagementDialog.vue";
 
 export default defineComponent({
+  mixins: [permissionMixin],
+  components: {
+    FieldManagementDialog,
+  },
   props: {
     data: {
       type: Array as PropType<
@@ -43,9 +49,14 @@ export default defineComponent({
       >,
     },
   },
+  data() {
+    return {
+      dialogFieldManagement: false,
+    };
+  },
   computed: {
     isLoading() {
-      return this.data === undefined;
+      return (this as any).data === undefined;
     },
   },
 });

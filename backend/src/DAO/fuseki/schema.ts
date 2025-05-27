@@ -97,7 +97,8 @@ const fieldDefSchema = new TableSchema<FieldDef>({
         name: "string",
         description: "string",
         type: "string",
-        isForAll: "boolean"
+        isForAll: "boolean",
+        createdAt: "date"
     }
 });
 

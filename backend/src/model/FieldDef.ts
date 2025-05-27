@@ -1,3 +1,4 @@
+import { StdDate } from "../utils/DateUtils";
 
 export const ALL_FIELD_TYPES = ["TEXT", "COMPLEX_TEXT", "DATE", "PERSON_REF", "IMAGE", "CHECKBOX"] as const;
 export type FieldType = (typeof ALL_FIELD_TYPES)[number];
@@ -22,4 +23,5 @@ export type FieldDef = {
     description: string;
     type: FieldType;
     isForAll: boolean;
+    createdAt: StdDate;
 };
