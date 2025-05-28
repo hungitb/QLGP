@@ -6,6 +6,7 @@
     maxWidth="500px"
     buttonText
     :buttons="[{ text: 'Lưu', click: save }]"
+    :isLoading="savingData"
   >
     <v-form ref="form">
     <v-text-field v-model="name" outlined label="Tên (bắt buộc)" :rules="[ruleRequired]"></v-text-field>
@@ -34,7 +35,6 @@
         label="Loại"
       ></v-select>
     </template>
-
     </v-form>
   </CustomDialog>
 </template>
@@ -50,6 +50,8 @@ import {
 } from "../../../../backend/src/model/FieldDef";
 import CustomDialog from "../CustomDialog.vue";
 import PersonInputGroup from "../input/PersonInputGroup.vue";
+import { FieldDataToEdit } from "../../../../backend/src/controller/fieldDef";
+import { fieldDefApi } from "@/api/fieldDef";
 
 export default defineComponent({
   components: {
@@ -62,9 +64,7 @@ export default defineComponent({
     },
     // If pass this value, mean that this dialog is for update
     toEdit: {
-      type: Object as () => Prettify<
-        SafeOmit<FieldDef, "createdAt" | "id" | "isForAll" | "type">
-      >,
+      type: Object as () => FieldDataToEdit,
     },
   },
   data() {
@@ -74,11 +74,12 @@ export default defineComponent({
         value: type,
         text: fieldTypeDisplayText[type],
       })),
-      name: "",
-      description: "",
+      name: this.toEdit?.name || "",
+      description: this.toEdit?.description || "",
       type: "TEXT" as FieldType,
       isForAll: true,
       specificPersonId: null as string | null,
+      savingData: false,
     };
   },
   computed: {
@@ -102,7 +103,7 @@ export default defineComponent({
         this.specificPersonId = null;
       }
     },
-    toEdit(v: typeof this.toEdit) {
+    toEdit(v: FieldDataToEdit) {
       this.name = v?.name || "";
       this.description = v?.description || "";
     },
@@ -113,9 +114,31 @@ export default defineComponent({
     }
   },
   methods: {
-    save() {
+    async save() {
       const isValid = (this.$refs as any).form.validate();
       if (!isValid) return;
+
+      this.savingData = true;
+
+      if (this.toEdit) {
+        await fieldDefApi.updateFieldDef({ data: { id: this.toEdit.id, name: this.name, description: this.description } });
+      } else {
+        const baseData = {
+          name: this.name,
+          description: this.description,
+          type: this.type
+        };
+
+        const data: (typeof baseData) & ({ isForAll: true } | { isForAll: false, specificPersonId: string }) = this.isForAll
+          ? Object.assign(baseData, { isForAll: true } as const)
+          : Object.assign(baseData, { isForAll: false, specificPersonId: this.specificPersonId! } as const)
+
+        await fieldDefApi.createFieldDef({ data });
+      }
+
+      this.savingData = false;
+
+      this.$emit("addOrUpdate");
     }
   }
 });

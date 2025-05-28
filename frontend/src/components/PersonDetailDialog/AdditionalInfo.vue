@@ -23,7 +23,7 @@
           <v-icon left>mdi-menu</v-icon>
           Quản lý
 
-          <FieldManagementDialog v-model="dialogFieldManagement" />
+          <FieldManagementDialog v-model="dialogFieldManagement" @addOrUpdateField="someFieldCreatedOrChanged = true" />
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -52,6 +52,7 @@ export default defineComponent({
   data() {
     return {
       dialogFieldManagement: false,
+      someFieldCreatedOrChanged: false,
     };
   },
   computed: {
@@ -59,5 +60,15 @@ export default defineComponent({
       return (this as any).data === undefined;
     },
   },
+  watch: {
+    dialogFieldManagement(v: boolean) {
+      // Chỉ emit event này để refresh data khi đóng dialog field management
+      // Vì nếu emit luôn khi có thay đổi thì dialog field management có thể bị toggle
+      if (!v && this.someFieldCreatedOrChanged) {
+        this.$emit("addOrUpdateField");
+        this.someFieldCreatedOrChanged = false;
+      }
+    }
+  }
 });
 </script>

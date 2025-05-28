@@ -1,26 +1,44 @@
 import { v4 as uuidv4 } from "uuid";
 import { IDAO } from "../model/IDAO";
 import { User } from "../model/User";
-import { ControllerHandlerResult as CHR, CanWriteGuard, CommonResponse, IsAdminGuard, SafeOmit, UserInfo, applyUserGuards, badRequetWithMsg, runPromisesInBatchs } from "./utils";
+import { ControllerHandlerResult as CHR, CanWriteGuard, CommonResponse, IsAdminGuard, Prettify, SafeOmit, UserInfo, applyUserGuards, badRequetWithMsg, runPromisesInBatchs } from "./utils";
 import { DEFAUT_ADMIN_USERNAME } from "./auth";
 import { nowDate, sortByStdDate } from "../utils/DateUtils";
 import { FieldDef } from "../model/FieldDef";
 import { Person } from "../model/Person";
 import { FieldVal } from "../model/FieldVal";
 
+export type ExtendedFieldDef = FieldDef & ({ isForAll: true } | { isForAll: false, specificPersonId: string });
+export type FieldDataToEdit = Prettify<SafeOmit<FieldDef, "createdAt" | "isForAll" | "type">>;
+
 export default function getFieldDefController(fieldDefDAO: IDAO<FieldDef>, fieldValDAO: IDAO<FieldVal>, personDAO: IDAO<Person>) {
     const getAllFieldDefs = applyUserGuards<
         {},
         {},
         {
-            fieldDefs: FieldDef[]
+            fieldDefs: ExtendedFieldDef[]
         }
     >(async () => {
         const fieldDefs = await fieldDefDAO.findAll();
+        const extendedFieldDefs: ExtendedFieldDef[] = await Promise.all(fieldDefs.map(async fd => {
+            if (fd.isForAll) {
+                return {
+                    ...fd,
+                    isForAll: true as const
+                };
+            }
+            const fieldVal = await fieldValDAO.findOne({ where: { fieldDefId: fd.id } });
+
+            return {
+                ...fd,
+                isForAll: false,
+                specificPersonId: fieldVal!.personId
+            }
+        }));
 
         return {
             data: {
-                fieldDefs: sortByStdDate("createdAt", fieldDefs)
+                fieldDefs: sortByStdDate("createdAt", extendedFieldDefs)
             },
             status: 200
         };
@@ -66,7 +84,48 @@ export default function getFieldDefController(fieldDefDAO: IDAO<FieldDef>, field
         return CommonResponse.OK;
     }, CanWriteGuard);
 
+    const updateFieldDef = applyUserGuards<
+        { data: FieldDataToEdit },
+        {}
+    >(async ({ body: { data } }) => {
+        if (
+            typeof data.id != "string" ||
+            typeof data.name != "string" ||
+            data.name.trim() == "" ||
+            typeof data.description != "string"
+        ) {
+            return CommonResponse.BAD_REQUEST;
+        }
+
+        const fieldDef = await fieldDefDAO.findByPk(data.id);
+        if (!fieldDef) return CommonResponse.BAD_REQUEST;
+
+        await fieldDefDAO.update({
+            name: data.name.trim(),
+            description: data.description.trim()
+        }, {
+            where: { id: data.id }
+        });
+
+        return CommonResponse.OK;
+    }, CanWriteGuard);
+
+    const deleteFieldDef = applyUserGuards<
+        {},
+        { id: string }
+    >(async ({ query: { id } }) => {
+        if (typeof id != "string") return CommonResponse.BAD_REQUEST;
+
+        const fieldDef = await fieldDefDAO.findByPk(id);
+        if (!fieldDef) return CommonResponse.BAD_REQUEST;
+
+        await fieldValDAO.destroy({ where: { fieldDefId: id } });
+        await fieldDefDAO.destroy({ where: { id } });
+
+        return CommonResponse.OK;
+    }, CanWriteGuard);
+
     return {
-        getAllFieldDefs
+        getAllFieldDefs, createFieldDef, updateFieldDef, deleteFieldDef
     };
 }

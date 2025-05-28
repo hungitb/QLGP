@@ -31,4 +31,43 @@ export const fieldDefApi = wrapApi({
       });
     }
   ),
+  createFieldDef: wrapPostApi<typeof fieldDefController.createFieldDef>(
+    async (data) => {
+      if (useBackend) {
+        return await wrapAxiosCall(() => api.post("/field_def", data));
+      }
+
+      return await fieldDefController.createFieldDef({
+        body: data,
+        query: {},
+        user: await getLoggedInUserLocalStorage(),
+      });
+    }
+  ),
+  updateFieldDef: wrapPostApi<typeof fieldDefController.updateFieldDef>(
+    async (data) => {
+      if (useBackend) {
+        return await wrapAxiosCall(() => api.patch("/field_def", data));
+      }
+
+      return await fieldDefController.updateFieldDef({
+        body: data,
+        query: {},
+        user: await getLoggedInUserLocalStorage(),
+      });
+    }
+  ),
+  deleteFieldDef: wrapGetApi<typeof fieldDefController.deleteFieldDef>(
+    async (data) => {
+      if (useBackend) {
+        return await wrapAxiosCall(() => api.delete("/field_def", { params: data }));
+      }
+
+      return await fieldDefController.deleteFieldDef({
+        body: {},
+        query: data,
+        user: await getLoggedInUserLocalStorage(),
+      });
+    }
+  ),
 });

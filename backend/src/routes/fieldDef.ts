@@ -8,5 +8,8 @@ const router = Router();
 const fieldDefController = getFieldDefController(fieldDefDAO, fieldValDAO, personDAO);
 
 router.get("/", wrapHandlerAdvance(fieldDefController.getAllFieldDefs));
+router.post("/", wrapHandlerAdvance(fieldDefController.createFieldDef));
+router.patch("/", wrapHandlerAdvance(fieldDefController.updateFieldDef));
+router.delete("/", wrapHandlerAdvance(fieldDefController.deleteFieldDef));
 
 export default router;

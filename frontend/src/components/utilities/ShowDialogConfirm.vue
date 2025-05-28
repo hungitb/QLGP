@@ -9,20 +9,29 @@ import { defineComponent } from "vue";
 
 import DialogConfirm from "@/components/DialogConfirm.vue";
 
-type ShowConfirmDialogParams = {
+// type ShowConfirmDialogParams = {
+//   onConfirmed: () => any;
+//   notAwaitOnConfirmed?: boolean;
+//   header: string;
+//   info?: string;
+//   confirmText?: string;
+//   confirmColor?: string;
+// };
+let _showDialogConfirm: ((data: ShowConfirmDialogParams) => any) | null = null;
+export function showDialogConfirm(data: {
   onConfirmed: () => any;
   notAwaitOnConfirmed?: boolean;
   header: string;
   info?: string;
   confirmText?: string;
   confirmColor?: string;
-};
-let _showDialogConfirm: ((data: ShowConfirmDialogParams) => any) | null = null;
-export function showDialogConfirm(data: ShowConfirmDialogParams) {
+}) {
   if (_showDialogConfirm) {
     _showDialogConfirm(data);
   }
 }
+
+type ShowConfirmDialogParams = Parameters<typeof showDialogConfirm>[0];
 
 export default defineComponent({
   components: {
