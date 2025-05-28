@@ -15,14 +15,14 @@
       </v-card-subtitle>
       <v-card-text v-if="data && data.length > 0"> Hello </v-card-text>
       <v-card-actions v-if="!isLoading && canWrite()">
-        <v-btn text color="primary">
+        <v-btn v-if="data" text color="primary" @click="dialogEditAdditionalInfo = true">
           <v-icon left>mdi-pen</v-icon>
           Chỉnh sửa
+          <EditAdditionalInfoDialog v-model="dialogEditAdditionalInfo" :data="data" />
         </v-btn>
         <v-btn text color="primary" @click="dialogFieldManagement = true">
           <v-icon left>mdi-menu</v-icon>
           Quản lý
-
           <FieldManagementDialog v-model="dialogFieldManagement" @addOrUpdateField="someFieldCreatedOrChanged = true" />
         </v-btn>
       </v-card-actions>
@@ -36,11 +36,13 @@ import { FieldVal } from "../../../../backend/src/model/FieldVal";
 import { FieldDef } from "../../../../backend/src/model/FieldDef";
 import { permissionMixin } from "@/utils";
 import FieldManagementDialog from "./FieldManagementDialog.vue";
+import EditAdditionalInfoDialog from "./EditAdditionalInfoDialog.vue";
 
 export default defineComponent({
   mixins: [permissionMixin],
   components: {
     FieldManagementDialog,
+    EditAdditionalInfoDialog
   },
   props: {
     data: {
@@ -52,6 +54,7 @@ export default defineComponent({
   data() {
     return {
       dialogFieldManagement: false,
+      dialogEditAdditionalInfo: false,
       someFieldCreatedOrChanged: false,
     };
   },
