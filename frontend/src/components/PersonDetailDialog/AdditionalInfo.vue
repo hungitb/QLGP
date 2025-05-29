@@ -15,15 +15,26 @@
       </v-card-subtitle>
       <v-card-text v-if="data && data.length > 0"> Hello </v-card-text>
       <v-card-actions v-if="!isLoading && canWrite()">
-        <v-btn v-if="data" text color="primary" @click="dialogEditAdditionalInfo = true">
+        <v-btn
+          v-if="data"
+          text
+          color="primary"
+          @click="dialogEditAdditionalInfo = true"
+        >
           <v-icon left>mdi-pen</v-icon>
           Chỉnh sửa
-          <EditAdditionalInfoDialog v-model="dialogEditAdditionalInfo" :data="data" />
+          <EditAdditionalInfoDialog
+            v-model="dialogEditAdditionalInfo"
+            :data="data"
+          />
         </v-btn>
         <v-btn text color="primary" @click="dialogFieldManagement = true">
           <v-icon left>mdi-menu</v-icon>
           Quản lý
-          <FieldManagementDialog v-model="dialogFieldManagement" @addOrUpdateField="someFieldCreatedOrChanged = true" />
+          <FieldManagementDialog
+            v-model="dialogFieldManagement"
+            @addOrUpdateField="someFieldCreatedOrChanged = true"
+          />
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -42,7 +53,7 @@ export default defineComponent({
   mixins: [permissionMixin],
   components: {
     FieldManagementDialog,
-    EditAdditionalInfoDialog
+    EditAdditionalInfoDialog,
   },
   props: {
     data: {
@@ -71,7 +82,7 @@ export default defineComponent({
         this.$emit("addOrUpdateField");
         this.someFieldCreatedOrChanged = false;
       }
-    }
-  }
+    },
+  },
 });
 </script>

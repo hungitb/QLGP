@@ -3,7 +3,7 @@
     v-model="dialog"
     header="Các loại thông tin khác"
     buttonText
-    maxWidth="600px"
+    maxWidth="800px"
   >
     <template v-if="fetchFieldDefsError">
       Không thể tìm thấy thông tin
@@ -32,9 +32,7 @@
         </template>
 
         <template v-slot:item.isForAll="{ value, item }">
-          <template v-if="value">
-            Mọi người
-          </template>
+          <template v-if="value"> Mọi người </template>
           <template v-else>
             {{ $store.state.personMapping[item.specificPersonId].callname }}
           </template>
@@ -42,12 +40,12 @@
 
         <template v-slot:item.__actions="{ item }">
           <v-icon class="mr-4" @click.stop="editField(item)">
-                  mdi-pencil
-                </v-icon>
+            mdi-pencil
+          </v-icon>
 
-                <v-icon color="error" @click.stop="deleteField(item)">
-                  mdi-delete
-                </v-icon>
+          <v-icon color="error" @click.stop="deleteField(item)">
+            mdi-delete
+          </v-icon>
         </template>
       </v-data-table>
 
@@ -64,17 +62,23 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import CustomDialog from "../CustomDialog.vue";
-import { FieldDef, fieldTypeDisplayText } from "../../../../backend/src/model/FieldDef";
+import {
+  FieldDef,
+  fieldTypeDisplayText,
+} from "../../../../backend/src/model/FieldDef";
 import { fieldDefApi } from "@/api/fieldDef";
 import AddOrEditFieldDefDialog from "./AddOrEditFieldDefDialog.vue";
-import { ExtendedFieldDef, FieldDataToEdit } from "../../../../backend/src/controller/fieldDef";
+import {
+  ExtendedFieldDef,
+  FieldDataToEdit,
+} from "../../../../backend/src/controller/fieldDef";
 import CustomPersonAvatar from "../CustomPersonAvatar.vue";
 import { showDialogConfirm } from "../utilities";
 
 export default defineComponent({
   components: {
     CustomDialog,
-    AddOrEditFieldDefDialog
+    AddOrEditFieldDefDialog,
   },
   props: {
     value: {
@@ -146,15 +150,19 @@ export default defineComponent({
     deleteField(field: ExtendedFieldDef) {
       showDialogConfirm({
         header: `Bạn có chắc chắn muốn xóa "${field.name}"?`,
-        info: `${field.isForAll ? "Tất cả mọi người" : this.$store.state.personMapping[field.specificPersonId].callname} sẽ mất đi trường thông tin này!`,
+        info: `${
+          field.isForAll
+            ? "Tất cả mọi người"
+            : this.$store.state.personMapping[field.specificPersonId].callname
+        } sẽ mất đi trường thông tin này!`,
         confirmText: "Chắc chắn",
         confirmColor: "error",
         onConfirmed: async () => {
           await fieldDefApi.deleteFieldDef({ id: field.id });
           this.onAddOrUpdateFieldHandler();
-        }
+        },
       });
-    }
+    },
   },
   mounted() {
     if (this.dialog) {

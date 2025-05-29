@@ -9,32 +9,37 @@
     :isLoading="savingData"
   >
     <v-form ref="form">
-    <v-text-field v-model="name" outlined label="Tên (bắt buộc)" :rules="[ruleRequired]"></v-text-field>
-    <v-text-field v-model="description" outlined label="Mô tả"></v-text-field>
-    <template v-if="!toEdit">
-      <v-select
-        v-model="isForAll"
+      <v-text-field
+        v-model="name"
         outlined
-        :items="[
-          { value: true, text: 'Cho tất cả mọi người' },
-          { value: false, text: 'Chọn người cụ thể' },
-        ]"
-        label="Đối tượng thêm loại thông tin này"
-      ></v-select>
-      <PersonInputGroup
-        v-if="!isForAll"
-        v-model="specificPersonId"
-        one
-        label="Đối tượng (bắt buộc)"
-        required
-      ></PersonInputGroup>
-      <v-select
-        v-model="type"
-        outlined
-        :items="typeSelectItems"
-        label="Loại"
-      ></v-select>
-    </template>
+        label="Tên (bắt buộc)"
+        :rules="[ruleRequired]"
+      ></v-text-field>
+      <v-text-field v-model="description" outlined label="Mô tả"></v-text-field>
+      <template v-if="!toEdit">
+        <v-select
+          v-model="isForAll"
+          outlined
+          :items="[
+            { value: true, text: 'Cho tất cả mọi người' },
+            { value: false, text: 'Chọn người cụ thể' },
+          ]"
+          label="Đối tượng thêm loại thông tin này"
+        ></v-select>
+        <PersonInputGroup
+          v-if="!isForAll"
+          v-model="specificPersonId"
+          one
+          label="Đối tượng (bắt buộc)"
+          required
+        ></PersonInputGroup>
+        <v-select
+          v-model="type"
+          outlined
+          :items="typeSelectItems"
+          label="Loại"
+        ></v-select>
+      </template>
     </v-form>
   </CustomDialog>
 </template>
@@ -55,7 +60,8 @@ import { fieldDefApi } from "@/api/fieldDef";
 
 export default defineComponent({
   components: {
-    CustomDialog, PersonInputGroup
+    CustomDialog,
+    PersonInputGroup,
   },
   props: {
     value: {
@@ -111,7 +117,7 @@ export default defineComponent({
       if (v) {
         this.specificPersonId = null;
       }
-    }
+    },
   },
   methods: {
     async save() {
@@ -121,17 +127,28 @@ export default defineComponent({
       this.savingData = true;
 
       if (this.toEdit) {
-        await fieldDefApi.updateFieldDef({ data: { id: this.toEdit.id, name: this.name, description: this.description } });
+        await fieldDefApi.updateFieldDef({
+          data: {
+            id: this.toEdit.id,
+            name: this.name,
+            description: this.description,
+          },
+        });
       } else {
         const baseData = {
           name: this.name,
           description: this.description,
-          type: this.type
+          type: this.type,
         };
 
-        const data: (typeof baseData) & ({ isForAll: true } | { isForAll: false, specificPersonId: string }) = this.isForAll
-          ? Object.assign(baseData, { isForAll: true } as const)
-          : Object.assign(baseData, { isForAll: false, specificPersonId: this.specificPersonId! } as const)
+        const data: typeof baseData &
+          ({ isForAll: true } | { isForAll: false; specificPersonId: string }) =
+          this.isForAll
+            ? Object.assign(baseData, { isForAll: true } as const)
+            : Object.assign(baseData, {
+                isForAll: false,
+                specificPersonId: this.specificPersonId!,
+              } as const);
 
         await fieldDefApi.createFieldDef({ data });
       }
@@ -139,7 +156,7 @@ export default defineComponent({
       this.savingData = false;
 
       this.$emit("addOrUpdate");
-    }
-  }
+    },
+  },
 });
 </script>

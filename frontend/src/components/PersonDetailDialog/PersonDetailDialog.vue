@@ -131,7 +131,10 @@
           </v-row>
         </v-col>
         <v-col cols="12" :md="dialogDisplaySetting.additionalDataNumColumns">
-          <AdditionalInfo :data="personDetailInfo?.additionalData" @addOrUpdateField="refresh" />
+          <AdditionalInfo
+            :data="personDetailInfo?.additionalData"
+            @addOrUpdateField="refresh"
+          />
         </v-col>
       </v-row>
     </template>

@@ -15,7 +15,11 @@ import {
   wrapApi,
 } from "../../../backend/src/DAO/fake/FakeDAO";
 
-const fieldDefController = getFieldDefController(fieldDefDAO, fieldValDAO, personDAO);
+const fieldDefController = getFieldDefController(
+  fieldDefDAO,
+  fieldValDAO,
+  personDAO
+);
 
 export const fieldDefApi = wrapApi({
   getAllFieldDefs: wrapGetApi<typeof fieldDefController.getAllFieldDefs>(
@@ -60,7 +64,9 @@ export const fieldDefApi = wrapApi({
   deleteFieldDef: wrapGetApi<typeof fieldDefController.deleteFieldDef>(
     async (data) => {
       if (useBackend) {
-        return await wrapAxiosCall(() => api.delete("/field_def", { params: data }));
+        return await wrapAxiosCall(() =>
+          api.delete("/field_def", { params: data })
+        );
       }
 
       return await fieldDefController.deleteFieldDef({
