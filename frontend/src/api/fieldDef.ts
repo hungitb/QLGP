@@ -77,3 +77,19 @@ export const fieldDefApi = wrapApi({
     }
   ),
 });
+
+export const fieldValApi = wrapApi({
+  updateFieldVal: wrapPostApi<typeof fieldDefController.updateFieldVal>(
+    async (data) => {
+      if (useBackend) {
+        return await wrapAxiosCall(() => api.patch("/field_val", data));
+      }
+
+      return await fieldDefController.updateFieldVal({
+        body: data,
+        query: {},
+        user: await getLoggedInUserLocalStorage(),
+      });
+    }
+  ),
+});

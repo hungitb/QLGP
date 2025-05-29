@@ -134,6 +134,7 @@
           <AdditionalInfo
             :data="personDetailInfo?.additionalData"
             @addOrUpdateField="refresh"
+            @someFieldValsChange="refresh"
           />
         </v-col>
       </v-row>

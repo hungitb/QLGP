@@ -26,6 +26,7 @@
           <EditAdditionalInfoDialog
             v-model="dialogEditAdditionalInfo"
             :data="data"
+            @someFieldValsChange="someFieldValsChangeHandler"
           />
         </v-btn>
         <v-btn text color="primary" @click="dialogFieldManagement = true">
@@ -84,5 +85,11 @@ export default defineComponent({
       }
     },
   },
+  methods: {
+    someFieldValsChangeHandler() {
+      this.$emit('someFieldValsChange');
+      this.dialogEditAdditionalInfo = false;
+    }
+  }
 });
 </script>

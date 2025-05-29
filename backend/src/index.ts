@@ -11,6 +11,7 @@ import authRouter from "./routes/auth";
 import personRouter from "./routes/person";
 import shareRouter from "./routes/share";
 import fieldDefRouter from "./routes/fieldDef";
+import fieldValRouter from "./routes/fieldVal";
 
 const isDev = process.env.NODE_ENV == "development";
 const app = express();
@@ -22,6 +23,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/person", personRouter);
 app.use("/api/share", shareRouter);
 app.use("/api/field_def", fieldDefRouter);
+app.use("/api/field_val", fieldValRouter);
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     console.error(err.stack);

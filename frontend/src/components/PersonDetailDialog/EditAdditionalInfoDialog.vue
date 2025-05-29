@@ -6,6 +6,7 @@
     buttonText
     persistent
     :buttons="[{ text: 'Lưu', click: saveData }]"
+    :isLoading="loading"
   >
     <v-form>
       <template v-for="(f, i) in data">
@@ -42,8 +43,8 @@
           <v-checkbox
             v-if="f.fieldDef.type == 'CHECKBOX'"
             class="mt-0"
-            :value="!!newValue[f.id]"
-            @input="newValue[f.id] = $event ? 'checked' : ''"
+            :input-value="!!newValue[f.id]"
+            @change="newValue[f.id] = $event ? 'checked' : ''"
             :label="f.fieldDef.name"
           ></v-checkbox>
         </div>
@@ -62,6 +63,7 @@ import { convertToDateInputValue, handleDateInputValue } from "@/utils";
 import { DateFormat } from "../types";
 import PersonInputGroup from "../input/PersonInputGroup.vue";
 import ImageInput from "../input/ImageInput.vue";
+import { fieldValApi } from "@/api/fieldDef";
 
 function getInitValue(data: (FieldVal & { fieldDef: FieldDef })[]) {
   const result: Record<string, string> = {};
@@ -91,6 +93,7 @@ export default defineComponent({
   data() {
     return {
       newValue: getInitValue(this.data),
+      loading: false,
     };
   },
   computed: {
@@ -120,9 +123,15 @@ export default defineComponent({
     transformDateInputValue(v: [date: string, type: DateFormat]) {
       return handleDateInputValue(v) || "";
     },
-    saveData() {
-      const changedFieldValIds = Object.keys(this.data).filter(id => this.data[id] != this.newValue[id]);
-    }
+    async saveData() {
+      const changedFieldValIds = this.data.filter(fv => fv.value != this.newValue[fv.id]).map(fv => fv.id);
+
+      this.loading = true;
+      await fieldValApi.updateFieldVal({ data: changedFieldValIds.map(id => ({ id, value: this.newValue[id] })) });
+      this.loading = false;
+
+      this.$emit("someFieldValsChange");
+    },
   },
 });
 </script>

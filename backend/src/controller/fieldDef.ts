@@ -125,7 +125,42 @@ export default function getFieldDefController(fieldDefDAO: IDAO<FieldDef>, field
         return CommonResponse.OK;
     }, CanWriteGuard);
 
+    const updateFieldVal = applyUserGuards<
+        { data: { id: string, value: string }[] },
+        {}
+    >(async ({ body: { data } }) => {
+        if (!Array.isArray(data)) {
+            return CommonResponse.BAD_REQUEST;
+        }
+
+        if (!data.every(i => {
+            if (typeof i.id != "string") return false;
+            if (typeof i.value != "string") return false;
+            return true;
+        })) {
+            return CommonResponse.BAD_REQUEST;
+        }
+
+        const fieldVals = await fieldValDAO.findAllIdsIn(data.map(i => i.id));
+        if (fieldVals.length != data.length) {
+            return CommonResponse.BAD_REQUEST;
+        }
+        const fieldValMapping: Record<string, FieldVal> = {};
+        fieldVals.forEach(fv => fieldValMapping[fv.id] = fv);
+
+        await Promise.all(
+            data.map(({ id, value }) => {
+                console.log(id, `"${value}"`, fieldValMapping[id].value == value)
+                if (fieldValMapping[id].value == value) return Promise.resolve();
+                return fieldValDAO.update({ value }, { where: { id } });
+            })
+        );
+
+        return CommonResponse.OK;
+    }, CanWriteGuard);
+
     return {
-        getAllFieldDefs, createFieldDef, updateFieldDef, deleteFieldDef
+        getAllFieldDefs, createFieldDef, updateFieldDef, deleteFieldDef,
+        updateFieldVal
     };
 }

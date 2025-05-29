@@ -481,7 +481,7 @@ export class TableSchema<Model extends ValidModel> extends BaseTableSchema<Model
         
         ids.forEach(id => {
             dataValidKeys.forEach(field => {
-                if (!data[field] && !this.useNullAnnotationForMissingValueField) {
+                if (utils.isNullOrUndefined(data[field]) && !this.useNullAnnotationForMissingValueField) {
                     return;
                 }
                 triples.push([
@@ -715,7 +715,7 @@ export class TableSchemaSingleRow<Model extends ValidModel> extends BaseTableSch
         const triples: Triple[] = [];
         
         utils.keys(data).forEach(field => {
-            if (!data[field] && !this.useNullAnnotationForMissingValueField) {
+            if (utils.isNullOrUndefined(data[field]) && !this.useNullAnnotationForMissingValueField) {
                 return;
             }
 
