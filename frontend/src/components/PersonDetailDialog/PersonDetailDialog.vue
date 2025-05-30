@@ -226,23 +226,29 @@ export default defineComponent({
       ] as Person | null;
     },
     dialogDisplaySetting() {
-      if (
-        !this.personDetailInfo ||
-        this.personDetailInfo.additionalData.length < 8
-      ) {
-        return {
+      return {
           maxWidth: 840,
           mainInfoNumColumns: 6,
           additionalDataNumColumns: 6,
           additionalDataItemNumCols: 12,
         };
-      }
-      return {
-        maxWidth: 1260,
-        mainInfoNumColumns: 4,
-        additionalDataNumColumns: 8,
-        additionalDataItemNumCols: 6,
-      };
+      // if (
+      //   !this.personDetailInfo ||
+      //   this.personDetailInfo.additionalData.length < 8
+      // ) {
+      //   return {
+      //     maxWidth: 840,
+      //     mainInfoNumColumns: 6,
+      //     additionalDataNumColumns: 6,
+      //     additionalDataItemNumCols: 12,
+      //   };
+      // }
+      // return {
+      //   maxWidth: 1260,
+      //   mainInfoNumColumns: 4,
+      //   additionalDataNumColumns: 8,
+      //   additionalDataItemNumCols: 6,
+      // };
     },
     groups() {
       if (!this.personDetailInfo) return [];

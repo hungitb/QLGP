@@ -150,7 +150,6 @@ export default function getFieldDefController(fieldDefDAO: IDAO<FieldDef>, field
 
         await Promise.all(
             data.map(({ id, value }) => {
-                console.log(id, `"${value}"`, fieldValMapping[id].value == value)
                 if (fieldValMapping[id].value == value) return Promise.resolve();
                 return fieldValDAO.update({ value }, { where: { id } });
             })
