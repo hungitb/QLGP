@@ -228,11 +228,11 @@ export default defineComponent({
     },
     dialogDisplaySetting() {
       return {
-          maxWidth: 840,
-          mainInfoNumColumns: 6,
-          additionalDataNumColumns: 6,
-          additionalDataItemNumCols: 12,
-        };
+        maxWidth: 840,
+        mainInfoNumColumns: 6,
+        additionalDataNumColumns: 6,
+        additionalDataItemNumCols: 12,
+      };
       // if (
       //   !this.personDetailInfo ||
       //   this.personDetailInfo.additionalData.length < 8

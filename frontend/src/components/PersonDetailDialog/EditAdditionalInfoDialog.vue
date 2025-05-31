@@ -124,10 +124,17 @@ export default defineComponent({
       return handleDateInputValue(v) || "";
     },
     async saveData() {
-      const changedFieldValIds = this.data.filter(fv => fv.value != this.newValue[fv.id]).map(fv => fv.id);
+      const changedFieldValIds = this.data
+        .filter((fv) => fv.value != this.newValue[fv.id])
+        .map((fv) => fv.id);
 
       this.loading = true;
-      await fieldValApi.updateFieldVal({ data: changedFieldValIds.map(id => ({ id, value: this.newValue[id] })) });
+      await fieldValApi.updateFieldVal({
+        data: changedFieldValIds.map((id) => ({
+          id,
+          value: this.newValue[id],
+        })),
+      });
       this.loading = false;
 
       this.$emit("someFieldValsChange");

@@ -45,7 +45,7 @@ export default defineComponent({
     width() {
       return 100;
       // return (this as any).$vuetify.breakpoint.smAndDown ? 100 : 150;
-    }
+    },
   },
 });
 </script>

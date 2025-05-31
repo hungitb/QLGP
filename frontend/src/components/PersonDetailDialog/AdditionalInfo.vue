@@ -22,27 +22,47 @@
           <template v-if="f.fieldDef.type == 'COMPLEX_TEXT'">
             <div class="font-weight-bold">{{ f.fieldDef.name }}</div>
             <template v-if="f.value">
-              <div v-for="(line, j) in f.value.split('\n')" :key="j">{{ line }}</div>
+              <div v-for="(line, j) in f.value.split('\n')" :key="j">
+                {{ line }}
+              </div>
             </template>
             <div v-else>{{ nullValueDisplayText }}</div>
           </template>
           <template v-if="f.fieldDef.type == 'DATE'">
             <div class="font-weight-bold">{{ f.fieldDef.name }}</div>
-            <div>{{ f.value ? transformDateString(f.value) : nullValueDisplayText }}</div>
+            <div>
+              {{
+                f.value ? transformDateString(f.value) : nullValueDisplayText
+              }}
+            </div>
           </template>
           <template v-if="f.fieldDef.type == 'CHECKBOX'">
-            <v-checkbox :input-value="!!f.value" readonly :label="f.fieldDef.name" hide-details class="mb-4 pt-0"></v-checkbox>
+            <v-checkbox
+              :input-value="!!f.value"
+              readonly
+              :label="f.fieldDef.name"
+              hide-details
+              class="mb-4 pt-0"
+            ></v-checkbox>
           </template>
           <template v-if="f.fieldDef.type == 'IMAGE'">
             <div class="font-weight-bold">{{ f.fieldDef.name }}</div>
-            <v-img v-if="f.value" :src="f.value" @click="showImage(f.value)" style="cursor: pointer"></v-img>
+            <v-img
+              v-if="f.value"
+              :src="f.value"
+              @click="showImage(f.value)"
+              style="cursor: pointer"
+            ></v-img>
             <div v-else>{{ nullValueDisplayText }}</div>
           </template>
           <template v-if="f.fieldDef.type == 'PERSON_REF'">
             <div class="font-weight-bold">{{ f.fieldDef.name }}</div>
             <div v-if="f.value" class="d-flex align-center">
               <div>
-                <CustomPersonAvatar :person="$store.state.personMapping[f.value]" size="24"></CustomPersonAvatar>
+                <CustomPersonAvatar
+                  :person="$store.state.personMapping[f.value]"
+                  size="24"
+                ></CustomPersonAvatar>
               </div>
               <div class="ml-2">
                 {{ $store.state.personMapping[f.value].callname }}
@@ -96,7 +116,7 @@ export default defineComponent({
   components: {
     FieldManagementDialog,
     EditAdditionalInfoDialog,
-    CustomPersonAvatar
+    CustomPersonAvatar,
   },
   props: {
     data: {
@@ -106,8 +126,8 @@ export default defineComponent({
     },
     readonly: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
   data() {
     return {
@@ -134,7 +154,7 @@ export default defineComponent({
   },
   methods: {
     someFieldValsChangeHandler() {
-      this.$emit('someFieldValsChange');
+      this.$emit("someFieldValsChange");
       this.dialogEditAdditionalInfo = false;
     },
     transformDateString(s: string) {
@@ -142,7 +162,7 @@ export default defineComponent({
     },
     showImage(src: string) {
       showImage({ src });
-    }
-  }
+    },
+  },
 });
 </script>
