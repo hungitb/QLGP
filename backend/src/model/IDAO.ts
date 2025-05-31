@@ -5,6 +5,7 @@ type Where<K> = { [attr in keyof K]?: NonNullable<K[attr]> };
 export interface IDAO<K> {
     findByPk: (pk: string) => Promise<K | null>;
     findOne: ({ where }: { where: Where<K> }) => Promise<K | null>;
+    findAllIdsIn: (ids: string[]) => Promise<K[]>;
     findAll: (match?: { where: Where<K> }) => Promise<K[]>;
     count: ({ where }: { where: Where<K> }) => Promise<number>;
     create: (k: K) => Promise<any>;

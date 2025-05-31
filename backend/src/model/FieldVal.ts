@@ -1,8 +1,8 @@
 
 export type FieldVal = {
-    id: string
-    personId:  string
-    fieldDefId: string
+    id: string;
+    personId:  string;
+    fieldDefId: string;
 
-    value: string | null
+    value: string | null;
 };

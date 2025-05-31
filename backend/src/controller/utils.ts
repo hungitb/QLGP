@@ -8,6 +8,9 @@ type RequestInputBody = Record<string, any>;
 
 export type SafeExclude<T, K extends T> = Exclude<T, K>;
 export type SafeOmit<T, K extends keyof T> = Omit<T, K>;
+export type Prettify<T> = {
+    [K in keyof T]: T[K];
+} & {};
 
 export type UserInfo = SafeOmit<User, "sessionToken" | "sessionExpiry" | "password" | "note"> & {
     thongTinGiaPha: ThongTinGiaPha;
@@ -31,7 +34,7 @@ export type ControllerHandler<
     Query extends RequestInputQuery = {},
     Output extends object = {},
     UserCanNull extends boolean = true
-> = (input: RequestInput<Body, Query, UserCanNull>) => Promise<ControllerHandlerResult<Output>>;
+> = (input: RequestInput<Prettify<Body>, Prettify<Query>, UserCanNull>) => Promise<ControllerHandlerResult<Output>>;
 
 export type Controller = Record<string, ControllerHandler<any, any, any>>;
 
@@ -200,6 +203,27 @@ export function applyUserGuards<
     };
 
     return newHandler;
+}
+
+export async function runPromisesInBatchs<T>(promiseFactories: (() => Promise<T>)[], batchSize: number): Promise<T[]> {
+    const result: T[] = [];
+    for (let i = 0; i < Math.ceil(promiseFactories.length/batchSize); i++) {
+        const temp: (() => Promise<T>)[] = [];
+        for (let j = 0; j < batchSize; j++) {
+            const index = i*batchSize + j;
+            if (index < promiseFactories.length) {
+                temp.push(promiseFactories[index]);
+            } else {
+                break;
+            }
+        }
+        result.push(
+            ...(
+                await Promise.all(temp.map(t => t()))
+            )
+        );
+    }
+    return result;
 }
 
 export function wrapControllerWithInitialScript<T extends Controller>(controller: T, script: () => Promise<void>): T {

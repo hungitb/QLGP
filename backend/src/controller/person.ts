@@ -8,6 +8,8 @@ import type { User } from "../model/User";
 import type { IDAO, IDASO } from "../model/IDAO";
 import { extractEvents, type Event } from "./event";
 import { ThongTinGiaPha } from "../model/ThongTinGiaPha";
+import { FieldDef } from "../model/FieldDef";
+import { FieldVal } from "../model/FieldVal";
 
 export type FamilyTreePerson = {
     id: string,
@@ -122,7 +124,9 @@ export default function getPersonController(
     personDAO: IDAO<Person>,
     userDAO: IDAO<User>,
     ttgpDASO: IDASO<ThongTinGiaPha>,
-    personAdvanceDAO: PersonAdvanceDAO
+    personAdvanceDAO: PersonAdvanceDAO,
+    fieldDefDAO: IDAO<FieldDef>,
+    fieldValDAO: IDAO<FieldVal>
 ) {
     const getAllPeopleBaseInfo = applyUserGuards<
         {},
@@ -178,7 +182,8 @@ export default function getPersonController(
                 personIdsOnlySameFather: string[],
                 personIdsOnlySameMother: string[],
                 personIdsSameBothFatherAndMother: string[],
-                childIds: string[]
+                childIds: string[],
+                additionalData: (FieldVal & { fieldDef: FieldDef })[]
             }
         }
     >(async ({ query: { id } }) => {
@@ -201,6 +206,15 @@ export default function getPersonController(
         const personIdsOnlySameFather = personIdsSameFather.filter(id => !setPersonIdsSameMother.has(id));
         const personIdsOnlySameMother = personIdsSameMother.filter(id => !setPersonIdsSameFather.has(id));
         const personIdsSameBothFatherAndMother = personIdsSameFather.filter(id => setPersonIdsSameMother.has(id));
+
+        const fieldVals = await fieldValDAO.findAll({ where: { personId: id } });
+        const fieldDefs = await fieldDefDAO.findAllIdsIn(fieldVals.map(fv => fv.fieldDefId));
+        const additionalData = fieldVals.map(fv => {
+            return {
+                ...fv,
+                fieldDef: fieldDefs.find(fd => fd.id == fv.fieldDefId)!
+            };
+        });
         
         return {
             data: {
@@ -210,6 +224,7 @@ export default function getPersonController(
                     personIdsOnlySameMother,
                     personIdsSameBothFatherAndMother,
                     childIds: children.sort((p1, p2) => p1.youngnessLevel - p2.youngnessLevel).map(p => p.id),
+                    additionalData,
                 }
             },
             status: 200
@@ -387,9 +402,20 @@ export default function getPersonController(
             }
         }
 
-        // to do: Create FieldVal with for all people FieldDef
-
         await Promise.all(promises);
+
+        // Field defs for all
+        const fieldDefs = await fieldDefDAO.findAll({ where: { isForAll: true } });
+        await Promise.all(
+            fieldDefs.map(fd => {
+                return fieldValDAO.create({
+                    id: uuid(),
+                    personId: newPerson.id,
+                    fieldDefId: fd.id,
+                    value: null
+                });
+            })
+        );
 
         return {
             data: {
@@ -421,7 +447,18 @@ export default function getPersonController(
 
         await personDAO.destroy({ where: { id } });
 
-        // to do: FieldVal & FieldDef
+        // Find field defs that for only current person before clear field vals
+        const fieldVals = await fieldValDAO.findAll({ where: { personId: id } });
+        const fieldDefIds = fieldVals.map(fv => fv.fieldDefId);
+        const fieldDefs = await fieldDefDAO.findAllIdsIn(fieldDefIds);
+        const fieldDefForSinglePerson = fieldDefs.filter(fd => !fd.isForAll);
+
+        // Clear field vals
+        await fieldValDAO.update({ value: null }, { where: { value: id } });
+        await fieldValDAO.destroy({ where: { personId: id } });
+
+        // Clear field defs
+        await Promise.all(fieldDefForSinglePerson.map(fd => fieldDefDAO.destroy({ where: { id: fd.id } })));
 
         return CommonResponse.OK;
     }, CanWriteGuard);
