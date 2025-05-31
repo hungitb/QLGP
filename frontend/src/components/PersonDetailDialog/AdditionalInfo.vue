@@ -52,7 +52,7 @@
           </template>
         </div>
       </v-card-text>
-      <v-card-actions v-if="!isLoading && canWrite()">
+      <v-card-actions v-if="!readonly && !isLoading && canWrite()">
         <v-btn
           v-if="data"
           text
@@ -104,6 +104,10 @@ export default defineComponent({
         (FieldVal & { fieldDef: FieldDef })[] | undefined
       >,
     },
+    readonly: {
+      type: Boolean,
+      default: false
+    }
   },
   data() {
     return {

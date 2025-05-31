@@ -133,6 +133,7 @@
         <v-col cols="12" :md="dialogDisplaySetting.additionalDataNumColumns">
           <AdditionalInfo
             :data="personDetailInfo?.additionalData"
+            :readonly="!editable"
             @addOrUpdateField="refresh"
             @someFieldValsChange="refresh"
           />

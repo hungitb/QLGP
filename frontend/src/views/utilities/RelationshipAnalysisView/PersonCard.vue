@@ -1,14 +1,16 @@
 <template>
-  <v-card style="overflow: hidden">
+  <div class="elevation-1" :style="{ width: `${width}px`, overflow: 'hidden' }">
     <CustomPersonAvatar
       :person="person"
       tile
-      :size="$vuetify.breakpoint.smAndDown ? 100 : 150"
-      :text-size="$vuetify.breakpoint.smAndDown ? '4' : '3'"
+      :size="width"
+      :text-size="'4'"
     ></CustomPersonAvatar>
-    <v-card-title>{{ person.callname }}</v-card-title>
-    <v-card-subtitle>{{ genderDisplayText[person.gender] }}</v-card-subtitle>
-  </v-card>
+    <div class="pa-2">
+      <div class="text-h6 text-center">{{ person.callname }}</div>
+      <div class="text-center">{{ genderDisplayText[person.gender] }}</div>
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -40,6 +42,10 @@ export default defineComponent({
         (this as any).id
       ] as Person;
     },
+    width() {
+      return 100;
+      // return (this as any).$vuetify.breakpoint.smAndDown ? 100 : 150;
+    }
   },
 });
 </script>

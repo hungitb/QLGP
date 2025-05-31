@@ -402,9 +402,20 @@ export default function getPersonController(
             }
         }
 
-        // to do: Create FieldVal with for all people FieldDef
-
         await Promise.all(promises);
+
+        // Field defs for all
+        const fieldDefs = await fieldDefDAO.findAll({ where: { isForAll: true } });
+        await Promise.all(
+            fieldDefs.map(fd => {
+                return fieldValDAO.create({
+                    id: uuid(),
+                    personId: newPerson.id,
+                    fieldDefId: fd.id,
+                    value: null
+                });
+            })
+        );
 
         return {
             data: {
@@ -436,7 +447,18 @@ export default function getPersonController(
 
         await personDAO.destroy({ where: { id } });
 
-        // to do: FieldVal & FieldDef
+        // Find field defs that for only current person before clear field vals
+        const fieldVals = await fieldValDAO.findAll({ where: { personId: id } });
+        const fieldDefIds = fieldVals.map(fv => fv.fieldDefId);
+        const fieldDefs = await fieldDefDAO.findAllIdsIn(fieldDefIds);
+        const fieldDefForSinglePerson = fieldDefs.filter(fd => !fd.isForAll);
+
+        // Clear field vals
+        await fieldValDAO.update({ value: null }, { where: { value: id } });
+        await fieldValDAO.destroy({ where: { personId: id } });
+
+        // Clear field defs
+        await Promise.all(fieldDefForSinglePerson.map(fd => fieldDefDAO.destroy({ where: { id: fd.id } })));
 
         return CommonResponse.OK;
     }, CanWriteGuard);

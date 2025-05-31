@@ -44,8 +44,8 @@
                   :key="i"
                 >
                   {{ g.value }}
-                </span> </template
-              >.
+                </span>
+              </template>.
             </div>
           </div>
           <div>
