@@ -1,6 +1,6 @@
 import { v4 as uuid } from "uuid";
 
-import { compareTwoDateString, datePlusDay, DateInputDB, isSomeValueStandardNormalDate, isSufixedLunarDate, lunarDateToNormalDate, normalDateToLunarDate, nowDate, shortenDateString, sortByStdDate, StandardNormalDate, sufixedLunarDateToNormalDate, todayDate, convertDateStoredDBToDateInputDB, convertDateInputDBToDateStoredDB } from "../utils/DateUtils";
+import { compareTwoDateString, datePlusDay, DateInputDB, isSomeValueStandardNormalDate, isSufixedLunarDate, lunarDateToNormalDate, normalDateToLunarDate, nowDate, shortenDateString, sortByStdDate, StandardNormalDate, sufixedLunarDateToNormalDate, todayDate, convertDateStoredDBToDateInputDB, convertDateInputDBToDateStoredDB, isDateStoredDB } from "../utils/DateUtils";
 import { isStringPureInterger } from "../utils/ValidationUtils";
 import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR, Controller, ControllerHandler, applyUserGuards, CanWriteGuard, keysModel, SafeOmit } from "./utils";
 import { Gender, type Person, PersonAdvanceDAO, RelationshipAnalysisResult, LifeState } from "../model/Person";
@@ -120,6 +120,87 @@ export function filterPeople(people: Person[], search: string, searchFieldsAsStr
     return people;
 }
 
+export function notAllowedToBeHadRelationshipWith(targetPerson: Person, allPeople: Person[]) {
+    const childrenMapping: Record<string, string[]> = {};
+
+    allPeople.forEach(person => {
+        childrenMapping[person.id] = [];
+    });
+
+    allPeople.forEach(person => {
+        if (person.fatherId) {
+            childrenMapping[person.fatherId].push(person.id);
+        }
+        if (person.motherId) {
+            childrenMapping[person.motherId].push(person.id);
+        }
+    });
+
+    const blacklist = new Set<string>();
+
+    function addPersonToBlacklist(personId: string) {
+        if (blacklist.has(personId)) {
+            return;
+        }
+
+        blacklist.add(personId);
+
+        childrenMapping[personId].forEach(childId => {
+            addPersonToBlacklist(childId);
+        });
+    }
+
+    blacklist.add(targetPerson.id);
+    childrenMapping[targetPerson.id].forEach(childId => {
+        addPersonToBlacklist(childId);
+    });
+
+    return [...allPeople].filter(p => blacklist.has(p.id));
+}
+
+export function backlistPeopleInChildInput(person: Person, allPeople: Person[]) {
+    const blacklist = new Set<string>();
+
+    const personMapping: Record<string, Person> = {};
+    allPeople.forEach(person => {
+        personMapping[person.id] = person;
+    });
+
+    function addToBlacklist(person: Person) {
+        if (blacklist.has(person.id)) {
+            return;
+        }
+
+        blacklist.add(person.id);
+        
+        if (person.fatherId) {
+            addToBlacklist(personMapping[person.fatherId]);
+        }
+        if (person.motherId) {
+            addToBlacklist(personMapping[person.motherId]);
+        }
+    }
+
+    addToBlacklist(person);
+    if (person.spouseId) {
+        blacklist.add(person.spouseId);
+    }
+
+    allPeople.forEach(p => {
+        if (person.gender == "MALE") {
+            if (p.fatherId) {
+                blacklist.add(p.id);
+            }
+        } else if (person.gender == "FEMALE") {
+            if (p.motherId) {
+                blacklist.add(p.id);
+            }
+        }
+    });
+
+    return allPeople.filter(p => blacklist.has(p.id));
+}
+
 export default function getPersonController(
     personDAO: IDAO<Person>,
     userDAO: IDAO<User>,
@@ -183,7 +264,10 @@ export default function getPersonController(
                 personIdsOnlySameMother: string[],
                 personIdsSameBothFatherAndMother: string[],
                 childIds: string[],
-                additionalData: (FieldVal & { fieldDef: FieldDef })[]
+                additionalData: (FieldVal & { fieldDef: FieldDef })[],
+                thuocGiaPha: boolean,
+                doiThu: number | null,
+                connectingPathToToTien: Awaited<ReturnType<typeof personAdvanceDAO.findConnectingPath>>
             }
         }
     >(async ({ query: { id } }) => {
@@ -215,6 +299,16 @@ export default function getPersonController(
                 fieldDef: fieldDefs.find(fd => fd.id == fv.fieldDefId)!
             };
         });
+
+        const [
+            connectingPathToToTien,
+            doiThu,
+            thuocGiaPha
+        ] = await Promise.all([
+            personAdvanceDAO.findConnectingPath(person),
+            personAdvanceDAO.findDoiThu(person),
+            personAdvanceDAO.isPersonBelongToFamily(person.id)
+        ]);
         
         return {
             data: {
@@ -225,6 +319,9 @@ export default function getPersonController(
                     personIdsSameBothFatherAndMother,
                     childIds: children.sort((p1, p2) => p1.youngnessLevel - p2.youngnessLevel).map(p => p.id),
                     additionalData,
+                    connectingPathToToTien,
+                    doiThu,
+                    thuocGiaPha
                 }
             },
             status: 200
@@ -348,13 +445,108 @@ export default function getPersonController(
         };
     });
 
+    const checkBasicPersonFields = async (data: Partial<CreatePersonParams["person"]>, isUpdateOperation = false) => {
+        if (data.fatherId && data.motherId && data.fatherId == data.motherId) {
+            return false;
+        }
+
+        if (data.fatherId && data.spouseId && data.fatherId == data.spouseId) {
+            return false;
+        }
+
+        if (data.motherId && data.motherId && data.motherId == data.motherId) {
+            return false;
+        }
+
+        const [r1, r2, r3] = await Promise.all([
+            [data.fatherId, "father"] as const,
+            [data.motherId, "mother"] as const,
+            [data.spouseId, "spouse"] as const
+        ].map(async ([id, type]) => {
+            if (id) {
+                const p = await personDAO.findByPk(id);
+                if (!p) {
+                    return false;
+                }
+
+                if (type == "father" && p.gender != "MALE") {
+                    return false;
+                }
+                if (type == "mother" && p.gender != "FEMALE") {
+                    return false;
+                }
+            }
+            return true;
+        }));
+
+        if (!r1 || !r2 || !r3) {
+            return false;
+        }
+
+        if (
+            (typeof data.gender == "string" && data.gender != "MALE" && data.gender != "FEMALE") ||
+            (typeof data.status == "string" && data.status != "ALIVE" && data.status != "DEAD" && data.status != "UNKNOWN")
+        ) {
+            return false;
+        }
+
+        if (isUpdateOperation) {
+            if (data.callname && typeof data.callname != "string") {
+                return false;
+            }
+        } else {
+            if (typeof data.callname != "string" || data.callname == "") {
+                return false;
+            }
+        }
+
+        if (data.avatarUrl && typeof data.avatarUrl != "string") {
+            return false;
+        }
+
+        if (data.birthdate) {
+            if (!isDateStoredDB(data.birthdate)) {
+                return false;
+            }
+        }
+
+        if (data.deathdate) {
+            if (!isDateStoredDB(data.deathdate)) {
+                return false;
+            }
+        }
+
+        return true;
+    };
+
     const createPerson = applyUserGuards<
         CreatePersonParams,
         {},
         { createdPersonId: string }
     >(async ({ body: data }) => {
-        // to do: Check params, check trùng, tồn tại,...
-        // Check xem nếu có bố, mẹ thì giới tính bố, mẹ có phải nam hay nữ không
+        const basicTest = await checkBasicPersonFields(data.person);
+        if (!basicTest) {
+            return CommonResponse.BAD_REQUEST;
+        }
+
+        if (data.role) {
+            const p = await personDAO.findByPk(data.role.roleWithTargetPersonId);
+            if (!p) {
+                return CommonResponse.BAD_REQUEST;
+            }
+
+            if (data.role.roleName == "father") {
+                if (p.fatherId || data.person.gender != "MALE") {
+                    return CommonResponse.BAD_REQUEST;
+                }
+            }
+
+            if (p.motherId || data.role.roleName == "mother") {
+                if (data.person.gender != "FEMALE") {
+                    return CommonResponse.BAD_REQUEST;
+                }
+            }
+        }
 
         const newPerson: Person = {
             ...data.person,
@@ -371,14 +563,14 @@ export default function getPersonController(
 
         if (data.role) {
             const { roleName, roleWithTargetPersonId } = data.role;
+            const personThatNewPersonHasRoleTo = (await personDAO.findByPk(roleWithTargetPersonId))!;
+
             if (roleName == "father") {
-                newPerson.gender = "MALE"; // Đảm bảo giới tính đúng
                 promises.push(
                     personDAO.update({ fatherId: newPerson.id }, { where: { id: roleWithTargetPersonId } })
                 );
             }
             else if (roleName == "mother") {
-                newPerson.gender = "FEMALE"; // Đảm bảo giới tính đúng
                 promises.push(
                     personDAO.update({ motherId: newPerson.id }, { where: { id: roleWithTargetPersonId } })
                 );
@@ -468,11 +660,23 @@ export default function getPersonController(
         {},
         { msg: string }
     >(async ({ body: data }) => {
-        // to do: Validate data
-        // to do: Validate data
-
         const person = await personDAO.findOne({ where: { id: data.id } });
         if (!person) return CommonResponse.BAD_REQUEST;
+
+        const blacklistPeople = notAllowedToBeHadRelationshipWith(person, await personDAO.findAll());
+        const blacklistIds = new Set(blacklistPeople.map(p => p.id));
+        if (
+            (data.fatherId && blacklistIds.has(data.fatherId)) ||
+            (data.motherId && blacklistIds.has(data.motherId)) ||
+            (data.spouseId && blacklistIds.has(data.spouseId))
+        ) {
+            return CommonResponse.BAD_REQUEST;
+        }
+
+        const basicTest = await checkBasicPersonFields(data, true);
+        if (!basicTest) {
+            return CommonResponse.BAD_REQUEST;
+        }
 
         await Promise.all(Object.entries(data).map(async ([_field, value]) => {
             const field = _field as keyof typeof data;

@@ -2,13 +2,13 @@
   <CustomDialog
     v-model="dialog"
     ref="dialog"
-    :maxWidth="`${dialogDisplaySetting.maxWidth}px`"
+    maxWidth="840px"
     buttonText
     xsFullScreen
   >
     <template v-if="person">
       <v-row>
-        <v-col cols="12" :md="dialogDisplaySetting.mainInfoNumColumns">
+        <v-col cols="12">
           <v-row>
             <v-col cols="12" sm="3" class="d-flex justify-center">
               <CustomPersonAvatar
@@ -48,17 +48,13 @@
 
             <v-col cols="12" v-if="editable && canWrite()">
               <v-row dense>
-                <v-col cols="12" sm="6">
+                <v-col>
                   <v-btn block color="primary" outlined @click="editPerson">
                     <v-icon left>mdi-pencil</v-icon>
                     Sửa thông tin
                   </v-btn>
                 </v-col>
-                <v-col
-                  cols="12"
-                  sm="6"
-                  v-if="$store.state.idToTien != person.id"
-                >
+                <v-col v-if="$store.state.idToTien != person.id">
                   <v-btn block color="red" outlined @click="deletePerson">
                     <v-icon left>mdi-delete</v-icon>
                     Xóa thành viên
@@ -68,6 +64,32 @@
             </v-col>
 
             <v-col cols="12">
+              <v-chip
+                v-if="
+                  personDetailInfo && personDetailInfo.connectingPathToToTien
+                "
+                @click="dialogTimeline = true"
+              >
+                Dòng thời gian
+                <CustomDialog
+                  v-model="dialogTimeline"
+                  header="Dòng thời gian"
+                  buttonText
+                  maxWidth="500px"
+                >
+                  <Timeline
+                    :path="
+                      personDetailInfo.connectingPathToToTien.map((i) => i.id)
+                    "
+                  ></Timeline>
+                </CustomDialog>
+              </v-chip>
+            </v-col>
+          </v-row>
+        </v-col>
+        <v-col cols="12">
+          <v-row>
+            <v-col cols="12" md="6">
               <v-card :loading="isLoadingDetailInfo">
                 <v-card-title style="word-break: initial">
                   Danh sách người thân
@@ -128,15 +150,15 @@
                 </v-card-actions>
               </v-card>
             </v-col>
+            <v-col cols="12" md="6">
+              <AdditionalInfo
+                :data="personDetailInfo?.additionalData"
+                :readonly="!editable"
+                @addOrUpdateField="refresh"
+                @someFieldValsChange="refresh"
+              />
+            </v-col>
           </v-row>
-        </v-col>
-        <v-col cols="12" :md="dialogDisplaySetting.additionalDataNumColumns">
-          <AdditionalInfo
-            :data="personDetailInfo?.additionalData"
-            :readonly="!editable"
-            @addOrUpdateField="refresh"
-            @someFieldValsChange="refresh"
-          />
         </v-col>
       </v-row>
     </template>
@@ -146,7 +168,6 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 
-import CustomDialog from "../CustomDialog.vue";
 import { personApi } from "@/api/person";
 import CustomPersonAvatar from "../CustomPersonAvatar.vue";
 import {
@@ -166,6 +187,8 @@ import { permissionMixin } from "@/utils";
 import { transformDateString } from "../../../../backend/src/utils/DateUtils";
 import ChangeChildrenOrderDialog from "./ChangeChildrenOrderDialog.vue";
 import AdditionalInfo from "./AdditionalInfo.vue";
+import CustomDialog from "../CustomDialog.vue";
+import Timeline from "./Timeline.vue";
 
 type PersonDetailInfo = Awaited<
   ReturnType<typeof personApi.getPersonDetailInfo>
@@ -179,6 +202,7 @@ export default defineComponent({
     CustomPersonAvatar,
     ChangeChildrenOrderDialog,
     AdditionalInfo,
+    Timeline,
   },
   mixins: [permissionMixin],
   props: {
@@ -209,6 +233,7 @@ export default defineComponent({
       isLoadingDetailInfo: false,
       personDetailInfo: undefined as PersonDetailInfo | undefined,
       dialogEditChildOrders: false,
+      dialogTimeline: false,
       isSavingNewChildOrders: false,
     };
   },
@@ -225,31 +250,6 @@ export default defineComponent({
       return (this as any).$store.state.personMapping[
         (this as any).internalPersonId
       ] as Person | null;
-    },
-    dialogDisplaySetting() {
-      return {
-        maxWidth: 840,
-        mainInfoNumColumns: 6,
-        additionalDataNumColumns: 6,
-        additionalDataItemNumCols: 12,
-      };
-      // if (
-      //   !this.personDetailInfo ||
-      //   this.personDetailInfo.additionalData.length < 8
-      // ) {
-      //   return {
-      //     maxWidth: 840,
-      //     mainInfoNumColumns: 6,
-      //     additionalDataNumColumns: 6,
-      //     additionalDataItemNumCols: 12,
-      //   };
-      // }
-      // return {
-      //   maxWidth: 1260,
-      //   mainInfoNumColumns: 4,
-      //   additionalDataNumColumns: 8,
-      //   additionalDataItemNumCols: 6,
-      // };
     },
     groups() {
       if (!this.personDetailInfo) return [];

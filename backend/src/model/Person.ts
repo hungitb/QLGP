@@ -30,6 +30,8 @@ export type RelationshipAnalysisResult = {
 export type PersonAdvanceDAO = {
     isPersonBelongToFamily(id: string): Promise<boolean>;
     isPeopleBelongToFamily(ids: string[]): Promise<Record<string, boolean>>;
+    findDoiThu(person: Person, getMinValue?: boolean): Promise<number | null>;
+    findConnectingPath(pDoiDuoi: Person, pDoiTren?: Person): Promise<{ id: string, gender: Gender }[] | null>;
     relationshipAnalysis(p1: Person, p2: Person): Promise<RelationshipAnalysisResult | null>;
 };
 

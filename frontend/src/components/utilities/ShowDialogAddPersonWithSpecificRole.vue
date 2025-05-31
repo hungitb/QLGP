@@ -27,7 +27,7 @@
         :label="props['roleText'] || ''"
         :male="props['role'] == 'father'"
         :female="props['role'] == 'mother'"
-        :skipPeopleHasRelationshipWith="editedPerson"
+        :exceptionIds="exceptionIds"
       />
       <div class="mb-1">Hoặc</div>
       <v-btn
@@ -50,7 +50,7 @@ import CustomDialog from "@/components/CustomDialog.vue";
 import PersonInputGroup from "@/components/input/PersonInputGroup.vue";
 import { personApi } from "@/api/person";
 import { showSnackbar } from "./ShowSnackbar.vue";
-import { RoleOfPersonWithOtherPerson } from "../../../../backend/src/controller/person";
+import { backlistPeopleInChildInput, notAllowedToBeHadRelationshipWith, RoleOfPersonWithOtherPerson } from "../../../../backend/src/controller/person";
 
 type ShowDialogAddPersonWithSpecificRoleParams = {
   person: Person;
@@ -82,6 +82,7 @@ export default defineComponent({
       savePickedPerson: null as (() => any) | null,
       clickAddPerson: (() => 1) as () => any,
       isLoading: false,
+      exceptionIds: undefined as string[] | undefined,
     };
   },
   methods: {
@@ -178,6 +179,29 @@ export default defineComponent({
           },
         });
       };
+
+      const exceptionIds = new Set<string>();
+      exceptionIds.add(person.id);
+      if (person.fatherId) {
+        exceptionIds.add(person.fatherId);
+      }
+      if (person.motherId) {
+        exceptionIds.add(person.motherId);
+      }
+      if (person.spouseId) {
+        exceptionIds.add(person.spouseId);
+      }
+      if (roleOfPersonWillAdd == "child") {
+        backlistPeopleInChildInput(person, this.$store.state.people).forEach(p => {
+          exceptionIds.add(p.id);
+        });
+      } else {
+        notAllowedToBeHadRelationshipWith(person, this.$store.state.people).forEach(p => {
+          exceptionIds.add(p.id);
+        });
+      }
+
+      this.exceptionIds = [...exceptionIds];
     },
   },
   mounted() {
