@@ -11,21 +11,25 @@ export enum DateFormat {
   dmyAL = "Ngày/Tháng/Năm Âm lịch",
 }
 
-export enum PersonCardLayout {
-  MIN_HEIGHT = "MIN_HEIGHT",
-  MIN_WIDTH = "MIN_WIDTH",
-}
-
-export type FamilyCardConfig = {
-  level: number;
-  show: {
+export type PersonCardConfig = {
+  layout: "HORIZONTAL" | "VERTICAL";
+  elementsDisplayedDict: {
     image: boolean;
     name: boolean;
     gender: boolean;
     birthdate: boolean;
     status: boolean;
   };
-  layout: PersonCardLayout;
+}
+
+export type FamilyCardConfig = {
+  /** Có vẽ bạn đời của người trong gia phả hay không */
+  drawSpouse: boolean;
+
+  /** Có mở rộng gia đình của nữ trong phả hệ hoặc Nam trong mẫu hệ hay không */
+  expandNonRelatedFamily: boolean;
+
+  personCardConfig: PersonCardConfig;
   horizontalDistance: number;
   verticalDistance: number;
 };

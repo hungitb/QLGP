@@ -330,23 +330,24 @@ export default function getPersonController(
 
     const getFamilyTreeInfo = applyUserGuards<
         {},
-        { subjectId?: string, level: string },
+        { subjectId?: string, goUp?: string },
         {
-            ancestor: FamilyTreePerson,
+            topLevelPerson: FamilyTreePerson,
             subjectId: string,
         }
-    >(async ({ query: { subjectId, level } }) => {
-        const levelInt = parseInt(level || "3");
-        if (isNaN(levelInt)) return CommonResponse.BAD_REQUEST;
-        
-        if (!subjectId) {
-            const thongTinGiaPha = await ttgpDASO.get();
+    >(async ({ query: { subjectId, goUp } }) => {
+        const ttgp = await ttgpDASO.get();
 
-            if (!thongTinGiaPha.idToTien) {
+        if (subjectId) {
+            const temp = await personDAO.findByPk(subjectId);
+            if (!temp) {
                 return CommonResponse.BAD_REQUEST;
             }
-            
-            subjectId = thongTinGiaPha.idToTien;
+        } else {
+            if (!ttgp.idToTien) {
+                return CommonResponse.BAD_REQUEST;
+            }
+            subjectId = ttgp.idToTien;
         }
 
         const people = await personDAO.findAll();
@@ -385,23 +386,40 @@ export default function getPersonController(
             }
         });
 
-        let ancestor = getPersonById(subjectId);
-        const consideredAncestorIds = new Set([ancestor.id]);
-        const femaleIdsAllowedGetChildren = new Set<string>();
+        var topLevelPerson = getPersonById(subjectId);
 
-        while(true) {
-            if (ancestor.fatherId && (!consideredAncestorIds.has(ancestor.fatherId))) {
-                ancestor = getPersonById(ancestor.fatherId);
-            }
-            else if (levelInt > 2 && ancestor.motherId && (!consideredAncestorIds.has(ancestor.motherId))) {
-                ancestor = getPersonById(ancestor.motherId);
-                femaleIdsAllowedGetChildren.add(ancestor.id);
-            }
-            else {
-                break;
-            }
+        // Đi lên cây gia phả, không quan tâm phả hệ hay mẫu hệ
+        if (goUp) {
+            const consideredAncestorIds = new Set([topLevelPerson.id]);
+    
+            while(true) {
+                const canGoUpToFather = topLevelPerson.fatherId && (!consideredAncestorIds.has(topLevelPerson.fatherId));
+                const canGoUpToMother = topLevelPerson.motherId && (!consideredAncestorIds.has(topLevelPerson.motherId));
 
-            consideredAncestorIds.add(ancestor.id);
+                // Phả hệ thì ưu tiên đi lên nhánh bố, mẫu hệ ưu tiên đi lên nhánh mẹ
+                if (ttgp.type == "phaHe") {
+                    if (canGoUpToFather) {
+                        topLevelPerson = getPersonById(topLevelPerson.fatherId!);
+                    } else if (canGoUpToMother) {
+                        topLevelPerson = getPersonById(topLevelPerson.motherId!);
+                    } else {
+                        break;
+                    }
+                } else if (ttgp.type == "mauHe") {
+                    if (canGoUpToMother) {
+                        topLevelPerson = getPersonById(topLevelPerson.motherId!);
+                    } else if (canGoUpToFather) {
+                        topLevelPerson = getPersonById(topLevelPerson.fatherId!);
+                    } else {
+                        break;
+                    }
+                } else {
+                    const x: never = ttgp.type;
+                    throw Error(`Missing case ttgp.type`);
+                }
+    
+                consideredAncestorIds.add(topLevelPerson.id);
+            }
         }
 
         // Travelsal and update children of person
@@ -409,23 +427,23 @@ export default function getPersonController(
             if (!path) path = new Set([person.id]);
             else path.add(person.id);
 
-            if (mapIdToOriginPerson[person.id].gender == "MALE" || levelInt > 2) {
-                childrenIdsOf[person.id].forEach(childId => {
-                    if (!path) {
-                        return; // By pass typescript error
-                    }
-                    if (!path.has(childId)) {
+            childrenIdsOf[person.id].forEach(childId => {
+                if (!path) {
+                    // Bypass typescript error
+                    throw Error("Path is undefined");
+                }
 
-                        const child = getPersonById(childId);
-                        travesal(child, path);
+                if (!path.has(childId)) {
 
-                        person.children.push({
-                            child,
-                            spouseId: person.id == child.fatherId ? child.motherId : child.fatherId,
-                        });
-                    }
-                })
-            }
+                    const child = getPersonById(childId);
+                    travesal(child, path);
+
+                    person.children.push({
+                        child,
+                        spouseId: person.id == child.fatherId ? child.motherId : child.fatherId,
+                    });
+                }
+            });
 
             person.children.sort((p1, p2) => {
                 return mapIdToOriginPerson[p1.child.id].youngnessLevel - mapIdToOriginPerson[p2.child.id].youngnessLevel;
@@ -434,11 +452,11 @@ export default function getPersonController(
             path.delete(person.id);
         }
 
-        travesal(ancestor);
+        travesal(topLevelPerson);
 
         return {
             data: {
-                ancestor,
+                topLevelPerson,
                 subjectId
             },
             status: 200,
