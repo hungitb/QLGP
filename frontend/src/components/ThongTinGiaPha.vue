@@ -6,30 +6,59 @@
         <tbody>
           <tr>
             <th :style="firstHeaderElementStyle">Tên dòng họ</th>
-            <td>{{ thongTinGiaPha.tenDongHo || "Chưa đặt" }}</td>
+            <td>
+              <div v-if="thongTinGiaPha.tenDongHo">
+                {{ thongTinGiaPha.tenDongHo }}
+              </div>
+              <div v-else class="red--text">Chưa đặt</div>
+            </td>
           </tr>
           <tr>
             <th>Tổ tiên</th>
             <td>
-              <div v-if="thongTinGiaPha.idToTien" class="d-flex align-center">
-                <v-skeleton-loader
-                  v-if="$store.state.isLoadingPeople"
-                  type="text"
-                  width="40"
-                ></v-skeleton-loader>
-                <template v-else>
-                  <CustomPersonAvatar
-                    :person="
+              <div v-if="thongTinGiaPha.idToTien" class="py-2">
+                <div class="d-flex align-center">
+                  <v-skeleton-loader
+                    v-if="$store.state.isLoadingPeople"
+                    type="text"
+                    width="40"
+                  ></v-skeleton-loader>
+                  <template v-else>
+                    <CustomPersonAvatar
+                      :person="
+                        $store.state.personMapping[thongTinGiaPha.idToTien]
+                      "
+                      size="30"
+                    />
+                    <span class="ml-3">{{
                       $store.state.personMapping[thongTinGiaPha.idToTien]
-                    "
-                    size="30"
-                  />
-                  <span class="ml-3">{{
+                        .callname
+                    }}</span>
+                  </template>
+                </div>
+                <v-alert
+                  v-if="candidateForToTien && canWrite()"
+                  class="mt-2 mb-0"
+                  dense
+                  outlined
+                  dismissible
+                  type="warning"
+                >
+                  {{
                     $store.state.personMapping[thongTinGiaPha.idToTien].callname
-                  }}</span>
-                </template>
+                  }}
+                  có {{ candidateForToTien.gender == "MALE" ? "bố" : "mẹ" }} là
+                  {{ candidateForToTien.callname }}
+                </v-alert>
               </div>
-              <template v-else>Chưa đặt</template>
+              <template v-else>
+                <div class="py-2">
+                  <div class="red--text">Chưa đặt</div>
+                  <div class="red--text">
+                    Một số chức năng sẽ hoạt động không đúng
+                  </div>
+                </div>
+              </template>
             </td>
           </tr>
           <tr>
@@ -140,6 +169,29 @@ export default defineComponent({
     firstHeaderElementStyle() {
       if (this.$vuetify.breakpoint.xs) return {};
       return { width: "140px" };
+    },
+    candidateForToTien(): Person | null {
+      const This = this as any;
+
+      if (!This.thongTinGiaPha.idToTien) return null;
+      const toTien =
+        This.$store.state.personMapping[This.thongTinGiaPha.idToTien];
+
+      // Có thể là $store.state.personMapping chưa load xong
+      // Một ngày nào đấy thử bỏ đoạn này và tìm hiểu nguyên nhân.
+      if (!toTien) {
+        return null;
+      }
+
+      if (This.thongTinGiaPha.type == "phaHe" && toTien.fatherId) {
+        return This.$store.state.personMapping[toTien.fatherId];
+      }
+
+      if (This.thongTinGiaPha.type == "mauHe" && toTien.motherId) {
+        return This.$store.state.personMapping[toTien.motherId];
+      }
+
+      return null;
     },
   },
   watch: {
