@@ -73,6 +73,47 @@ export type AdvanceSufixedLunarDate = string & { __typeAdvanceSufixedLunarDate__
 export type DateInputDB = YearOnlyDate | MonthAndYearDate | StandardNormalDate | SufixedLunarDate;
 export type DateStoredDB = YearOnlyDate | MonthAndYearDate | StandardNormalDate | AdvanceSufixedLunarDate;
 
+export function isDateStoredDB(date: unknown): date is DateStoredDB {
+    if (typeof date != "string") {
+        return false;
+    }
+
+    if (date.includes("AL")) {
+        const parts = date.split("AL");
+        if (parts.length != 2) {
+            return false;
+        }
+        const [left, right] = parts;
+
+        const msg = lunarDateValidationMessage(left);
+        if (msg) {
+            return false;
+        }
+
+        const msg2 = nonLunarDateValidationMessage(right);
+        if (msg2) {
+            return false;
+        }
+
+        if (sufixedLunarDateToNormalDate((left + "AL") as SufixedLunarDate) != right) {
+            return false;
+        }
+
+        return true;
+    }
+
+    const t1 = nonLunarDateValidationMessage(date);
+    if (!t1) return true;
+
+    const t2 = nonLunarDateValidationMessage(date, { isMissingDay: true });
+    if (!t2) return true;
+
+    const t3 = nonLunarDateValidationMessage(date, { isMissingMonth: true });
+    if (!t3) return true;
+
+    return false;
+}
+
 export function convertAdvanceSufixedLunarDateToSufixedLunarDate(date: AdvanceSufixedLunarDate): SufixedLunarDate {
     return date.split("AL")[0] + "AL" as SufixedLunarDate;
 }

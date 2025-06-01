@@ -125,7 +125,11 @@ import { personApi } from "@/api/person";
 import { mapActions } from "vuex";
 import { FETCH_PEOPLE } from "@/store";
 import { convertToDateInputValue, handleDateInputValue } from "@/utils";
-import { CreatePersonParams } from "../../../backend/src/controller/person";
+import {
+  CreatePersonParams,
+  notAllowedToBeHadRelationshipWith,
+  RoleOfPersonWithOtherPerson,
+} from "../../../backend/src/controller/person";
 import { showSnackbar } from "./utilities/ShowSnackbar.vue";
 
 export default defineComponent({
@@ -145,6 +149,7 @@ export default defineComponent({
       type: Object as () => Partial<Person>,
       default: () => ({}),
     },
+    // Không cùng xuất hiện với person, chỉ 1 trong 2
     role: {
       type: Object as () => CreatePersonParams["role"],
     },
@@ -201,8 +206,16 @@ export default defineComponent({
     } as unknown as () => boolean,
   },
   watch: {
-    person() {
+    person(v) {
+      if (v && this.role) {
+        throw Error("Can't set both person and role");
+      }
       this.loadPersonProp();
+    },
+    role(v) {
+      if (v && this.person) {
+        throw Error("Can't set both person and role");
+      }
     },
     initData() {
       this.resetForm();
@@ -235,28 +248,46 @@ export default defineComponent({
     ...mapActions({
       [FETCH_PEOPLE]: FETCH_PEOPLE,
     }),
-    exceptionIdsOfPersonInput(type: string) {
-      const ids: string[] = [];
-      if (this.person) ids.push(this.person.id);
+    exceptionIdsOfPersonInput(type: RoleOfPersonWithOtherPerson) {
+      const ids = new Set<string>();
+
+      if (this.person) {
+        ids.add(this.person.id);
+        notAllowedToBeHadRelationshipWith(
+          this.person,
+          this.$store.state.people
+        ).forEach((p) => {
+          ids.add(p.id);
+        });
+      }
+
       if (this.role) {
         const role = this.role.roleName;
         const id = this.role.roleWithTargetPersonId;
-        const addForTypes = (...types: string[]) => {
-          types.forEach((allowedType) => {
-            if (allowedType == type && !ids.includes(id)) ids.push(id);
-          });
-        };
+
         if (role == "child") {
+          if (type == "spouse") {
+            ids.add(id);
+          }
           if (this.$store.state.personMapping[id].gender == "MALE") {
-            addForTypes("mother", "spouse");
+            if (type == "mother") {
+              ids.add(id);
+            }
           } else {
-            addForTypes("father", "spouse");
+            if (type == "father") {
+              ids.add(id);
+            }
           }
         } else if (role == "spouse") {
-          addForTypes("mother", "father");
+          if (type == "mother") {
+            ids.add(id);
+          } else if (type == "father") {
+            ids.add(id);
+          }
         }
       }
-      return ids;
+
+      return [...ids];
     },
     loadPersonProp() {
       const person = this.person;

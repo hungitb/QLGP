@@ -40,12 +40,34 @@ export default defineComponent({
   data() {
     return {
       dialog: false,
+      timeoutClearData: null as number | null,
 
       personId: "",
       editable: undefined as boolean | undefined,
       onPersonDeleted: undefined as (() => any) | undefined,
       onPersonEdited: undefined as (() => any) | undefined,
     };
+  },
+  watch: {
+    dialog(v) {
+      // Thường thì sẽ không cần reset nhưng nếu sử dụng component có inner state thì phải reset cho chắc.
+      // Ví dụ đối với PersonDetailDialog, có 1 inner state là innerPersonId thể hiện người sẽ hiển thị.
+      // Mỗi lần bấm thay đổi người thì giá trị của innerPersonId sẽ thay đổi theo.
+      // Mặc dù innerPersonId đang watch personId, mỗi khi personId thay đổi thì innerPersonId thay đổi theo nhưng có trường hợp thế này.
+      // Xem detail person A, personId = A, innerPersonId = A. Bấm sang xem B, innerPersonId = B. Bấm close dialog.
+      // Bấm lại xem detail A, personID = A không đổi, watcher personId không cập nhật lại innerPersonId => Vẫn hiện B
+      if (!v) {
+        // Set timeout để khi đóng animation không bị giật
+        this.timeoutClearData = setTimeout(() => {
+          this.timeoutClearData = null;
+
+          this.personId = "";
+          this.editable = undefined;
+          this.onPersonDeleted = undefined;
+          this.onPersonEdited = undefined;
+        }, 1000);
+      }
+    },
   },
   methods: {
     showDialogPersonDetailInfo({
@@ -54,6 +76,10 @@ export default defineComponent({
       onPersonDeleted,
       onPersonEdited,
     }: ShowDialogPersonDetailInfoParams) {
+      if (this.timeoutClearData) {
+        clearTimeout(this.timeoutClearData);
+      }
+
       this.dialog = true;
       this.personId = personId;
       this.editable = editable;

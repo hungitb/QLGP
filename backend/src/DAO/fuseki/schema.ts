@@ -176,15 +176,109 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
         }, {} as Record<string, boolean>);
     };
 
+    /**
+     * Format object Person sang dạng text để in lỗi
+     */
+    const formatPersonAsText = (p: Person, capitalize = false) => {
+        return `${capitalize ? "Person" : "person"} has name ${p.callname} (${p.id})`;
+    };
+    
+    /**
+     * Tìm đường kết nối giữa hai người. Có thể xảy ra trường hợp có nhiều đường kết nối
+     * (do trong dòng họ có loạn luân), khi đó chỉ trả về kết quả thứ nhất.
+     */
+    const _findConnectingPath = async (p1: Person, p2: Person, delta: number): Promise<{ id: string, gender: Gender }[]> => {
+        if (delta < 1) {
+            throw Error(`Delta must great than 0`);
+        }
+
+        if (delta == 1) {
+            return [{ id: p1.id, gender: p1.gender }, { id: p2.id, gender: p2.gender }];
+        }
+
+        const tripples: string[] = [];
+        var selectStatement = "";
+        var filterPart = "";
+        for (let i = 0; i < delta; i++) {
+            if (i == 0) {
+                tripples.push(
+                    `person:${p1.id} ?r0 ?x0`,
+                    "?x0 person:gender ?gx0"
+                );
+            } else if (i < delta - 1) {
+                tripples.push(
+                    `?x${i - 1} ?r${i} ?x${i}`,
+                    `?x${i} person:gender ?gx${i}`
+                );
+            } else {
+                // i == delta - 1
+                tripples.push(
+                    `?x${i - 1} ?r${i} person:${p2.id}`
+                );
+            }
+
+            if (i < delta - 1) {
+                if (selectStatement != "") selectStatement += " ";
+                selectStatement += `?x${i} ?gx${i}`;
+            }
+
+            if (filterPart != "") filterPart += " && ";
+            filterPart += `?r${i} in (person:hasFather, person:hasMother)`;
+        }
+
+        const selectResult = await personSchema.execSelectQuery(`
+            SELECT ${selectStatement} WHERE {
+                ${tripples.join(" .\n")}
+                FILTER (${filterPart})
+            }
+        `);
+
+        if (selectResult.results.bindings.length == 0) {
+            throw Error(`Can't find connecting path between ${formatPersonAsText(p1)} and ${formatPersonAsText(p2)}`);
+        }
+
+        const result = [{ id: p1.id, gender: p1.gender }];
+        for (let i = 0; i < delta - 1; i++) {
+            const vars = selectResult.results.bindings[0];
+
+            const id = personSchema.removeSelfPrefix(vars[`x${i}`].value);
+            const gender = vars[`gx${i}`].value;
+            
+            if (gender == "MALE" || gender == "FEMALE") {
+                result.push({ id, gender });
+            } else {
+                throw Error(`Found invalid gender: ${gender}`);
+            }
+        }
+        result.push({ id: p2.id, gender: p2.gender });
+
+        return result;
+    };
+    
+    /**
+     * Tìm xem p là đời thứ mấy. Nếu người đó có nhiều khả năng về số đời
+     * (do trong dòng họ có loạn luân) thì ưu tiên số cao hoặc thấp tùy vào biến getMin.
+     * Chú ý: Tổ tiên là đời thứ 1.
+     */
+    const findDoiThu = async (p: Person, getMin = false) => {
+        const result = await personSchema.execSelectQuery<"x">(`
+            SELECT ?x
+            WHERE {
+                person:${p.id} inferred:doiThu ?x
+            }
+        `);
+
+        if (result.results.bindings.length == 0) {
+            return null;
+        }
+
+        const values = result.results.bindings.map(o => parseInt(o.x.value));
+
+        return getMin ? Math.min(...values) : Math.max(...values);
+    };
+
     const relationshipAnalysis = async (p1: Person, p2: Person) => {
         const ttgp = await ttgpDASO.get();
-
-        /**
-         * Format object Person sang dạng text để in lỗi
-         */
-        const formatPersonAsText = (p: Person, capitalize = false) => {
-            return `${capitalize ? "Person" : "person"} has name ${p.callname} (${p.id})`;
-        };
     
         /**
          * Nhúng objêct Person như một chuỗi text, frontend sẽ xử lý để có thể bấm vào.
@@ -196,96 +290,6 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
         const uncapitalize = (x: string) => {
             if (x.length == 0) return x;
             return x.charAt(0).toLowerCase() + x.slice(1);
-        };
-    
-        /**
-         * Tìm đường kết nối giữa hai người. Có thể xảy ra trường hợp có nhiều đường kết nối
-         * (do trong dòng họ có loạn luân), khi đó chỉ trả về kết quả thứ nhất.
-         */
-        const findConnectingPath = async (p1: Person, p2: Person, delta: number): Promise<{ id: string, gender: Gender }[]> => {
-            if (delta == 1) {
-                return [{ id: p1.id, gender: p1.gender }, { id: p2.id, gender: p2.gender }];
-            }
-    
-            const tripples: string[] = [];
-            var selectStatement = "";
-            var filterPart = "";
-            for (let i = 0; i < delta; i++) {
-                if (i == 0) {
-                    tripples.push(
-                        `person:${p1.id} ?r0 ?x0`,
-                        "?x0 person:gender ?gx0"
-                    );
-                } else if (i < delta - 1) {
-                    tripples.push(
-                        `?x${i - 1} ?r${i} ?x${i}`,
-                        `?x${i} person:gender ?gx${i}`
-                    );
-                } else {
-                    // i == delta - 1
-                    tripples.push(
-                        `?x${i - 1} ?r${i} person:${p2.id}`
-                    );
-                }
-    
-                if (i < delta - 1) {
-                    if (selectStatement != "") selectStatement += " ";
-                    selectStatement += `?x${i} ?gx${i}`;
-                }
-
-                if (filterPart != "") filterPart += " && ";
-                filterPart += `?r${i} in (person:hasFather, person:hasMother)`;
-            }
-    
-            const selectResult = await personSchema.execSelectQuery(`
-                SELECT ${selectStatement} WHERE {
-                    ${tripples.join(" .\n")}
-                    FILTER (${filterPart})
-                }
-            `);
-    
-            if (selectResult.results.bindings.length == 0) {
-                throw Error(`Can't find connecting path between ${formatPersonAsText(p1)} and ${formatPersonAsText(p2)}`);
-            }
-    
-            const result = [{ id: p1.id, gender: p1.gender }];
-            for (let i = 0; i < delta - 1; i++) {
-                const vars = selectResult.results.bindings[0];
-    
-                const id = personSchema.removeSelfPrefix(vars[`x${i}`].value);
-                const gender = vars[`gx${i}`].value;
-                
-                if (gender == "MALE" || gender == "FEMALE") {
-                    result.push({ id, gender });
-                } else {
-                    throw Error(`Found invalid gender: ${gender}`);
-                }
-            }
-            result.push({ id: p2.id, gender: p2.gender });
-    
-            return result;
-        };
-    
-        /**
-         * Tìm xem p là đời thứ mấy. Nếu người đó có nhiều khả năng về số đời
-         * (do trong dòng họ có loạn luân) thì ưu tiên số cao hoặc thấp tùy vào biến getMin.
-         * Chú ý: Tổ tiên là đời thứ 1.
-         */
-        const findDoiThu = async (p: Person, getMin = false) => {
-            const result = await personSchema.execSelectQuery<"x">(`
-                SELECT ?x
-                WHERE {
-                    person:${p.id} inferred:doiThu ?x
-                }
-            `);
-    
-            if (result.results.bindings.length == 0) {
-                return null;
-            }
-    
-            const values = result.results.bindings.map(o => parseInt(o.x.value));
-    
-            return getMin ? Math.min(...values) : Math.max(...values);
         };
     
         /**
@@ -360,7 +364,7 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                     };
                 }
 
-                const connectingPath = await findConnectingPath(p, pDoiTren, delta);
+                const connectingPath = await _findConnectingPath(p, pDoiTren, delta);
 
                 return {
                     p1: {
@@ -517,8 +521,8 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                     ]);
         
                     const [cp1, cp2] = await Promise.all([
-                        findConnectingPath(p1, p3, delta1),
-                        findConnectingPath(p2, p4, delta2)
+                        _findConnectingPath(p1, p3, delta1),
+                        _findConnectingPath(p2, p4, delta2)
                     ]);
         
                     const [relationshipOfP3WithP1, relationshipOfP4WithP2] = [
@@ -578,7 +582,7 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
 
                         const [deltaYZ, doiThuPz, doiThuPy] = await findDoiThuOfPairOfPeople(pz, py);
             
-                        const cpYZ = await findConnectingPath(py, pz, deltaYZ);
+                        const cpYZ = await _findConnectingPath(py, pz, deltaYZ);
                         const relationshipPXPZ = selectResult.results.bindings[0].r.value.replace(
                             Fuseki.PREDEDINED_PREFIXES.quanHeTrucTiep, ""
                         ) as QuanHeAnhEmTrucTiep;
@@ -1070,9 +1074,42 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
         return null;
     };
 
+    const findConnectingPath = async (pDoiDuoi: Person, pDoiTren?: Person) => {
+        if (!pDoiTren) {
+            const idToTien = (await ttgpDASO.get()).idToTien;
+            if (!idToTien) {
+                return null;
+            }
+
+            const toTien = await personDAO.findByPk(idToTien);
+            if (!toTien) {
+                throw Error(`Invalid idToTien`);
+            }
+
+            pDoiTren = toTien;
+        }
+
+        const [pDuoiDoiThu, pTrenDoiThu] = await Promise.all([
+            findDoiThu(pDoiDuoi),
+            findDoiThu(pDoiTren, true)
+        ]);
+
+        if (!pDuoiDoiThu || !pTrenDoiThu) {
+            return null;
+        }
+
+        try {
+            return await _findConnectingPath(pDoiDuoi, pDoiTren, pDuoiDoiThu - pTrenDoiThu);
+        } catch {
+            return null;
+        }
+    };
+
     return {
         isPersonBelongToFamily,
         isPeopleBelongToFamily,
+        findDoiThu,
+        findConnectingPath,
         relationshipAnalysis
     };
 })();

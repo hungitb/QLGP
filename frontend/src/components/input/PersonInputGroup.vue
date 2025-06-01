@@ -217,13 +217,8 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
-    skipPeopleHasRelationshipWith: {
-      // type: Object as () => Person,
-      default: null,
-    },
     exceptionIds: {
       type: Array as () => string[],
-      default: () => [],
     },
   },
   data() {
@@ -250,21 +245,10 @@ export default defineComponent({
     },
     peopleList() {
       const people = this.$store.state.people as Person[];
-      const exceptionIds = new Set(this.exceptionIds);
-      if (this.skipPeopleHasRelationshipWith) {
-        const person = this.skipPeopleHasRelationshipWith as Person;
-        exceptionIds.add(person.id);
-        if (person.spouseId) exceptionIds.add(person.spouseId);
-        if (person.fatherId) exceptionIds.add(person.fatherId);
-        if (person.motherId) exceptionIds.add(person.motherId);
+      const exceptionIds = this.exceptionIds
+        ? new Set(this.exceptionIds)
+        : new Set();
 
-        // Ở đây sẽ tạm thời không bỏ qua các con nữa do nếu bỏ qua có thể làm việc sửa bị khó
-        // people.forEach((p) => {
-        //   if (p.fatherId == person.id || p.motherId == person.id) {
-        //     exceptionIds.add(p.id);
-        //   }
-        // });
-      }
       return people.filter?.((p) => {
         if (exceptionIds.has(p.id)) return false;
         if (this.male) {
