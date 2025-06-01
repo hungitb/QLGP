@@ -19,11 +19,11 @@
         ></PersonInputGroup>
       </div>
     </div>
-    <template v-else-if="ancestor && !$store.state.isLoadingPeople">
+    <template v-else-if="topLevelPerson && !$store.state.isLoadingPeople">
       <Viewer ref="viewer" :key="key">
         <FamilyCard
           ref="familyCard"
-          :person="ancestor"
+          :person="topLevelPerson"
           :config="config"
           :viewer="viewer"
           @addPersonRelationShipDone="handlePersonAddRelationship"
@@ -71,25 +71,27 @@
                 label="Chủ thể biểu đồ"
                 one
                 v-model="settingVModel.subjectId"
+                hide-details
               />
             </v-col>
 
             <v-col cols="12">
-              <v-select
-                v-model="settingVModel.level"
-                label="Cấu hình cây gia phả"
-                :items="familyTreeLevelItems"
-                :hint="
-                  familyTreeLevelItems.find(
-                    ({ value }) => value == settingVModel.level
-                  )?.hint
-                "
-                persistent-hint
-                outlined
-              />
+              <v-checkbox
+                v-model="settingVModel.drawSpouse"
+                label="Vẽ bạn đời các thành viên"
+                hide-details
+                class="mt-2"
+              ></v-checkbox>
+
+              <v-checkbox
+                v-model="settingVModel.expandNonRelatedFamily"
+                :label="`Vẽ gia đình của các thành viên ${$store.state.user.thongTinGiaPha.type == 'phaHe' ? 'Nữ' : 'Nam'} trong gia phả`"
+                hide-details
+                class="mt-2"
+              ></v-checkbox>
             </v-col>
 
-            <v-col cols="12">
+            <v-col cols="12" class="mt-8">
               <div class="d-flex flex-column align-center">
                 <span class="mb-1">Xem trước</span>
                 <PersonCard
@@ -100,7 +102,7 @@
                       : $store.state.personMapping[subjectId]
                   "
                   viewOnly
-                  :config="settingVModel"
+                  :config="settingVModel.personCardConfig"
                 />
               </div>
             </v-col>
@@ -108,41 +110,39 @@
             <v-col cols="12">
               <span>Thông tin thẻ thành viên</span>
               <v-checkbox
-                v-model="settingVModel.show.image"
+                v-model="settingVModel.personCardConfig.elementsDisplayedDict.image"
                 hide-details
                 label="Ảnh đại diện"
               />
               <v-checkbox
-                v-model="settingVModel.show.name"
+                v-model="settingVModel.personCardConfig.elementsDisplayedDict.name"
                 hide-details
                 label="Tên"
               />
               <v-checkbox
-                v-model="settingVModel.show.gender"
+                v-model="settingVModel.personCardConfig.elementsDisplayedDict.gender"
                 hide-details
                 label="Giới tính"
               />
               <v-checkbox
-                v-model="settingVModel.show.birthdate"
+                v-model="settingVModel.personCardConfig.elementsDisplayedDict.birthdate"
                 hide-details
                 label="Ngày sinh"
               />
               <v-checkbox
-                v-model="settingVModel.show.status"
+                v-model="settingVModel.personCardConfig.elementsDisplayedDict.status"
                 hide-details
                 label="Trạng thái, ngày mất (nếu có)"
               />
             </v-col>
 
             <v-col cols="12">
-              <v-radio-group label="Bố cục" v-model="settingVModel.layout">
+              <v-radio-group label="Bố cục" v-model="settingVModel.personCardConfig.layout">
                 <v-radio
-                  label="Thẻ dọc"
-                  :value="PersonCardLayout.MIN_WIDTH"
-                ></v-radio>
-                <v-radio
-                  label="Thẻ ngang"
-                  :value="PersonCardLayout.MIN_HEIGHT"
+                  v-for="item in personCardLayoutItems"
+                  :key="item.value"
+                  :label="item.text"
+                  :value="item.value"
                 ></v-radio>
               </v-radio-group>
             </v-col>
@@ -196,13 +196,34 @@ import FamilyCard from "@/components/FamilyCard/index";
 import FullViewLoading from "@/components/FullViewLoading.vue";
 import { personApi } from "@/api/person";
 import { FamilyTreePerson } from "../../../backend/src/controller/person";
-import { PersonCardLayout, type FamilyCardConfig } from "@/components/types";
+import { PersonCardConfig, type FamilyCardConfig } from "@/components/types";
 import { mapActions } from "vuex";
 import { FETCH_PEOPLE } from "@/store";
 import CustomDialog from "@/components/CustomDialog.vue";
 import PersonInputGroup from "@/components/input/PersonInputGroup.vue";
 import PersonCard from "@/components/FamilyCard/PersonCard.vue";
 import { getUniqueID } from "@/utils";
+
+const getFamilyCardDefaultConfig = () => {
+  const config: FamilyCardConfig = {
+    drawSpouse: true,
+    expandNonRelatedFamily: false,
+    personCardConfig: {
+      layout: "VERTICAL",
+      elementsDisplayedDict: {
+          image: true,
+          name: true,
+          gender: true,
+          birthdate: true,
+          status: true,
+        }
+    },
+    horizontalDistance: 120,
+    verticalDistance: 150,
+  };
+
+  return config;
+};
 
 export default Vue.extend({
   components: {
@@ -214,36 +235,27 @@ export default Vue.extend({
     PersonInputGroup,
   },
   data() {
-    const getDefaultConfig = () =>
-      ({
-        level: 3,
-        show: {
-          image: true,
-          name: true,
-          gender: true,
-          birthdate: true,
-          status: true,
-        },
-        layout: PersonCardLayout.MIN_WIDTH,
-        horizontalDistance: 120,
-        verticalDistance: 150,
-      } as FamilyCardConfig);
+    const personCardLayoutItems: { text: string, value: PersonCardConfig["layout"] }[] = [
+      { text: "Thẻ dọc", value: "VERTICAL" },
+      { text: "Thẻ ngang", value: "HORIZONTAL" }
+    ];
+
     return {
-      PersonCardLayout,
       // Dùng để inject vào viewer để check click event
       // Không thể truyền trực tiếp bằng $refs.viewer do đã test
       viewer: undefined as any,
       key: getUniqueID(),
-      ancestor: null as FamilyTreePerson | null,
+      topLevelPerson: null as FamilyTreePerson | null,
       interval: null as number | null,
       focusSubjectAfterFetched: true,
       // Danh sách person id để focus, ưu tiên cuối
       focusPersonIds: [] as string[],
       disableButtons: false,
       subjectId: this.$store.state.idToTien, // Id của chủ thể biểu đồ gia phả
-      config: getDefaultConfig(),
+      config: getFamilyCardDefaultConfig(),
 
       dialogSetting: false,
+      personCardLayoutItems,
       familyTreeLevelItems: [
         {
           text: "Mức 1: Phát triển đầy đủ gia đình các nam, không hiển thị vợ",
@@ -262,9 +274,9 @@ export default Vue.extend({
         },
       ],
       settingVModel: {
-        ...getDefaultConfig(),
-        subjectId: null,
-      } as FamilyCardConfig & { subjectId: string | null },
+        ...getFamilyCardDefaultConfig(),
+        subjectId: null as string | null,
+      },
     };
   },
   watch: {
@@ -276,14 +288,14 @@ export default Vue.extend({
     subjectId() {
       this.loadData();
     },
-    "settingVModel.show.image"(newValue) {
+    "settingVModel.personCardConfig.elementsDisplayedDict.image"(newValue) {
       if (!newValue) {
-        this.settingVModel.show.name = true;
+        this.settingVModel.personCardConfig.elementsDisplayedDict.name = true;
       }
     },
-    "settingVModel.show.name"(newValue) {
+    "settingVModel.personCardConfig.elementsDisplayedDict.name"(newValue) {
       if (!newValue) {
-        this.settingVModel.show.image = true;
+        this.settingVModel.personCardConfig.elementsDisplayedDict.image = true;
       }
     },
   },
@@ -316,21 +328,20 @@ export default Vue.extend({
       this.loadData();
     },
     loadData() {
-      this.ancestor = null; // Nếu không có cái này và FETCH_PEOPLE xong trước thì sẽ xảy ra hiện tượng giật hình
+      this.topLevelPerson = null; // Nếu không có cái này và FETCH_PEOPLE xong trước thì sẽ xảy ra hiện tượng giật hình
       Promise.all([
         this[FETCH_PEOPLE](),
         personApi.getFamilyTreeInfo({
-          level: this.config.level.toString(),
           subjectId: this.subjectId || undefined,
         }),
       ]).then(async ([_, familyTreeRespone]) => {
         const { data } = familyTreeRespone;
 
-        if (!("ancestor" in data)) {
+        if (!("topLevelPerson" in data)) {
           return;
         }
 
-        this.ancestor = data.ancestor;
+        this.topLevelPerson = data.topLevelPerson;
         this.key = getUniqueID(); // Force recreate (Thường thì ko hiểu tại sao component ở đây khi set ancestor sẽ bị recreate, nhưng cứ chủ động force cho chắc)
 
         await nextTick();
@@ -405,15 +416,12 @@ export default Vue.extend({
       const cf = this.config;
       this.settingVModel = {
         subjectId: this.subjectId,
-        level: cf.level,
-        show: {
-          image: cf.show.image,
-          name: cf.show.name,
-          gender: cf.show.gender,
-          birthdate: cf.show.birthdate,
-          status: cf.show.status,
+        drawSpouse: cf.drawSpouse,
+        expandNonRelatedFamily: cf.expandNonRelatedFamily,
+        personCardConfig: {
+          layout: cf.personCardConfig.layout,
+          elementsDisplayedDict: { ...cf.personCardConfig.elementsDisplayedDict }
         },
-        layout: cf.layout,
         horizontalDistance: cf.horizontalDistance,
         verticalDistance: cf.verticalDistance,
       };
@@ -422,32 +430,28 @@ export default Vue.extend({
       const isSubjectChanged =
         this.settingVModel.subjectId &&
         this.settingVModel.subjectId != this.subjectId;
-      const isLevelChanged = this.config.level != this.settingVModel.level;
 
       const st = this.settingVModel;
       this.subjectId = st.subjectId || this.subjectId;
       this.config = {
-        level: st.level,
-        show: {
-          image: st.show.image,
-          name: st.show.name,
-          gender: st.show.gender,
-          birthdate: st.show.birthdate,
-          status: st.show.status,
+        drawSpouse: st.drawSpouse,
+        expandNonRelatedFamily: st.expandNonRelatedFamily,
+        personCardConfig: {
+          layout: st.personCardConfig.layout,
+          elementsDisplayedDict: { ...st.personCardConfig.elementsDisplayedDict }
         },
-        layout: st.layout,
         horizontalDistance: st.horizontalDistance,
         verticalDistance: st.verticalDistance,
       };
 
-      if (isSubjectChanged || isLevelChanged) {
+      if (isSubjectChanged) {
         this.loadData();
       } else {
         // Force recreate cả viewer lẫn familyCard (Do nếu không recreate sẽ có cực kỳ nhiều lỗi oái oăm của cả viewer lẫn familyCard, mong ngày nào đó mình sẽ fix)
-        const ancestor = this.ancestor;
-        this.ancestor = null;
+        const topLevelPerson = this.topLevelPerson;
+        this.topLevelPerson = null;
         await nextTick();
-        this.ancestor = ancestor;
+        this.topLevelPerson = topLevelPerson;
         // Gán này thực ra không cần thiết lắm nhưng cứ gắn cho chắc
         this.key = getUniqueID();
 

@@ -8,7 +8,7 @@
       class="person-card elevation-2"
       @click="handleClickPerson"
       :style="
-        config.layout == PersonCardLayout.MIN_WIDTH
+        config.layout == 'VERTICAL'
           ? { maxWidth: '128px' }
           : { maxHeight: '128px' }
       "
@@ -16,35 +16,35 @@
       <div
         :class="
           'content d-flex justify-center align-center' +
-          (config.layout == PersonCardLayout.MIN_WIDTH ? ' flex-column' : '')
+          (config.layout == 'VERTICAL' ? ' flex-column' : '')
         "
       >
-        <div v-if="config.show.image">
+        <div v-if="config.elementsDisplayedDict.image">
           <CustomPersonAvatar :person="person" tile size="128" textSize="3" />
         </div>
         <div
           class="pa-3"
           v-if="
-            config.show.name ||
-            config.show.gender ||
-            config.show.birthdate ||
-            config.show.status
+            config.elementsDisplayedDict.name ||
+            config.elementsDisplayedDict.gender ||
+            config.elementsDisplayedDict.birthdate ||
+            config.elementsDisplayedDict.status
           "
           :style="
-            config.layout == PersonCardLayout.MIN_WIDTH
+            config.layout == 'VERTICAL'
               ? {
                   textAlign: 'center',
                 }
               : {}
           "
         >
-          <div class="text-h6" v-if="config.show.name">
+          <div class="text-h6" v-if="config.elementsDisplayedDict.name">
             {{ person.callname }}
           </div>
-          <div v-if="config.show.gender">
+          <div v-if="config.elementsDisplayedDict.gender">
             {{ genderDisplayText[person.gender] }}
           </div>
-          <div v-if="config.show.birthdate">
+          <div v-if="config.elementsDisplayedDict.birthdate">
             Ngày sinh:
             {{
               person.birthdate
@@ -54,7 +54,7 @@
                 : "Không rõ"
             }}
           </div>
-          <div v-if="config.show.status">
+          <div v-if="config.elementsDisplayedDict.status">
             Tình trạng:
             <template v-if="person.status != 'DEAD'">
               {{ lifeStateDisplayText[person.status] }}
@@ -113,12 +113,11 @@ import Vue from "vue";
 
 import PersonCardButton from "./PersonCardButton.vue";
 import {
-  Gender,
   genderDisplayText,
   lifeStateDisplayText,
   Person,
 } from "../../../../backend/src/model/Person";
-import { FamilyCardConfig, PersonCardLayout } from "../types";
+import { PersonCardConfig } from "../types";
 import {
   showDialogAddPersonWithSpecificRole,
   showDialogPersonDetailInfo,
@@ -140,7 +139,7 @@ export default Vue.extend({
       required: true,
     },
     config: {
-      type: Object as () => FamilyCardConfig,
+      type: Object as () => PersonCardConfig,
       required: true,
     },
     viewer: {
@@ -153,7 +152,6 @@ export default Vue.extend({
   },
   data() {
     return {
-      PersonCardLayout,
       genderDisplayText,
       lifeStateDisplayText,
       isMobile: checkIfIsMobile(),

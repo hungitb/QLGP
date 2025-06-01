@@ -11,7 +11,7 @@
     <div class="parent">
       <PersonCard
         :person="$store.state.personMapping[person.id]"
-        :config="config"
+        :config="config.personCardConfig"
         :ref="mappingPersonIdToRef[person.id]"
         :viewer="viewer"
         @addPersonRelationShipDone="handlePersonAddRelationship"
@@ -25,7 +25,7 @@
           v-if="person.spouseId"
           :ref="mappingPersonIdToRef[person.spouseId + sffrmfsi]"
           :person="$store.state.personMapping[person.spouseId]"
-          :config="config"
+          :config="config.personCardConfig"
           :viewer="viewer"
           @addPersonRelationShipDone="handlePersonAddRelationship"
         />
@@ -41,14 +41,14 @@
             :key="mappingPersonIdToRef[spouseId + sffrmfsi]"
             :ref="mappingPersonIdToRef[spouseId + sffrmfsi]"
             :person="$store.state.personMapping[spouseId]"
-            :config="config"
+            :config="config.personCardConfig"
             :viewer="viewer"
             @addPersonRelationShipDone="handlePersonAddRelationship"
           />
         </template>
       </template>
     </div>
-    <div class="children">
+    <div class="children" v-if="expandFamily">
       <FamilyCard
         v-for="child in allChildren"
         :key="mappingPersonIdToRef[child.id]"
@@ -117,10 +117,6 @@ export default Vue.extend({
   data() {
     return {
       sffrmfsi: sufixForRefMappingForSpouseId,
-      drawSpouse:
-        (this.config.level == 2 &&
-          this.$store.state.personMapping[this.person.id].gender == "MALE") ||
-        this.config.level >= 3,
       allChildren: [] as FamilyTreePerson[],
       childrenNotKnowSpouse: [] as FamilyTreePerson[],
       childrenHasSpouseSameCurrSpouse: [] as FamilyTreePerson[],
@@ -134,6 +130,27 @@ export default Vue.extend({
       lines: [] as JQuery<HTMLElement>[], /* eslint-disable-line */ // @ts-ignore
     };
   },
+  computed: {
+    /** Người hiện tại là Nam trong phả hệ hoặc Nữ trong mẫu hệ hay không */
+    isMainType() {
+      const ttgp = this.$store.state.user.thongTinGiaPha;
+      const thisPerson = this.$store.state.personMapping[this.person.id];
+
+      if (ttgp.type == "phaHe" && thisPerson.gender == "MALE") {
+        return true;
+      }
+      if (ttgp.type == "mauHe" && thisPerson.gender == "FEMALE") {
+        return true;
+      }
+      return false;
+    },
+    expandFamily() {
+      return (this as any).isMainType ? true : this.config.expandNonRelatedFamily;
+    },
+    drawSpouse() {
+      return this.config.drawSpouse && (this as any).expandFamily as boolean;
+    },
+  },
   methods: {
     handlePersonAddRelationship(payload: any) {
       this.$emit("addPersonRelationShipDone", payload);
@@ -141,13 +158,6 @@ export default Vue.extend({
     drawLines() {
       // Thuật toán drawLines này hình như bị ảnh hưởng gì đó bởi viewer, ví dụ như trên viewer pc nếu translate của slot khác nhau sẽ
       // làm cho việc vẽ bị lệch chẳng hạn. Hiện tại trên tab family tree sẽ dùng cách recreate viewer nên tạm chưa cần sửa, nếu có cơ hội hãy fix.
-      if (
-        (!this.drawSpouse || !this.person.spouseId) &&
-        this.allChildren.length == 0
-      ) {
-        // Không vẽ được gì cả thì return luôn
-        return;
-      }
 
       const $familyCard = $(this.$refs.familyCard as HTMLElement);
 
@@ -230,7 +240,7 @@ export default Vue.extend({
         };
       };
 
-      if (this.allChildren.length != 0) {
+      if (this.allChildren.length != 0 && this.expandFamily) {
         horiLineY =
           (pPos.top + pHeight + getChildCardStyle(this.allChildren[0].id).top) /
           2;
@@ -410,18 +420,20 @@ export default Vue.extend({
 
       // Doesnot draw spouse
       if (!this.drawSpouse) {
-        drawConnectLinesBetweenChildrenWithAbove(
-          this.allChildren,
-          pPos.left + pWidth / 2,
-          pPos.top + pHeight
-        );
+        if (this.expandFamily) {
+          drawConnectLinesBetweenChildrenWithAbove(
+            this.allChildren,
+            pPos.left + pWidth / 2,
+            pPos.top + pHeight
+          );
+        }
         return;
       }
 
-      // Draw spouse is condition to below
+      // Below: drawSpouse and expandFamily is true
 
       // Draw children has no spouse
-      if (this.childrenNotKnowSpouse.length != 0) {
+      if (this.childrenNotKnowSpouse.length != 0 && this.expandFamily) {
         drawConnectLinesBetweenChildrenWithAbove(
           this.childrenNotKnowSpouse,
           pPos.left + pWidth / 2,
