@@ -50,7 +50,11 @@ import CustomDialog from "@/components/CustomDialog.vue";
 import PersonInputGroup from "@/components/input/PersonInputGroup.vue";
 import { personApi } from "@/api/person";
 import { showSnackbar } from "./ShowSnackbar.vue";
-import { backlistPeopleInChildInput, notAllowedToBeHadRelationshipWith, RoleOfPersonWithOtherPerson } from "../../../../backend/src/controller/person";
+import {
+  backlistPeopleInChildInput,
+  notAllowedToBeHadRelationshipWith,
+  RoleOfPersonWithOtherPerson,
+} from "../../../../backend/src/controller/person";
 
 type ShowDialogAddPersonWithSpecificRoleParams = {
   person: Person;
@@ -192,11 +196,16 @@ export default defineComponent({
         exceptionIds.add(person.spouseId);
       }
       if (roleOfPersonWillAdd == "child") {
-        backlistPeopleInChildInput(person, this.$store.state.people).forEach(p => {
-          exceptionIds.add(p.id);
-        });
+        backlistPeopleInChildInput(person, this.$store.state.people).forEach(
+          (p) => {
+            exceptionIds.add(p.id);
+          }
+        );
       } else {
-        notAllowedToBeHadRelationshipWith(person, this.$store.state.people).forEach(p => {
+        notAllowedToBeHadRelationshipWith(
+          person,
+          this.$store.state.people
+        ).forEach((p) => {
           exceptionIds.add(p.id);
         });
       }

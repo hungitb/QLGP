@@ -454,7 +454,7 @@ export default function getPersonController(
             return false;
         }
 
-        if (data.motherId && data.motherId && data.motherId == data.motherId) {
+        if (data.motherId && data.spouseId && data.motherId == data.spouseId) {
             return false;
         }
 
@@ -475,6 +475,8 @@ export default function getPersonController(
                 if (type == "mother" && p.gender != "FEMALE") {
                     return false;
                 }
+
+                return true;
             }
             return true;
         }));

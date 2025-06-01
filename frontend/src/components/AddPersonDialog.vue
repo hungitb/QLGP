@@ -125,7 +125,11 @@ import { personApi } from "@/api/person";
 import { mapActions } from "vuex";
 import { FETCH_PEOPLE } from "@/store";
 import { convertToDateInputValue, handleDateInputValue } from "@/utils";
-import { CreatePersonParams, notAllowedToBeHadRelationshipWith, RoleOfPersonWithOtherPerson } from "../../../backend/src/controller/person";
+import {
+  CreatePersonParams,
+  notAllowedToBeHadRelationshipWith,
+  RoleOfPersonWithOtherPerson,
+} from "../../../backend/src/controller/person";
 import { showSnackbar } from "./utilities/ShowSnackbar.vue";
 
 export default defineComponent({
@@ -249,7 +253,10 @@ export default defineComponent({
 
       if (this.person) {
         ids.add(this.person.id);
-        notAllowedToBeHadRelationshipWith(this.person, this.$store.state.people).forEach(p => {
+        notAllowedToBeHadRelationshipWith(
+          this.person,
+          this.$store.state.people
+        ).forEach((p) => {
           ids.add(p.id);
         });
       }
@@ -275,8 +282,8 @@ export default defineComponent({
           if (type == "mother") {
             ids.add(id);
           } else if (type == "father") {
-              ids.add(id);
-            }
+            ids.add(id);
+          }
         }
       }
 
