@@ -39,7 +39,10 @@
 import { defineComponent } from "vue";
 import CustomPersonAvatar from "../CustomPersonAvatar.vue";
 import { DateStoredDB } from "../../../../backend/src/utils/DateUtils";
-import { Person } from "../../../../backend/src/model/Person";
+import {
+  genderDisplayText,
+  Person,
+} from "../../../../backend/src/model/Person";
 
 /** Cấu hình này là của vuetify */
 const TIMELINE_ITEM_PADDING_BOTTOM = 24;
@@ -71,7 +74,9 @@ export default defineComponent({
     },
   },
   data() {
-    return {};
+    return {
+      genderDisplayText,
+    };
   },
   computed: {
     detailPeople() {

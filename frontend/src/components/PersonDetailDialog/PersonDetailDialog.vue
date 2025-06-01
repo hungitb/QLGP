@@ -44,6 +44,16 @@
                   </template>
                 </template>
               </div>
+              <template v-if="personDetailInfo">
+                <template v-if="personDetailInfo.thuocGiaPha">
+                  <div v-if="personDetailInfo.doiThu">
+                    Đời thứ {{ personDetailInfo.doiThu }}
+                  </div>
+                </template>
+                <template v-else>
+                  <div>Không thuộc gia phả</div>
+                </template>
+              </template>
             </v-col>
 
             <v-col cols="12" v-if="editable && canWrite()">
