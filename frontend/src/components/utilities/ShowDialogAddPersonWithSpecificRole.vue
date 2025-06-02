@@ -51,8 +51,8 @@ import PersonInputGroup from "@/components/input/PersonInputGroup.vue";
 import { personApi } from "@/api/person";
 import { showSnackbar } from "./ShowSnackbar.vue";
 import {
-  backlistPeopleInChildInput,
-  notAllowedToBeHadRelationshipWith,
+  getAllDoiTren,
+  getAllDoiDuoi,
   RoleOfPersonWithOtherPerson,
 } from "../../../../backend/src/controller/person";
 
@@ -196,13 +196,22 @@ export default defineComponent({
         exceptionIds.add(person.spouseId);
       }
       if (roleOfPersonWillAdd == "child") {
-        backlistPeopleInChildInput(person, this.$store.state.people).forEach(
+        getAllDoiTren(person, this.$store.state.people).forEach(
           (p) => {
             exceptionIds.add(p.id);
           }
         );
+        // Bỏ qua những người đã có bố hoặc mẹ
+        this.$store.state.people.forEach(p => {
+          if (person.gender == "MALE" && p.fatherId) {
+            exceptionIds.add(p.id);
+          }
+          if (person.gender == "FEMALE" && p.motherId) {
+            exceptionIds.add(p.id);
+          }
+        });
       } else {
-        notAllowedToBeHadRelationshipWith(
+        getAllDoiDuoi(
           person,
           this.$store.state.people
         ).forEach((p) => {

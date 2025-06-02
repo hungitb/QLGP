@@ -120,7 +120,7 @@ export function filterPeople(people: Person[], search: string, searchFieldsAsStr
     return people;
 }
 
-export function notAllowedToBeHadRelationshipWith(targetPerson: Person, allPeople: Person[]) {
+export function getAllDoiDuoi(person: Person, allPeople: Person[]) {
     const childrenMapping: Record<string, string[]> = {};
 
     allPeople.forEach(person => {
@@ -136,69 +136,58 @@ export function notAllowedToBeHadRelationshipWith(targetPerson: Person, allPeopl
         }
     });
 
-    const blacklist = new Set<string>();
+    const doiDuoiIds = new Set<string>();
 
-    function addPersonToBlacklist(personId: string) {
-        if (blacklist.has(personId)) {
+    function addPerson(personId: string) {
+        if (doiDuoiIds.has(personId)) {
             return;
         }
 
-        blacklist.add(personId);
+        doiDuoiIds.add(personId);
 
         childrenMapping[personId].forEach(childId => {
-            addPersonToBlacklist(childId);
+            addPerson(childId);
         });
     }
 
-    blacklist.add(targetPerson.id);
-    childrenMapping[targetPerson.id].forEach(childId => {
-        addPersonToBlacklist(childId);
+    childrenMapping[person.id].forEach(childId => {
+        addPerson(childId);
     });
 
-    return [...allPeople].filter(p => blacklist.has(p.id));
+    return [...allPeople].filter(p => doiDuoiIds.has(p.id));
 }
 
-export function backlistPeopleInChildInput(person: Person, allPeople: Person[]) {
-    const blacklist = new Set<string>();
+export function getAllDoiTren(person: Person, allPeople: Person[]) {
+    const doiTrenIds = new Set<string>();
 
     const personMapping: Record<string, Person> = {};
     allPeople.forEach(person => {
         personMapping[person.id] = person;
     });
 
-    function addToBlacklist(person: Person) {
-        if (blacklist.has(person.id)) {
+    function addPerson(person: Person) {
+        if (doiTrenIds.has(person.id)) {
             return;
         }
 
-        blacklist.add(person.id);
+        doiTrenIds.add(person.id);
         
         if (person.fatherId) {
-            addToBlacklist(personMapping[person.fatherId]);
+            addPerson(personMapping[person.fatherId]);
         }
         if (person.motherId) {
-            addToBlacklist(personMapping[person.motherId]);
+            addPerson(personMapping[person.motherId]);
         }
     }
 
-    addToBlacklist(person);
-    if (person.spouseId) {
-        blacklist.add(person.spouseId);
+    if (person.fatherId) {
+        addPerson(personMapping[person.fatherId]);
+    }
+    if (person.motherId) {
+        addPerson(personMapping[person.motherId]);
     }
 
-    allPeople.forEach(p => {
-        if (person.gender == "MALE") {
-            if (p.fatherId) {
-                blacklist.add(p.id);
-            }
-        } else if (person.gender == "FEMALE") {
-            if (p.motherId) {
-                blacklist.add(p.id);
-            }
-        }
-    });
-
-    return allPeople.filter(p => blacklist.has(p.id));
+    return allPeople.filter(p => doiTrenIds.has(p.id));
 }
 
 export default function getPersonController(
@@ -683,7 +672,7 @@ export default function getPersonController(
         const person = await personDAO.findOne({ where: { id: data.id } });
         if (!person) return CommonResponse.BAD_REQUEST;
 
-        const blacklistPeople = notAllowedToBeHadRelationshipWith(person, await personDAO.findAll());
+        const blacklistPeople = getAllDoiDuoi(person, await personDAO.findAll());
         const blacklistIds = new Set(blacklistPeople.map(p => p.id));
         if (
             (data.fatherId && blacklistIds.has(data.fatherId)) ||

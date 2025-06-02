@@ -127,7 +127,7 @@ import { FETCH_PEOPLE } from "@/store";
 import { convertToDateInputValue, handleDateInputValue } from "@/utils";
 import {
   CreatePersonParams,
-  notAllowedToBeHadRelationshipWith,
+  getAllDoiDuoi,
   RoleOfPersonWithOtherPerson,
 } from "../../../backend/src/controller/person";
 import { showSnackbar } from "./utilities/ShowSnackbar.vue";
@@ -253,7 +253,7 @@ export default defineComponent({
 
       if (this.person) {
         ids.add(this.person.id);
-        notAllowedToBeHadRelationshipWith(
+        getAllDoiDuoi(
           this.person,
           this.$store.state.people
         ).forEach((p) => {
@@ -284,6 +284,14 @@ export default defineComponent({
           } else if (type == "father") {
             ids.add(id);
           }
+        } else if (role == "father" || role == "mother") {
+          const targetPerson = this.$store.state.personMapping[id];
+          ids.add(id);
+          getAllDoiDuoi(targetPerson, this.$store.state.people).forEach(p => {
+            ids.add(p.id);
+          });
+        } else {
+          const x: never = role;
         }
       }
 

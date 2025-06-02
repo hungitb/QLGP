@@ -576,28 +576,30 @@ export default Vue.extend({
 
       let foundElement: HTMLElement | null = null;
 
-      for (const child of this.allChildren) {
-        const childRef = this.mappingPersonIdToRef[child.id];
-        let childCardComponent = this.$refs[childRef] as any;
-        if (Array.isArray(childCardComponent)) {
-          // Có thể là Array nếu được gen từ v-if
-          childCardComponent = childCardComponent[0];
-        }
-        const [element, asSpouse]: [
-          element: HTMLElement | null,
-          asSpouse: boolean
-        ] = childCardComponent.findCardElementByPersonId(personId);
-        if (element) {
-          if (!asSpouse) {
-            return [element, false];
+      if (this.expandFamily) {
+        for (const child of this.allChildren) {
+          const childRef = this.mappingPersonIdToRef[child.id];
+          let childCardComponent = this.$refs[childRef] as any;
+          if (Array.isArray(childCardComponent)) {
+            // Có thể là Array nếu được gen từ v-if
+            childCardComponent = childCardComponent[0];
           }
+          const [element, asSpouse]: [
+            element: HTMLElement | null,
+            asSpouse: boolean
+          ] = childCardComponent.findCardElementByPersonId(personId);
+          if (element) {
+            if (!asSpouse) {
+              return [element, false];
+            }
 
-          foundElement = element;
+            foundElement = element;
+          }
         }
-      }
 
-      if (foundElement) {
-        return [foundElement, true];
+        if (foundElement) {
+          return [foundElement, true];
+        }
       }
 
       for (const spouseId of [
@@ -610,7 +612,7 @@ export default Vue.extend({
           ];
           if (Array.isArray(spouseCardComponent))
             spouseCardComponent = spouseCardComponent[0];
-          // Có thể sẽ null do điều kiện vẽ, ví dụ khi level quá bé.
+          // Có thể sẽ null do điều kiện vẽ.
           // Cái mappingPersonIdToRef chỉ là tính trước thôi chứ có thể sẽ có person không vẽ
           if (spouseCardComponent) {
             return [spouseCardComponent.$el as HTMLElement, true];
