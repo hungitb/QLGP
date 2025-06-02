@@ -62,12 +62,12 @@ export default defineComponent({
           subtitle: "Phân tích mối quan hệ giữa các thành viên",
           url: "/utilities/relationship_analysis",
         },
-        {
-          icon: "mdi-calendar-month",
-          title: "Lịch âm",
-          subtitle: "Xem lịch âm các tháng, các năm",
-          url: "/utilities/lunar_calendar",
-        },
+        // {
+        //   icon: "mdi-calendar-month",
+        //   title: "Lịch âm",
+        //   subtitle: "Xem lịch âm các tháng, các năm",
+        //   url: "/utilities/lunar_calendar",
+        // },
         ...(buildStatic
           ? [
               {

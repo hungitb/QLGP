@@ -202,14 +202,16 @@ import { FETCH_PEOPLE } from "@/store";
 import CustomDialog from "@/components/CustomDialog.vue";
 import PersonInputGroup from "@/components/input/PersonInputGroup.vue";
 import PersonCard from "@/components/FamilyCard/PersonCard.vue";
-import { getUniqueID } from "@/utils";
+import { getFamilyTreeSettingFromLocalStorage, getUniqueID, saveFamilyTreeToLocalStorage } from "@/utils";
 
 const getFamilyCardDefaultConfig = () => {
+  const lcConfig = getFamilyTreeSettingFromLocalStorage();
+
   const config: FamilyCardConfig = {
-    drawSpouse: true,
-    expandNonRelatedFamily: false,
+    drawSpouse: lcConfig.drawSpouse,
+    expandNonRelatedFamily: lcConfig.expandNonRelatedFamily,
     personCardConfig: {
-      layout: "VERTICAL",
+      layout: lcConfig.personCardLayoutConfig,
       elementsDisplayedDict: {
           image: true,
           name: true,
@@ -443,6 +445,12 @@ export default Vue.extend({
         horizontalDistance: st.horizontalDistance,
         verticalDistance: st.verticalDistance,
       };
+
+      saveFamilyTreeToLocalStorage({
+        drawSpouse: st.drawSpouse,
+        expandNonRelatedFamily: st.expandNonRelatedFamily,
+        personCardLayoutConfig: st.personCardConfig.layout
+      });
 
       if (isSubjectChanged) {
         this.loadData();
