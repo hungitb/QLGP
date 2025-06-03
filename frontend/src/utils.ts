@@ -150,12 +150,14 @@ export function saveEventSettingToLocalStorage(setting: Partial<EventSetting>) {
 type FamilyTreeSettingLocalStorage = {
   drawSpouse: boolean;
   expandNonRelatedFamily: boolean;
-  personCardLayoutConfig: "VERTICAL" | "HORIZONTAL"
+  personCardLayoutConfig: "VERTICAL" | "HORIZONTAL";
 };
 
 export function getFamilyTreeSettingFromLocalStorage(): FamilyTreeSettingLocalStorage {
   try {
-    const data: any = JSON.parse(localStorage.getItem("QLGP.familyTreeSetting") || "{}");
+    const data: any = JSON.parse(
+      localStorage.getItem("QLGP.familyTreeSetting") || "{}"
+    );
     if (
       data &&
       typeof data == "object" &&
@@ -168,7 +170,8 @@ export function getFamilyTreeSettingFromLocalStorage(): FamilyTreeSettingLocalSt
       return {
         drawSpouse: data.drawSpouse,
         expandNonRelatedFamily: data.expandNonRelatedFamily,
-        personCardLayoutConfig: data.personCardLayoutConfig == "VERTICAL" ? "VERTICAL" : "HORIZONTAL"
+        personCardLayoutConfig:
+          data.personCardLayoutConfig == "VERTICAL" ? "VERTICAL" : "HORIZONTAL",
       };
     }
     throw Error("Catch block!");
@@ -176,16 +179,15 @@ export function getFamilyTreeSettingFromLocalStorage(): FamilyTreeSettingLocalSt
     return {
       drawSpouse: true,
       expandNonRelatedFamily: false,
-      personCardLayoutConfig: "VERTICAL"
+      personCardLayoutConfig: "VERTICAL",
     };
   }
 }
 
-export function saveFamilyTreeToLocalStorage(setting: FamilyTreeSettingLocalStorage) {
-  localStorage.setItem(
-    "QLGP.familyTreeSetting",
-    JSON.stringify(setting)
-  );
+export function saveFamilyTreeToLocalStorage(
+  setting: FamilyTreeSettingLocalStorage
+) {
+  localStorage.setItem("QLGP.familyTreeSetting", JSON.stringify(setting));
 }
 
 type PermissionMixinThis = {

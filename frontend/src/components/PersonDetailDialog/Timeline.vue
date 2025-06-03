@@ -1,37 +1,42 @@
 <template>
   <div>
-    <v-timeline :dense="dense">
-      <v-timeline-item
-        v-for="(p, i) in detailPeople"
-        :key="i"
-        :right="dense ? true : undefined"
-        :style="{ marginBottom: `${p.marginBottom}px` }"
-      >
-        <template v-if="!dense" v-slot:opposite>
-          <template v-if="p.year">
-            {{ p.year }}
+    <div class="mx-auto" style="max-width: 500px">
+      <v-timeline :dense="dense">
+        <v-timeline-item
+          v-for="(p, i) in detailPeople"
+          :key="i"
+          :right="dense ? true : undefined"
+          :style="{ marginBottom: `${p.marginBottom}px` }"
+        >
+          <template v-if="!dense" v-slot:opposite>
+            <template v-if="p.year">
+              {{ p.year }}
+            </template>
           </template>
-        </template>
 
-        <template v-slot:icon>
-          <CustomPersonAvatar :person="p" :textSize="'5'"></CustomPersonAvatar>
-        </template>
+          <template v-slot:icon>
+            <CustomPersonAvatar
+              :person="p"
+              :textSize="'5'"
+            ></CustomPersonAvatar>
+          </template>
 
-        <v-card>
-          <div class="pa-3">
-            <div class="font-weight-bold">
-              {{ p.callname }}
-              <template v-if="p.year && dense"> ({{ p.year }}) </template>
+          <v-card>
+            <div class="pa-3">
+              <div class="font-weight-bold">
+                {{ p.callname }}
+                <template v-if="p.year && dense"> ({{ p.year }}) </template>
+              </div>
+
+              <div>
+                <template v-if="i == 0">Tổ tiên</template>
+                <template v-else>Đời thứ {{ i + 1 }}</template>
+              </div>
             </div>
-
-            <div>
-              <template v-if="i == 0">Tổ tiên</template>
-              <template v-else>Đời thứ {{ i + 1 }}</template>
-            </div>
-          </div>
-        </v-card>
-      </v-timeline-item>
-    </v-timeline>
+          </v-card>
+        </v-timeline-item>
+      </v-timeline>
+    </div>
   </div>
 </template>
 

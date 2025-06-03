@@ -196,13 +196,11 @@ export default defineComponent({
         exceptionIds.add(person.spouseId);
       }
       if (roleOfPersonWillAdd == "child") {
-        getAllDoiTren(person, this.$store.state.people).forEach(
-          (p) => {
-            exceptionIds.add(p.id);
-          }
-        );
+        getAllDoiTren(person, this.$store.state.people).forEach((p) => {
+          exceptionIds.add(p.id);
+        });
         // Bỏ qua những người đã có bố hoặc mẹ
-        this.$store.state.people.forEach(p => {
+        this.$store.state.people.forEach((p) => {
           if (person.gender == "MALE" && p.fatherId) {
             exceptionIds.add(p.id);
           }
@@ -211,10 +209,7 @@ export default defineComponent({
           }
         });
       } else {
-        getAllDoiDuoi(
-          person,
-          this.$store.state.people
-        ).forEach((p) => {
+        getAllDoiDuoi(person, this.$store.state.people).forEach((p) => {
           exceptionIds.add(p.id);
         });
       }

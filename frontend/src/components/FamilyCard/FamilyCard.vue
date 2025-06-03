@@ -145,10 +145,12 @@ export default Vue.extend({
       return false;
     },
     expandFamily() {
-      return (this as any).isMainType ? true : this.config.expandNonRelatedFamily;
+      return (this as any).isMainType
+        ? true
+        : this.config.expandNonRelatedFamily;
     },
     drawSpouse() {
-      return this.config.drawSpouse && (this as any).expandFamily as boolean;
+      return this.config.drawSpouse && ((this as any).expandFamily as boolean);
     },
   },
   methods: {

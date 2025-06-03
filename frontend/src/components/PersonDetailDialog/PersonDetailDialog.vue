@@ -74,31 +74,29 @@
             </v-col>
 
             <v-col cols="12">
-              <v-chip
-                v-if="
-                  personDetailInfo && personDetailInfo.connectingPathToToTien
-                "
-                @click="dialogTimeline = true"
-              >
-                Dòng thời gian
-                <CustomDialog
-                  v-model="dialogTimeline"
-                  header="Dòng thời gian"
-                  buttonText
-                  maxWidth="500px"
-                >
-                  <Timeline
-                    :path="
-                      personDetailInfo.connectingPathToToTien.map((i) => i.id)
+              <div class="py-1" style="overflow-x: auto; white-space: nowrap">
+                <template v-for="(item, i) in tabSelections">
+                  <v-chip
+                    v-if="
+                      item.value != 'TIMELINE' ||
+                      personDetailInfo?.connectingPathToToTien
                     "
-                  ></Timeline>
-                </CustomDialog>
-              </v-chip>
+                    :key="item.value"
+                    @click="tab = item.value"
+                    :color="tab == item.value ? 'primary' : undefined"
+                    :class="i != 0 ? 'ml-3' : ''"
+                    label
+                  >
+                    <v-icon left>{{ item.icon }}</v-icon>
+                    {{ item.text }}
+                  </v-chip>
+                </template>
+              </div>
             </v-col>
           </v-row>
         </v-col>
         <v-col cols="12">
-          <v-row>
+          <v-row v-if="tab == 'GENERAL'">
             <v-col cols="12" md="6">
               <v-card :loading="isLoadingDetailInfo">
                 <v-card-title style="word-break: initial">
@@ -169,6 +167,13 @@
               />
             </v-col>
           </v-row>
+          <div v-if="tab == 'TIMELINE'">
+            <Timeline
+              v-if="personDetailInfo && personDetailInfo.connectingPathToToTien"
+              :path="personDetailInfo.connectingPathToToTien.map((i) => i.id)"
+              :dense="$vuetify.breakpoint.mobile"
+            ></Timeline>
+          </div>
         </v-col>
       </v-row>
     </template>
@@ -236,14 +241,25 @@ export default defineComponent({
     },
   },
   data() {
+    type TabType = "GENERAL" | "TIMELINE" | "RELATIONSHIP_ANLYSIS";
+
     return {
       genderDisplayText,
       lifeStateDisplayText,
       internalPersonId: this.personId,
+      tab: "GENERAL" as TabType,
+      tabSelections: [
+        { text: "Thông tin chung", value: "GENERAL", icon: "mdi-account" },
+        { text: "Dòng thời gian", value: "TIMELINE", icon: "mdi-timeline" },
+        {
+          text: "Phân tích quan hệ",
+          value: "RELATIONSHIP_ANLYSIS",
+          icon: "mdi-account-switch",
+        },
+      ] as { text: string; value: TabType; icon: string }[],
       isLoadingDetailInfo: false,
       personDetailInfo: undefined as PersonDetailInfo | undefined,
       dialogEditChildOrders: false,
-      dialogTimeline: false,
       isSavingNewChildOrders: false,
     };
   },
@@ -317,6 +333,7 @@ export default defineComponent({
     ...mapActions([FETCH_PEOPLE]),
     transformDateString,
     refresh() {
+      this.tab = "GENERAL";
       (this.$refs.dialog as any).scrollTop();
       this.fetchPersonDetailInfo();
     },

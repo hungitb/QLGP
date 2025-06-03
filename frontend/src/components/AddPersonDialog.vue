@@ -253,10 +253,7 @@ export default defineComponent({
 
       if (this.person) {
         ids.add(this.person.id);
-        getAllDoiDuoi(
-          this.person,
-          this.$store.state.people
-        ).forEach((p) => {
+        getAllDoiDuoi(this.person, this.$store.state.people).forEach((p) => {
           ids.add(p.id);
         });
       }
@@ -287,7 +284,7 @@ export default defineComponent({
         } else if (role == "father" || role == "mother") {
           const targetPerson = this.$store.state.personMapping[id];
           ids.add(id);
-          getAllDoiDuoi(targetPerson, this.$store.state.people).forEach(p => {
+          getAllDoiDuoi(targetPerson, this.$store.state.people).forEach((p) => {
             ids.add(p.id);
           });
         } else {
