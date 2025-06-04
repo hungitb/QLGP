@@ -51,9 +51,10 @@ import PersonInputGroup from "@/components/input/PersonInputGroup.vue";
 import { personApi } from "@/api/person";
 import { showSnackbar } from "./ShowSnackbar.vue";
 import {
-  backlistPeopleInChildInput,
-  notAllowedToBeHadRelationshipWith,
+  getAllDoiTren,
+  getAllDoiDuoi,
   RoleOfPersonWithOtherPerson,
+  relationshipStatistic,
 } from "../../../../backend/src/controller/person";
 
 type ShowDialogAddPersonWithSpecificRoleParams = {
@@ -196,18 +197,26 @@ export default defineComponent({
         exceptionIds.add(person.spouseId);
       }
       if (roleOfPersonWillAdd == "child") {
-        backlistPeopleInChildInput(person, this.$store.state.people).forEach(
-          (p) => {
-            exceptionIds.add(p.id);
-          }
-        );
-      } else {
-        notAllowedToBeHadRelationshipWith(
-          person,
-          this.$store.state.people
-        ).forEach((p) => {
+        getAllDoiTren(person, this.$store.state.people).forEach((p) => {
           exceptionIds.add(p.id);
         });
+        // Bỏ qua những người đã có bố hoặc mẹ
+        this.$store.state.people.forEach((p) => {
+          if (person.gender == "MALE" && p.fatherId) {
+            exceptionIds.add(p.id);
+          }
+          if (person.gender == "FEMALE" && p.motherId) {
+            exceptionIds.add(p.id);
+          }
+        });
+      } else {
+        getAllDoiDuoi(person, this.$store.state.people).forEach((p) => {
+          exceptionIds.add(p.id);
+        });
+        if (roleOfPersonWillAdd == "spouse") {
+          const relationshipStat = relationshipStatistic(this.$store.state.people);
+          relationshipStat.peopleHasSpouse.forEach(p => exceptionIds.add(p.id));
+        }
       }
 
       this.exceptionIds = [...exceptionIds];

@@ -349,21 +349,6 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
             const handleCaseAPersonIsDoiTrenOfOtherPerson = async (pDoiTren: Person, p: Person): Promise<RelationshipAnalysisResult> => {
                 const [delta, doiThuCuaPDoiTren, doiThuCuaP] = await findDoiThuOfPairOfPeople(pDoiTren, p);
 
-                // Quan hệ trực tiếp phải support cái này rồi, chỉ cần trả ra thông tin tối thiểu
-                if (delta <= 4) {
-                    return {
-                        p1: {
-                            wayOfCallingTheOther: null,
-                            relationshipWithTheOtherDesc: null
-                        },
-                        p2: {
-                            wayOfCallingTheOther: null,
-                            relationshipWithTheOtherDesc: null
-                        },
-                        relationshipDetailDesc: null
-                    };
-                }
-
                 const connectingPath = await _findConnectingPath(p, pDoiTren, delta);
 
                 return {
@@ -975,7 +960,7 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
             const r2to1s = sortQuanHeByCloseness(_r2to1s);
             const r1to2s = sortQuanHeByCloseness(_r1to2s);
     
-            if (r2to1s.length == 0 || r1to2s.length == 0) {
+            if (r2to1s.length == 0 && r1to2s.length == 0) {
                 return null;
             }
     

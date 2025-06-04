@@ -8,7 +8,7 @@ import {
   SufixedLunarDate,
   sufixedLunarDateToNormalDate,
 } from "../../backend/src/utils/DateUtils";
-import { DateFormat } from "./components/types";
+import { DateFormat, FamilyCardConfig } from "./components/types";
 import store from "./store";
 
 export function checkIfIsMobile() {
@@ -145,6 +145,49 @@ export function saveEventSettingToLocalStorage(setting: Partial<EventSetting>) {
       personIds: setting.personIds?.join(","),
     })
   );
+}
+
+type FamilyTreeSettingLocalStorage = {
+  drawSpouse: boolean;
+  expandNonRelatedFamily: boolean;
+  personCardLayoutConfig: "VERTICAL" | "HORIZONTAL";
+};
+
+export function getFamilyTreeSettingFromLocalStorage(): FamilyTreeSettingLocalStorage {
+  try {
+    const data: any = JSON.parse(
+      localStorage.getItem("QLGP.familyTreeSetting") || "{}"
+    );
+    if (
+      data &&
+      typeof data == "object" &&
+      "drawSpouse" in data &&
+      typeof data.drawSpouse == "boolean" &&
+      "expandNonRelatedFamily" in data &&
+      typeof data.expandNonRelatedFamily == "boolean" &&
+      "personCardLayoutConfig" in data
+    ) {
+      return {
+        drawSpouse: data.drawSpouse,
+        expandNonRelatedFamily: data.expandNonRelatedFamily,
+        personCardLayoutConfig:
+          data.personCardLayoutConfig == "VERTICAL" ? "VERTICAL" : "HORIZONTAL",
+      };
+    }
+    throw Error("Catch block!");
+  } catch (e) {
+    return {
+      drawSpouse: true,
+      expandNonRelatedFamily: false,
+      personCardLayoutConfig: "VERTICAL",
+    };
+  }
+}
+
+export function saveFamilyTreeToLocalStorage(
+  setting: FamilyTreeSettingLocalStorage
+) {
+  localStorage.setItem("QLGP.familyTreeSetting", JSON.stringify(setting));
 }
 
 type PermissionMixinThis = {

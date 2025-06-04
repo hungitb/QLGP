@@ -127,7 +127,8 @@ import { FETCH_PEOPLE } from "@/store";
 import { convertToDateInputValue, handleDateInputValue } from "@/utils";
 import {
   CreatePersonParams,
-  notAllowedToBeHadRelationshipWith,
+  getAllDoiDuoi,
+  relationshipStatistic,
   RoleOfPersonWithOtherPerson,
 } from "../../../backend/src/controller/person";
 import { showSnackbar } from "./utilities/ShowSnackbar.vue";
@@ -212,7 +213,7 @@ export default defineComponent({
       }
       this.loadPersonProp();
     },
-    role(v) {
+    role(v: CreatePersonParams["role"]) {
       if (v && this.person) {
         throw Error("Can't set both person and role");
       }
@@ -248,15 +249,20 @@ export default defineComponent({
     ...mapActions({
       [FETCH_PEOPLE]: FETCH_PEOPLE,
     }),
-    exceptionIdsOfPersonInput(type: RoleOfPersonWithOtherPerson) {
+    exceptionIdsOfPersonInput(type: "father" | "mother" | "spouse") {
       const ids = new Set<string>();
+
+      if (type == "spouse") {
+        relationshipStatistic(this.$store.state.people).peopleHasSpouse.forEach(p => {
+          if (this.initData.spouseId != p.id && (!this.person || this.person.spouseId != p.id)) {
+            ids.add(p.id);
+          }
+        });
+      }
 
       if (this.person) {
         ids.add(this.person.id);
-        notAllowedToBeHadRelationshipWith(
-          this.person,
-          this.$store.state.people
-        ).forEach((p) => {
+        getAllDoiDuoi(this.person, this.$store.state.people).forEach((p) => {
           ids.add(p.id);
         });
       }
@@ -284,6 +290,14 @@ export default defineComponent({
           } else if (type == "father") {
             ids.add(id);
           }
+        } else if (role == "father" || role == "mother") {
+          const targetPerson = this.$store.state.personMapping[id];
+          ids.add(id);
+          getAllDoiDuoi(targetPerson, this.$store.state.people).forEach((p) => {
+            ids.add(p.id);
+          });
+        } else {
+          const x: never = role;
         }
       }
 
@@ -341,7 +355,9 @@ export default defineComponent({
             this.spouseId = targetPerson.fatherId;
           }
         } else if (this.role.roleName == "spouse") {
-          // Pass
+          if (targetPerson.gender == "MALE") {
+            this.gender = "FEMALE";
+          }
         } else if (this.role.roleName == "child") {
           if (
             targetPerson.spouseId &&

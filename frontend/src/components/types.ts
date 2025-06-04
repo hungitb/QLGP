@@ -20,7 +20,7 @@ export type PersonCardConfig = {
     birthdate: boolean;
     status: boolean;
   };
-}
+};
 
 export type FamilyCardConfig = {
   /** Có vẽ bạn đời của người trong gia phả hay không */

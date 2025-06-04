@@ -85,7 +85,11 @@
 
               <v-checkbox
                 v-model="settingVModel.expandNonRelatedFamily"
-                :label="`Vẽ gia đình của các thành viên ${$store.state.user.thongTinGiaPha.type == 'phaHe' ? 'Nữ' : 'Nam'} trong gia phả`"
+                :label="`Vẽ gia đình của các thành viên ${
+                  $store.state.user.thongTinGiaPha.type == 'phaHe'
+                    ? 'Nữ'
+                    : 'Nam'
+                } trong gia phả`"
                 hide-details
                 class="mt-2"
               ></v-checkbox>
@@ -110,34 +114,47 @@
             <v-col cols="12">
               <span>Thông tin thẻ thành viên</span>
               <v-checkbox
-                v-model="settingVModel.personCardConfig.elementsDisplayedDict.image"
+                v-model="
+                  settingVModel.personCardConfig.elementsDisplayedDict.image
+                "
                 hide-details
                 label="Ảnh đại diện"
               />
               <v-checkbox
-                v-model="settingVModel.personCardConfig.elementsDisplayedDict.name"
+                v-model="
+                  settingVModel.personCardConfig.elementsDisplayedDict.name
+                "
                 hide-details
                 label="Tên"
               />
               <v-checkbox
-                v-model="settingVModel.personCardConfig.elementsDisplayedDict.gender"
+                v-model="
+                  settingVModel.personCardConfig.elementsDisplayedDict.gender
+                "
                 hide-details
                 label="Giới tính"
               />
               <v-checkbox
-                v-model="settingVModel.personCardConfig.elementsDisplayedDict.birthdate"
+                v-model="
+                  settingVModel.personCardConfig.elementsDisplayedDict.birthdate
+                "
                 hide-details
                 label="Ngày sinh"
               />
               <v-checkbox
-                v-model="settingVModel.personCardConfig.elementsDisplayedDict.status"
+                v-model="
+                  settingVModel.personCardConfig.elementsDisplayedDict.status
+                "
                 hide-details
                 label="Trạng thái, ngày mất (nếu có)"
               />
             </v-col>
 
             <v-col cols="12">
-              <v-radio-group label="Bố cục" v-model="settingVModel.personCardConfig.layout">
+              <v-radio-group
+                label="Bố cục"
+                v-model="settingVModel.personCardConfig.layout"
+              >
                 <v-radio
                   v-for="item in personCardLayoutItems"
                   :key="item.value"
@@ -202,21 +219,27 @@ import { FETCH_PEOPLE } from "@/store";
 import CustomDialog from "@/components/CustomDialog.vue";
 import PersonInputGroup from "@/components/input/PersonInputGroup.vue";
 import PersonCard from "@/components/FamilyCard/PersonCard.vue";
-import { getUniqueID } from "@/utils";
+import {
+  getFamilyTreeSettingFromLocalStorage,
+  getUniqueID,
+  saveFamilyTreeToLocalStorage,
+} from "@/utils";
 
 const getFamilyCardDefaultConfig = () => {
+  const lcConfig = getFamilyTreeSettingFromLocalStorage();
+
   const config: FamilyCardConfig = {
-    drawSpouse: true,
-    expandNonRelatedFamily: false,
+    drawSpouse: lcConfig.drawSpouse,
+    expandNonRelatedFamily: lcConfig.expandNonRelatedFamily,
     personCardConfig: {
-      layout: "VERTICAL",
+      layout: lcConfig.personCardLayoutConfig,
       elementsDisplayedDict: {
-          image: true,
-          name: true,
-          gender: true,
-          birthdate: true,
-          status: true,
-        }
+        image: true,
+        name: true,
+        gender: true,
+        birthdate: false,
+        status: false,
+      },
     },
     horizontalDistance: 120,
     verticalDistance: 150,
@@ -235,9 +258,12 @@ export default Vue.extend({
     PersonInputGroup,
   },
   data() {
-    const personCardLayoutItems: { text: string, value: PersonCardConfig["layout"] }[] = [
+    const personCardLayoutItems: {
+      text: string;
+      value: PersonCardConfig["layout"];
+    }[] = [
       { text: "Thẻ dọc", value: "VERTICAL" },
-      { text: "Thẻ ngang", value: "HORIZONTAL" }
+      { text: "Thẻ ngang", value: "HORIZONTAL" },
     ];
 
     return {
@@ -420,7 +446,9 @@ export default Vue.extend({
         expandNonRelatedFamily: cf.expandNonRelatedFamily,
         personCardConfig: {
           layout: cf.personCardConfig.layout,
-          elementsDisplayedDict: { ...cf.personCardConfig.elementsDisplayedDict }
+          elementsDisplayedDict: {
+            ...cf.personCardConfig.elementsDisplayedDict,
+          },
         },
         horizontalDistance: cf.horizontalDistance,
         verticalDistance: cf.verticalDistance,
@@ -438,11 +466,19 @@ export default Vue.extend({
         expandNonRelatedFamily: st.expandNonRelatedFamily,
         personCardConfig: {
           layout: st.personCardConfig.layout,
-          elementsDisplayedDict: { ...st.personCardConfig.elementsDisplayedDict }
+          elementsDisplayedDict: {
+            ...st.personCardConfig.elementsDisplayedDict,
+          },
         },
         horizontalDistance: st.horizontalDistance,
         verticalDistance: st.verticalDistance,
       };
+
+      saveFamilyTreeToLocalStorage({
+        drawSpouse: st.drawSpouse,
+        expandNonRelatedFamily: st.expandNonRelatedFamily,
+        personCardLayoutConfig: st.personCardConfig.layout,
+      });
 
       if (isSubjectChanged) {
         this.loadData();

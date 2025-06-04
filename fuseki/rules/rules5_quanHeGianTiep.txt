@@ -5,6 +5,27 @@
 @prefix rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
 @prefix ttgp: http://qlgp/thongTinGiaPha#
 
+# Phụ thuộc vào tổ tiên
+[
+  (:thongTinGiaPha ttgp:ancestor ?x)
+  ->
+  (?x inferred:phuThuocToTien "true")
+]
+
+[
+  (?x inferred:phuThuocToTien "true"),
+  (?y person:hasFather ?x)
+  ->
+  (?y inferred:phuThuocToTien "true")
+]
+
+[
+  (?x inferred:phuThuocToTien "true"),
+  (?y person:hasMother ?x)
+  ->
+  (?y inferred:phuThuocToTien "true")
+]
+
 # Số đời
 [
   (:thongTinGiaPha ttgp:ancestor ?x)
@@ -13,56 +34,49 @@
 ]
 
 [
-    (?x inferred:doiThu ?soDoiX),
-    (?y person:hasFather ?x),
-    addOne(?soDoiX, ?soDoiY)
-    ->
-    (?y inferred:doiThu ?soDoiY)
+  (?x inferred:phuThuocToTien "true"),
+  (?x inferred:doiThu ?soDoiX),
+  (?y person:hasSpouse ?x)
+  ->
+  (?y inferred:doiThu ?soDoiX)
 ]
 
 [
-    (?x inferred:doiThu ?soDoiX),
-    (?y person:hasMother ?x),
-    addOne(?soDoiX, ?soDoiY)
-    ->
-    (?y inferred:doiThu ?soDoiY)
-]
-
-# Đời trên, chỉ xác định với những người thuộc gia phả (vì thuật toán xđ mqh dùng cái này cùng với số đời)
-[
-    (?x person:hasFather ?y),
-    (:thongTinGiaPha ttgp:ancestor ?y)
-    ->
-    (?x inferred:doiTren ?y)
+  (?x inferred:phuThuocToTien "true"),
+  (?x inferred:doiThu ?soDoiX),
+  (?y person:hasFather ?x),
+  addOne(?soDoiX, ?soDoiY)
+  ->
+  (?y inferred:doiThu ?soDoiY)
 ]
 
 [
-    (?x person:hasMother ?y),
-    (:thongTinGiaPha ttgp:ancestor ?y)
-    ->
-    (?x inferred:doiTren ?y)
+  (?x inferred:phuThuocToTien "true"),
+  (?x inferred:doiThu ?soDoiX),
+  (?y person:hasMother ?x),
+  addOne(?soDoiX, ?soDoiY)
+  ->
+  (?y inferred:doiThu ?soDoiY)
 ]
 
-# Người có bố tồn tại đời trên thì mới có bố là đời trên
-# Dùng để giới hạn chỉ trong gia phả
+# Đời trên, chỉ xác định với những người có số đời (vì thuật toán xđ mqh dùng cái này cùng với số đời)
 [
-    (?x person:hasFather ?y),
-    (?y inferred:doiTren ?z)
-    ->
-    (?x inferred:doiTren ?y)
-]
-
-# Tương tự như phần của bố
-[
-    (?x person:hasMother ?y),
-    (?y inferred:doiTren ?z)
-    ->
-    (?x inferred:doiTren ?y)
+  (?x person:hasFather ?y),
+  (?y inferred:doiThu ?soDoi)
+  ->
+  (?x inferred:doiTren ?y)
 ]
 
 [
-    (?x inferred:doiTren ?y),
-    (?y inferred:doiTren ?z)
-    ->
-    (?x inferred:doiTren ?z)
+  (?x person:hasMother ?y),
+  (?y inferred:doiThu ?soDoi)
+  ->
+  (?x inferred:doiTren ?y)
+]
+
+[
+  (?x inferred:doiTren ?y),
+  (?y inferred:doiTren ?z)
+  ->
+  (?x inferred:doiTren ?z)
 ]
