@@ -960,7 +960,7 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
             const r2to1s = sortQuanHeByCloseness(_r2to1s);
             const r1to2s = sortQuanHeByCloseness(_r1to2s);
     
-            if (r2to1s.length == 0 || r1to2s.length == 0) {
+            if (r2to1s.length == 0 && r1to2s.length == 0) {
                 return null;
             }
     

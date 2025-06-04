@@ -174,6 +174,9 @@
               :dense="$vuetify.breakpoint.mobile"
             ></Timeline>
           </div>
+          <div v-if="tab == 'RELATIONSHIP_ANLYSIS'" style="min-height: 400px">
+            <RelationshipAnalysis :person-id="person.id"></RelationshipAnalysis>
+          </div>
         </v-col>
       </v-row>
     </template>
@@ -204,6 +207,7 @@ import ChangeChildrenOrderDialog from "./ChangeChildrenOrderDialog.vue";
 import AdditionalInfo from "./AdditionalInfo.vue";
 import CustomDialog from "../CustomDialog.vue";
 import Timeline from "./Timeline.vue";
+import RelationshipAnalysis from "./RelationshipAnalysis.vue";
 
 type PersonDetailInfo = Awaited<
   ReturnType<typeof personApi.getPersonDetailInfo>
@@ -218,6 +222,7 @@ export default defineComponent({
     ChangeChildrenOrderDialog,
     AdditionalInfo,
     Timeline,
+    RelationshipAnalysis,
   },
   mixins: [permissionMixin],
   props: {

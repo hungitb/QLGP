@@ -550,8 +550,8 @@ export default function getPersonController(
                 }
             }
 
-            if (p.motherId || data.role.roleName == "mother") {
-                if (data.person.gender != "FEMALE") {
+            if (data.role.roleName == "mother") {
+                if (p.motherId || data.person.gender != "FEMALE") {
                     return CommonResponse.BAD_REQUEST;
                 }
             }

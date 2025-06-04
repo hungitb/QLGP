@@ -139,7 +139,9 @@
 
             <v-list-item-content>
               <v-list-item-title>{{ person.callname }}</v-list-item-title>
-              <v-list-item-subtitle>{{ person.gender }}</v-list-item-subtitle>
+              <v-list-item-subtitle>{{
+                genderDisplayText[person.gender]
+              }}</v-list-item-subtitle>
             </v-list-item-content>
 
             <v-list-item-action>
