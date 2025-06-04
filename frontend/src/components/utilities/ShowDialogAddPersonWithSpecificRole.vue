@@ -214,8 +214,12 @@ export default defineComponent({
           exceptionIds.add(p.id);
         });
         if (roleOfPersonWillAdd == "spouse") {
-          const relationshipStat = relationshipStatistic(this.$store.state.people);
-          relationshipStat.peopleHasSpouse.forEach(p => exceptionIds.add(p.id));
+          const relationshipStat = relationshipStatistic(
+            this.$store.state.people
+          );
+          relationshipStat.peopleHasSpouse.forEach((p) =>
+            exceptionIds.add(p.id)
+          );
         }
       }
 

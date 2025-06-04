@@ -65,7 +65,10 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import PersonInputGroup from "../input/PersonInputGroup.vue";
-import { RelationshipAnalysisResult } from "../../../../backend/src/model/Person";
+import {
+  RelationshipAnalysisResult,
+  Person,
+} from "../../../../backend/src/model/Person";
 import { personApi } from "@/api/person";
 import RelationshipDesc from "./RelationshipDesc.vue";
 
@@ -88,11 +91,15 @@ export default defineComponent({
   },
   computed: {
     person() {
-      return this.$store.state.personMapping[this.personId];
+      return (this as any).$store.state.personMapping[
+        (this as any).personId
+      ] as Person;
     },
     targetPerson() {
-      if (!this.targetPersonId) return null;
-      return this.$store.state.personMapping[this.targetPersonId];
+      if (!(this as any).targetPersonId) return null;
+      return (this as any).$store.state.personMapping[
+        (this as any).targetPersonId
+      ] as Person;
     },
   },
   watch: {

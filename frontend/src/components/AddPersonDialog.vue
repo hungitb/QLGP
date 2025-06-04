@@ -253,11 +253,16 @@ export default defineComponent({
       const ids = new Set<string>();
 
       if (type == "spouse") {
-        relationshipStatistic(this.$store.state.people).peopleHasSpouse.forEach(p => {
-          if (this.initData.spouseId != p.id && (!this.person || this.person.spouseId != p.id)) {
-            ids.add(p.id);
+        relationshipStatistic(this.$store.state.people).peopleHasSpouse.forEach(
+          (p) => {
+            if (
+              this.initData.spouseId != p.id &&
+              (!this.person || this.person.spouseId != p.id)
+            ) {
+              ids.add(p.id);
+            }
           }
-        });
+        );
       }
 
       if (this.person) {
