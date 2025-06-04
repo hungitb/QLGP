@@ -74,7 +74,7 @@
       </v-card-text>
       <v-card-actions v-if="!readonly && !isLoading && canWrite()">
         <v-btn
-          v-if="data"
+          v-if="data && data.length > 0"
           text
           color="primary"
           @click="dialogEditAdditionalInfo = true"

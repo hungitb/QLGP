@@ -95,7 +95,7 @@
             </v-col>
           </v-row>
         </v-col>
-        <v-col cols="12">
+        <v-col cols="12" style="min-height: 400px">
           <v-row v-if="tab == 'GENERAL'">
             <v-col cols="12" md="6">
               <v-card :loading="isLoadingDetailInfo">
@@ -174,7 +174,7 @@
               :dense="$vuetify.breakpoint.mobile"
             ></Timeline>
           </div>
-          <div v-if="tab == 'RELATIONSHIP_ANLYSIS'" style="min-height: 400px">
+          <div v-if="tab == 'RELATIONSHIP_ANLYSIS'">
             <RelationshipAnalysis :person-id="person.id"></RelationshipAnalysis>
           </div>
         </v-col>

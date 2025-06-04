@@ -54,6 +54,7 @@ import {
   getAllDoiTren,
   getAllDoiDuoi,
   RoleOfPersonWithOtherPerson,
+  relationshipStatistic,
 } from "../../../../backend/src/controller/person";
 
 type ShowDialogAddPersonWithSpecificRoleParams = {
@@ -212,6 +213,10 @@ export default defineComponent({
         getAllDoiDuoi(person, this.$store.state.people).forEach((p) => {
           exceptionIds.add(p.id);
         });
+        if (roleOfPersonWillAdd == "spouse") {
+          const relationshipStat = relationshipStatistic(this.$store.state.people);
+          relationshipStat.peopleHasSpouse.forEach(p => exceptionIds.add(p.id));
+        }
       }
 
       this.exceptionIds = [...exceptionIds];

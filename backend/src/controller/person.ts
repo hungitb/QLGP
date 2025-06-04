@@ -190,6 +190,30 @@ export function getAllDoiTren(person: Person, allPeople: Person[]) {
     return allPeople.filter(p => doiTrenIds.has(p.id));
 }
 
+export function relationshipStatistic(allPeople: Person[]) {
+    const peopleHasFather: Person[] = [];
+    const peopleHasMother: Person[] = [];
+    const peopleHasSpouse: Person[] = [];
+
+    allPeople.forEach(p => {
+        if (p.fatherId) {
+            peopleHasFather.push(p);
+        }
+        if (p.motherId) {
+            peopleHasMother.push(p);
+        }
+        if (p.spouseId) {
+            peopleHasSpouse.push(p);
+        }
+    });
+
+    return {
+        peopleHasFather,
+        peopleHasMother,
+        peopleHasSpouse
+    };
+}
+
 export default function getPersonController(
     personDAO: IDAO<Person>,
     userDAO: IDAO<User>,
@@ -555,8 +579,31 @@ export default function getPersonController(
                     return CommonResponse.BAD_REQUEST;
                 }
             }
+
+            if (data.role.roleName == "spouse") {
+                if (p.spouseId) {
+                    return CommonResponse.BAD_REQUEST;
+                }
+            }
+
+            if (data.role.roleName == "child") {
+                // Gán lại cho chắc
+                if (p.gender == "MALE") {
+                    data.person.fatherId = p.id;
+                } else if (p.gender == "FEMALE") {
+                    data.person.motherId = p.id;
+                }
+            }
         }
 
+        if (data.person.spouseId) {
+            const p = (await personDAO.findByPk(data.person.spouseId))!;
+            if (p.spouseId) {
+                return CommonResponse.BAD_REQUEST;
+            }
+        }
+
+        // Validation end
         const newPerson: Person = {
             ...data.person,
             id: uuid(),
@@ -572,7 +619,6 @@ export default function getPersonController(
 
         if (data.role) {
             const { roleName, roleWithTargetPersonId } = data.role;
-            const personThatNewPersonHasRoleTo = (await personDAO.findByPk(roleWithTargetPersonId))!;
 
             if (roleName == "father") {
                 promises.push(
@@ -584,8 +630,6 @@ export default function getPersonController(
                     personDAO.update({ motherId: newPerson.id }, { where: { id: roleWithTargetPersonId } })
                 );
             }
-            // Check nếu role là child thì gán id bố và mẹ lại bằng roleWithTargetPersonId
-            // Hiện tại code vẫn OK vì dựa vào giá trị từ frontend trả về
         }
 
         // Đảm bảo 1 người chỉ có 1 bạn đời
@@ -672,6 +716,18 @@ export default function getPersonController(
         const person = await personDAO.findOne({ where: { id: data.id } });
         if (!person) return CommonResponse.BAD_REQUEST;
 
+        const basicTest = await checkBasicPersonFields(data, true);
+        if (!basicTest) {
+            return CommonResponse.BAD_REQUEST;
+        }
+
+        if (data.spouseId) {
+            const p = (await personDAO.findByPk(data.spouseId))!;
+            if (p.spouseId && p.spouseId != data.id) {
+                return CommonResponse.BAD_REQUEST;
+            }
+        }
+
         const blacklistPeople = getAllDoiDuoi(person, await personDAO.findAll());
         const blacklistIds = new Set(blacklistPeople.map(p => p.id));
         if (
@@ -682,11 +738,7 @@ export default function getPersonController(
             return CommonResponse.BAD_REQUEST;
         }
 
-        const basicTest = await checkBasicPersonFields(data, true);
-        if (!basicTest) {
-            return CommonResponse.BAD_REQUEST;
-        }
-
+        // End validation
         await Promise.all(Object.entries(data).map(async ([_field, value]) => {
             const field = _field as keyof typeof data;
 
