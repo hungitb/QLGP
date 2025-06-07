@@ -45,6 +45,7 @@
   (?x inferred:phuThuocToTien "true"),
   (?x inferred:doiThu ?soDoiX),
   (?y person:hasFather ?x),
+  lessThan(?soDoiX, 9999),
   addOne(?soDoiX, ?soDoiY)
   ->
   (?y inferred:doiThu ?soDoiY)
@@ -54,6 +55,7 @@
   (?x inferred:phuThuocToTien "true"),
   (?x inferred:doiThu ?soDoiX),
   (?y person:hasMother ?x),
+  lessThan(?soDoiX, 9999),
   addOne(?soDoiX, ?soDoiY)
   ->
   (?y inferred:doiThu ?soDoiY)

@@ -9,48 +9,63 @@
         hide-details
       ></PersonInputGroup>
     </div>
-    <div v-if="relationship !== undefined">
+    <div v-if="relationship !== undefined && targetPersonId">
       <div v-if="relationship">
-        <div v-if="relationship.relationshipDetailDesc" class="mt-6">
-          <div class="text-h6">Mối quan hệ</div>
-          <div
-            v-html="
-              relationshipDetailDescHtml(relationship.relationshipDetailDesc)
-            "
-          ></div>
-        </div>
-        <div
-          v-if="
-            relationship.p2.wayOfCallingTheOther ||
-            relationship.p2.relationshipWithTheOtherDesc
-          "
-          class="mt-6"
-        >
-          <RelationshipDesc
-            :fromId="personId"
-            :toId="targetPersonId"
-            :wayOfCallingTheOther="relationship.p2.wayOfCallingTheOther"
-            :relationshipWithTheOtherDesc="
-              relationship.p2.relationshipWithTheOtherDesc
-            "
-          ></RelationshipDesc>
-        </div>
-        <div
-          v-if="
-            relationship.p1.wayOfCallingTheOther ||
-            relationship.p1.relationshipWithTheOtherDesc
-          "
-          class="mt-6"
-        >
-          <RelationshipDesc
-            :fromId="targetPersonId"
-            :toId="personId"
-            :wayOfCallingTheOther="relationship.p1.wayOfCallingTheOther"
-            :relationshipWithTheOtherDesc="
-              relationship.p1.relationshipWithTheOtherDesc
-            "
-          ></RelationshipDesc>
-        </div>
+        <v-row>
+          <v-col cols="12" :md="relationship.connectingPath ? 6 : undefined">
+            <div v-if="relationship.relationshipDetailDesc" class="mt-6">
+              <div class="text-h6">Mối quan hệ</div>
+              <div
+                v-html="
+                  relationshipDetailDescHtml(
+                    relationship.relationshipDetailDesc
+                  )
+                "
+              ></div>
+            </div>
+            <div
+              v-if="
+                relationship.p2.wayOfCallingTheOther ||
+                relationship.p2.relationshipWithTheOtherDesc
+              "
+              class="mt-6"
+            >
+              <RelationshipDesc
+                :fromId="personId"
+                :toId="targetPersonId"
+                :wayOfCallingTheOther="relationship.p2.wayOfCallingTheOther"
+                :relationshipWithTheOtherDesc="
+                  relationship.p2.relationshipWithTheOtherDesc
+                "
+              ></RelationshipDesc>
+            </div>
+            <div
+              v-if="
+                relationship.p1.wayOfCallingTheOther ||
+                relationship.p1.relationshipWithTheOtherDesc
+              "
+              class="mt-6"
+            >
+              <RelationshipDesc
+                :fromId="targetPersonId"
+                :toId="personId"
+                :wayOfCallingTheOther="relationship.p1.wayOfCallingTheOther"
+                :relationshipWithTheOtherDesc="
+                  relationship.p1.relationshipWithTheOtherDesc
+                "
+              ></RelationshipDesc>
+            </div>
+          </v-col>
+          <v-col v-if="relationship.connectingPath" cols="12" md="6">
+            <div class="pt-6">
+              <Timeline :path="relationship.connectingPath" dense>
+                <template v-slot:info="{ person }">
+                  {{ genderDisplayText[person.gender] }}
+                </template>
+              </Timeline>
+            </div>
+          </v-col>
+        </v-row>
       </div>
       <div v-else>
         <div v-if="targetPerson" class="mt-6">
@@ -68,14 +83,17 @@ import PersonInputGroup from "../input/PersonInputGroup.vue";
 import {
   RelationshipAnalysisResult,
   Person,
+  genderDisplayText,
 } from "../../../../backend/src/model/Person";
 import { personApi } from "@/api/person";
 import RelationshipDesc from "./RelationshipDesc.vue";
+import Timeline from "./Timeline.vue";
 
 export default defineComponent({
   components: {
     PersonInputGroup,
     RelationshipDesc,
+    Timeline,
   },
   props: {
     personId: {
@@ -85,6 +103,7 @@ export default defineComponent({
   },
   data() {
     return {
+      genderDisplayText,
       targetPersonId: null as string | null,
       relationship: undefined as RelationshipAnalysisResult | null | undefined,
     };

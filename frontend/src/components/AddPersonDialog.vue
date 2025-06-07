@@ -127,6 +127,7 @@ import { FETCH_PEOPLE } from "@/store";
 import { convertToDateInputValue, handleDateInputValue } from "@/utils";
 import {
   CreatePersonParams,
+  getAllCoQuanHeRuotThit,
   getAllDoiDuoi,
   relationshipStatistic,
   RoleOfPersonWithOtherPerson,
@@ -270,6 +271,19 @@ export default defineComponent({
         getAllDoiDuoi(this.person, this.$store.state.people).forEach((p) => {
           ids.add(p.id);
         });
+
+        if (type == "spouse") {
+          getAllCoQuanHeRuotThit(this.person, this.$store.state.people).forEach(
+            (p) => {
+              if (
+                this.initData.spouseId != p.id &&
+                (!this.person || this.person.spouseId != p.id)
+              ) {
+                ids.add(p.id);
+              }
+            }
+          );
+        }
       }
 
       if (this.role) {

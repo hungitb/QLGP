@@ -8,8 +8,8 @@ import {
     PersonAdvanceDAO,
     QuanHeTrucTiep,
     relationshipWithDoiTrenDesc,
-    sortQuanHeByCloseness,
-    RelationshipAnalysisResult
+    RelationshipAnalysisResult,
+    PersonHasQuanHeTrucTiep
 } from "../../model/Person";
 import { FieldDef } from "../../model/FieldDef";
 import { FieldVal } from "../../model/FieldVal";
@@ -277,6 +277,32 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
         return getMin ? Math.min(...values) : Math.max(...values);
     };
 
+    const getPeopleHasQuanHeTrucTiep = async (p: Person): Promise<PersonHasQuanHeTrucTiep[]> => {
+        const result = await personSchema.execSelectQuery<"r" | "p2">(`
+            SELECT ?r ?p2 WHERE {
+                person:${p.id} ?r ?p2
+                FILTER (CONTAINS(STR(?r), "${Fuseki.PREDEDINED_PREFIXES.quanHeTrucTiep}"))
+            }
+        `);
+
+        const people: { id: string, type: QuanHeTrucTiep }[] = [];
+        result.results.bindings.forEach(o => {
+            const r = o.r.value.replace(Fuseki.PREDEDINED_PREFIXES.quanHeTrucTiep, "");
+            if (isQuanHeTrucTiep(r)) {
+                people.push({
+                    id: personSchema.removeSelfPrefix(o.p2.value),
+                    type: r
+                });
+            } else {
+                if (isDevMode) {
+                    throw Error(`"${r} is not a direct relationship"`);
+                }
+            }
+        });
+
+        return people;
+    }
+
     const relationshipAnalysis = async (p1: Person, p2: Person) => {
         const ttgp = await ttgpDASO.get();
     
@@ -366,7 +392,8 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                         uncapitalize(relationshipWithDoiTrenDesc(connectingPath, ttgp.type == "phaHe")),
                         "của",
                         escapePerson(p), `(đời thứ ${doiThuCuaP})`
-                    ].join(" ")
+                    ].join(" "),
+                    connectingPath: connectingPath.map(i => i.id)
                 };
             };
 
@@ -799,7 +826,8 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                         p1: p1IsVaiTren ? vaiTrenInfo : vaiDuoiInfo,
                         p2: p1IsVaiTren ? vaiDuoiInfo : vaiTrenInfo,
                         relationshipDetailDesc: `${s1} và ${s2} là hai ${uncapitalize(desc1)}`
-                            + ` (${(data.p4IsP2 ? p2 : data.p4).callname} là ${uncapitalize(preferRelationshipsData[data.relationshipP3P4].desc2)})`
+                            + ` (${(data.p4IsP2 ? p2 : data.p4).callname} là ${uncapitalize(preferRelationshipsData[data.relationshipP3P4].desc2)})`,
+                        connectingPath: null
                     },
                     p1Spouse: p1IsVaiTren ? vaiTrenSpouseInfo : vaiDuoiSpouseInfo,
                     p2Spouse: p1IsVaiTren ? vaiDuoiSpouseInfo : vaiTrenSpouseInfo
@@ -841,7 +869,8 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                                 wayOfCallingTheOther: null,
                                 relationshipWithTheOtherDesc: null
                             },
-                            relationshipDetailDesc: `${escapePerson(p1)} có bạn đời đồng tính là ${escapePerson(spouseP1)}. ${r2.data.relationshipDetailDesc}`
+                            relationshipDetailDesc: `${escapePerson(p1)} có bạn đời đồng tính là ${escapePerson(spouseP1)}. ${r2.data.relationshipDetailDesc}`,
+                            connectingPath: null
                         };
                     } else {
                         return {
@@ -853,7 +882,8 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                                 wayOfCallingTheOther: r2.p1Spouse.wayOfCallingByTheOther,
                                 relationshipWithTheOtherDesc: null
                             },
-                            relationshipDetailDesc: `${escapePerson(p1)} có ${vaiTroVoHayChong(spouseP1)} là ${escapePerson(spouseP1)}. ${r2.data.relationshipDetailDesc}`
+                            relationshipDetailDesc: `${escapePerson(p1)} có ${vaiTroVoHayChong(spouseP1)} là ${escapePerson(spouseP1)}. ${r2.data.relationshipDetailDesc}`,
+                            connectingPath: null
                         };
                     }
                 }
@@ -872,7 +902,8 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                                 wayOfCallingTheOther: null,
                                 relationshipWithTheOtherDesc: null
                             },
-                            relationshipDetailDesc: `${escapePerson(p2)} có bạn đời đồng tính là ${escapePerson(spouseP2)}. ${r2.data.relationshipDetailDesc}`
+                            relationshipDetailDesc: `${escapePerson(p2)} có bạn đời đồng tính là ${escapePerson(spouseP2)}. ${r2.data.relationshipDetailDesc}`,
+                            connectingPath: null
                         };
                     } else {
                         return {
@@ -884,7 +915,8 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                                 wayOfCallingTheOther: r2.p2Spouse.wayOfCallingTheOther,
                                 relationshipWithTheOtherDesc: null
                             },
-                            relationshipDetailDesc: `${escapePerson(p2)} có ${vaiTroVoHayChong(spouseP2)} là ${escapePerson(spouseP2)}. ${r2.data.relationshipDetailDesc}`
+                            relationshipDetailDesc: `${escapePerson(p2)} có ${vaiTroVoHayChong(spouseP2)} là ${escapePerson(spouseP2)}. ${r2.data.relationshipDetailDesc}`,
+                            connectingPath: null
                         };
                     }
                 }
@@ -905,7 +937,8 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                             },
                             relationshipDetailDesc: `${escapePerson(p1)} có ${p1.gender == spouseP1.gender ? "bạn đời đồng tính" : vaiTroVoHayChong(spouseP1)} là ${escapePerson(spouseP1)}`
                                 + `, ${escapePerson(p2)} có ${p2.gender == spouseP2.gender ? "bạn đời đồng tính" : vaiTroVoHayChong(spouseP2)} là ${escapePerson(spouseP2)}`
-                                + `. ${r2.data.relationshipDetailDesc}`
+                                + `. ${r2.data.relationshipDetailDesc}`,
+                            connectingPath: null
                         };
                     } else {
                         return {
@@ -919,7 +952,8 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                             },
                             relationshipDetailDesc: `${escapePerson(p1)} có ${vaiTroVoHayChong(spouseP1)} là ${escapePerson(spouseP1)}`
                                 + `, ${escapePerson(p2)} có ${vaiTroVoHayChong(spouseP2)} là ${escapePerson(spouseP2)}`
-                                + `. ${r2.data.relationshipDetailDesc}`
+                                + `. ${r2.data.relationshipDetailDesc}`,
+                            connectingPath: null
                         };
                     }
                 }
@@ -929,36 +963,18 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
         };
     
         const directlyRelationshipAnalysis = async (p1: Person, p2: Person): Promise<RelationshipAnalysisResult | null> => {
-            const getDirectRelationships = async (id1: string, id2: string) => {
-                const result = await personSchema.execSelectQuery<"r">(`
-                    SELECT ?r WHERE {
-                        person:${id1} ?r person:${id2}
-                        FILTER (CONTAINS(STR(?r), "${Fuseki.PREDEDINED_PREFIXES.quanHeTrucTiep}"))
-                    }
-                `);
-    
-                const directRelationships: QuanHeTrucTiep[] = [];
-                result.results.bindings.forEach(o => {
-                    const r = o.r.value.replace(Fuseki.PREDEDINED_PREFIXES.quanHeTrucTiep, "");
-                    if (isQuanHeTrucTiep(r)) {
-                        directRelationships.push(r);
-                    } else {
-                        if (isDevMode) {
-                            throw Error(`"${r} is not a direct relationship"`);
-                        }
-                    }
-                });
-    
-                return directRelationships;
+            const getDirectRelationships = async (p1: Person, p2: Person) => {
+                const result = await getPeopleHasQuanHeTrucTiep(p1);
+                return result.filter(o => o.id == p2.id).map(o => o.type);
             };
     
-            const [_r2to1s, _r1to2s] = await Promise.all([
-                getDirectRelationships(p1.id, p2.id),
-                getDirectRelationships(p2.id, p1.id)
+            const [r2to1s, r1to2s] = await Promise.all([
+                getDirectRelationships(p1, p2),
+                getDirectRelationships(p2, p1)
             ]);
-    
-            const r2to1s = sortQuanHeByCloseness(_r2to1s);
-            const r1to2s = sortQuanHeByCloseness(_r1to2s);
+
+            r2to1s.sort((a, b) => ALL_QUAN_HE_TRUC_TIEP_INFO[a].closeness - ALL_QUAN_HE_TRUC_TIEP_INFO[b].closeness);
+            r1to2s.sort((a, b) => ALL_QUAN_HE_TRUC_TIEP_INFO[a].closeness - ALL_QUAN_HE_TRUC_TIEP_INFO[b].closeness);
     
             if (r2to1s.length == 0 && r1to2s.length == 0) {
                 return null;
@@ -1046,7 +1062,8 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                 relationshipDetailDesc: (
                     (r2to1 ? ALL_QUAN_HE_TRUC_TIEP_INFO[r2to1].needMoreDesc : true) ||
                     (r1to2 ? ALL_QUAN_HE_TRUC_TIEP_INFO[r1to2].needMoreDesc : true)
-                ) ? resultQuanHeGianTiep?.relationshipDetailDesc || null : null
+                ) ? resultQuanHeGianTiep?.relationshipDetailDesc || null : null,
+                connectingPath: resultQuanHeGianTiep ? resultQuanHeGianTiep.connectingPath : null
             };
         };
 
@@ -1084,7 +1101,7 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
         }
 
         try {
-            return await _findConnectingPath(pDoiDuoi, pDoiTren, pDuoiDoiThu - pTrenDoiThu);
+            return (await _findConnectingPath(pDoiDuoi, pDoiTren, pDuoiDoiThu - pTrenDoiThu)).map(i => i.id);
         } catch {
             return null;
         }
@@ -1093,6 +1110,7 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
     return {
         isPersonBelongToFamily,
         isPeopleBelongToFamily,
+        getPeopleHasQuanHeTrucTiep,
         findDoiThu,
         findConnectingPath,
         relationshipAnalysis

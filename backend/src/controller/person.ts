@@ -190,6 +190,74 @@ export function getAllDoiTren(person: Person, allPeople: Person[]) {
     return allPeople.filter(p => doiTrenIds.has(p.id));
 }
 
+export function getAllCoQuanHeRuotThit(person: Person, allPeople: Person[]) {
+    const personMapping: Record<string, Person> = {};
+    const childrenMapping: Record<string, string[]> = {};
+
+    allPeople.forEach(person => {
+        personMapping[person.id] = person;
+        childrenMapping[person.id] = [];
+    });
+
+    allPeople.forEach(person => {
+        if (person.fatherId) {
+            childrenMapping[person.fatherId].push(person.id);
+        }
+        if (person.motherId) {
+            childrenMapping[person.motherId].push(person.id);
+        }
+    });
+
+    const considered = new Set<string>();
+    const topPeopleIds = new Set<string>();
+    
+    function goUp(person: Person) {
+        if (considered.has(person.id)) {
+            return;
+        }
+
+        considered.add(person.id);
+
+        if (person.fatherId) {
+            goUp(personMapping[person.fatherId]);
+        }
+
+        if (person.motherId) {
+            goUp(personMapping[person.motherId]);
+        }
+
+        if (!person.fatherId && !person.motherId) {
+            topPeopleIds.add(person.id);
+        }
+    }
+
+    goUp(person);
+
+    const result = new Set<string>();
+
+    function goDown(person: Person) {
+        if (result.has(person.id)) {
+            return;
+        }
+
+        result.add(person.id);
+
+        childrenMapping[person.id].forEach(id => {
+            goDown(personMapping[id]);
+        });
+    }
+
+    topPeopleIds.forEach(id => {
+        goDown(personMapping[id]);
+    });
+
+    if (result.has(person.id)) {
+        result.delete(person.id);
+    }
+
+    return allPeople.filter(p => result.has(p.id));
+}
+
 export function relationshipStatistic(allPeople: Person[]) {
     const peopleHasFather: Person[] = [];
     const peopleHasMother: Person[] = [];
@@ -273,13 +341,11 @@ export default function getPersonController(
         { id: string },
         {
             person: Person & {
-                personIdsOnlySameFather: string[],
-                personIdsOnlySameMother: string[],
-                personIdsSameBothFatherAndMother: string[],
                 childIds: string[],
                 additionalData: (FieldVal & { fieldDef: FieldDef })[],
                 thuocGiaPha: boolean,
                 doiThu: number | null,
+                peopleHasQuanHeTrucTiep: Awaited<ReturnType<typeof personAdvanceDAO.getPeopleHasQuanHeTrucTiep>>
                 connectingPathToToTien: Awaited<ReturnType<typeof personAdvanceDAO.findConnectingPath>>
             }
         }
@@ -287,22 +353,21 @@ export default function getPersonController(
         const person = await personDAO.findOne({ where: { id } });
         if (!person) return CommonResponse.BAD_REQUEST;
 
-        const [peopleHasSameFather, peopleHasSameMother, children] = await Promise.all([
-            person.fatherId ? personDAO.findAll({ where: { fatherId: person.fatherId } }) : Promise.resolve([]),
-            person.motherId ? personDAO.findAll({ where: { motherId: person.motherId } }) : Promise.resolve([]),
+        const [
+            children,
+            connectingPathToToTien,
+            peopleHasQuanHeTrucTiep,
+            doiThu,
+            thuocGiaPha
+        ] = await Promise.all([
             person.gender == "MALE" ?
                 personDAO.findAll({ where: { fatherId: person.id } }) :
-                personDAO.findAll({ where: { motherId: person.id } })
+                personDAO.findAll({ where: { motherId: person.id } }),
+            personAdvanceDAO.findConnectingPath(person),
+            personAdvanceDAO.getPeopleHasQuanHeTrucTiep(person),
+            personAdvanceDAO.findDoiThu(person),
+            personAdvanceDAO.isPersonBelongToFamily(person.id)
         ]);
-
-        const personIdsSameFather = peopleHasSameFather.map(p => p.id).filter(id => id != person.id);
-        const personIdsSameMother = peopleHasSameMother.map(p => p.id).filter(id => id != person.id);
-        const setPersonIdsSameFather = new Set(personIdsSameFather);
-        const setPersonIdsSameMother = new Set(personIdsSameMother);
-
-        const personIdsOnlySameFather = personIdsSameFather.filter(id => !setPersonIdsSameMother.has(id));
-        const personIdsOnlySameMother = personIdsSameMother.filter(id => !setPersonIdsSameFather.has(id));
-        const personIdsSameBothFatherAndMother = personIdsSameFather.filter(id => setPersonIdsSameMother.has(id));
 
         const fieldVals = await fieldValDAO.findAll({ where: { personId: id } });
         const fieldDefs = await fieldDefDAO.findAllIdsIn(fieldVals.map(fv => fv.fieldDefId));
@@ -312,27 +377,15 @@ export default function getPersonController(
                 fieldDef: fieldDefs.find(fd => fd.id == fv.fieldDefId)!
             };
         });
-
-        const [
-            connectingPathToToTien,
-            doiThu,
-            thuocGiaPha
-        ] = await Promise.all([
-            personAdvanceDAO.findConnectingPath(person),
-            personAdvanceDAO.findDoiThu(person),
-            personAdvanceDAO.isPersonBelongToFamily(person.id)
-        ]);
         
         return {
             data: {
                 person: {
                     ...person,
-                    personIdsOnlySameFather,
-                    personIdsOnlySameMother,
-                    personIdsSameBothFatherAndMother,
                     childIds: children.sort((p1, p2) => p1.youngnessLevel - p2.youngnessLevel).map(p => p.id),
                     additionalData,
                     connectingPathToToTien,
+                    peopleHasQuanHeTrucTiep,
                     doiThu,
                     thuocGiaPha
                 }

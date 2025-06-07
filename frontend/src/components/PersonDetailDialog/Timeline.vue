@@ -28,9 +28,12 @@
                 <template v-if="p.year && dense"> ({{ p.year }}) </template>
               </div>
 
-              <div>
-                <template v-if="i == 0">Tổ tiên</template>
-                <template v-else>Đời thứ {{ i + 1 }}</template>
+              <div v-if="$scopedSlots.info">
+                <slot
+                  name="info"
+                  :idx="i"
+                  :person="$store.state.personMapping[p.id]"
+                ></slot>
               </div>
             </div>
           </v-card>
