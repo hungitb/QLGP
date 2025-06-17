@@ -3,7 +3,7 @@ import { v4 as uuid } from "uuid";
 import { compareTwoDateString, datePlusDay, DateInputDB, isSomeValueStandardNormalDate, isSufixedLunarDate, lunarDateToNormalDate, normalDateToLunarDate, nowDate, shortenDateString, sortByStdDate, StandardNormalDate, sufixedLunarDateToNormalDate, todayDate, convertDateStoredDBToDateInputDB, convertDateInputDBToDateStoredDB, isDateStoredDB } from "../utils/DateUtils";
 import { isStringPureInterger } from "../utils/ValidationUtils";
 import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR, Controller, ControllerHandler, applyUserGuards, CanWriteGuard, keysModel, SafeOmit } from "./utils";
-import { Gender, type Person, PersonAdvanceDAO, RelationshipAnalysisResult, LifeState } from "../model/Person";
+import { Gender, type Person, PersonAdvanceDAO, RelationshipAnalysisResult, LifeState, genderDisplayText } from "../model/Person";
 import type { User } from "../model/User";
 import type { IDAO, IDASO } from "../model/IDAO";
 import { extractEvents, type Event } from "./event";
@@ -93,18 +93,40 @@ export function filterPeople(people: Person[], search: string, searchFieldsAsStr
 
     people = people.filter(person => {
         let matched = false;
-        (allFields ? Object.keys(person) : searchFields).forEach(field => {
+        (allFields ? Object.keys(person) : searchFields).forEach(_field => {
             if (matched) return;
+            const field = _field as keyof Person;
             // "createdAt", "updatedAt": default field of database, include "t" and some digits. For example:
             // "createdAt": "2024-12-02T13:57:26.804Z",
             // "updatedAt": "2024-12-02T13:57:26.804Z"
-            if (["id", "ownerUserId", "isStandForUser", "avatarUrl", "spouseId", "fatherId", "motherId", "createdAt", "updatedAt"].includes(field)) return;
-            let val = person[field as keyof Person];
+            const invalidFields = [
+                "id",
+                "ownerUserId",
+                "isStandForUser",
+                "avatarUrl",
+                "spouseId",
+                "fatherId",
+                "motherId",
+                "createdAt",
+                "updatedAt"
+            ];
+            if (invalidFields.includes(field)) return;
+            
+            let val = person[field];
             if (!val) return;
 
-            const valAsLunarDate = normalDateToLunarDate(val as StandardNormalDate);
-            if (field == "deathdate" && valAsLunarDate) {
-                val += " " + valAsLunarDate;
+            if (field == "deathdate") {
+                try {
+                    const valAsLunarDate = normalDateToLunarDate(val as StandardNormalDate);
+                    if (valAsLunarDate) {
+                        val += " " + valAsLunarDate;
+                    }
+                } catch {}
+            }
+
+            if (field == "gender") {
+                const originalValue = val as Gender;
+                val = genderDisplayText[originalValue];
             }
 
             val = val.toString().toLowerCase();
