@@ -216,6 +216,10 @@ export default Vue.extend({
 
       const $person = $(getPersonCardElementByPersonId(this.person.id));
       const pPos = $person.position();
+      // Cái pHeight là chiều cao của card wrapper, và có thể sẽ lớn hơn khoảng cách thực sự của person card
+      // nếu người hiện tại có 1 spouse bên cạnh có thẻ dài hơn.
+      // Cách tính này hiện là sai nhưng nó vẫn ổn, trừ cho khi vẽ trường hợp người này vừa có spouse dài hơn, vừa có con chưa biết mẹ
+      // Đối với trường hợp đó sẽ được xử lý riêng.
       const pHeight = $person.outerHeight() as number;
       const pWidth = $person.outerWidth() as number;
 
@@ -436,10 +440,13 @@ export default Vue.extend({
 
       // Draw children has no spouse
       if (this.childrenNotKnowSpouse.length != 0 && this.expandFamily) {
+        // pHeight có thể không đúng
+        const cardActuallyHeight = $person.children().outerHeight() || pHeight;
+
         drawConnectLinesBetweenChildrenWithAbove(
           this.childrenNotKnowSpouse,
           pPos.left + pWidth / 2,
-          pPos.top + pHeight
+          pPos.top + cardActuallyHeight
         );
       }
 
