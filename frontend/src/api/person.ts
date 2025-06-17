@@ -18,6 +18,7 @@ import {
   wrapApi,
   fieldDefDAO,
   fieldValDAO,
+  imageUtils,
 } from "../../../backend/src/DAO/fake/FakeDAO";
 import {
   ControllerHandlerResult as CHR,
@@ -31,7 +32,8 @@ const personController = getPersonController(
   ttgpDASO,
   null as any,
   fieldDefDAO,
-  fieldValDAO
+  fieldValDAO,
+  imageUtils
 );
 
 export const personApi = wrapApi({

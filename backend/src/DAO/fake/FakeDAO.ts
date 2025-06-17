@@ -1,4 +1,4 @@
-import type { IDAO, IDASO } from "../../model/IDAO";
+import type { IDAO, IDASO, ImageUtils } from "../../model/IDAO";
 import type { User } from "../../model/User";
 import type { Person } from "../../model/Person";
 import { Gender } from "../../model/Person";
@@ -618,6 +618,13 @@ const ttgpDAO: IDAO<ThongTinGiaPha> = createDAO(
   ThongTinGiaPhas
 );
 export const ttgpDASO = createDASO(ttgpDAO, getDefaultThongTinGiaPhaValue());
+
+export const imageUtils: ImageUtils = {
+  validateUrl: () => true,
+  getImageDataByUrl: (url: string) => Promise.resolve(url),
+  saveImage: (data: string) => Promise.resolve(data),
+  deleteImageByUrl: (url: string) => Promise.resolve()
+};
 
 if (process.env.NODE_ENV == "development" && isWeb) {
   (window as any).userDAO = userDAO;

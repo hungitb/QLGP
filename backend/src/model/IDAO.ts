@@ -17,3 +17,10 @@ export interface IDASO<K> {
     get: () => Promise<K>;
     update: (data: Reduced<K>) => Promise<any>;
 }
+
+export type ImageUtils = {
+    validateUrl: (url: string) => boolean;
+    getImageDataByUrl: (url: string) => Promise<string | null>;
+    saveImage: (data: string) => Promise<string>;
+    deleteImageByUrl: (url: string) => Promise<void>;
+};

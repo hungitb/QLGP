@@ -10,3 +10,5 @@ export const fieldValDAO = fakeData ? FakeDAO.fieldValDAO : FusekiDAO.fieldValDA
 export const userDAO = fakeData ? FakeDAO.userDAO : FusekiDAO.userDAO;
 export const ttgpDASO = fakeData ? FakeDAO.ttgpDASO : FusekiDAO.ttgpDASO;
 export const personAdvanceDAO = fakeData ? (null as any) : FusekiDAO.personAdvanceDAO;
+
+export const imageUtils = fakeData ? FakeDAO.imageUtils : FusekiDAO.imageUtils;

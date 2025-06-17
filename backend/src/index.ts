@@ -12,6 +12,8 @@ import personRouter from "./routes/person";
 import shareRouter from "./routes/share";
 import fieldDefRouter from "./routes/fieldDef";
 import fieldValRouter from "./routes/fieldVal";
+import { imageUtils } from "./DAO";
+import { getLoggedInUser } from "./routes/utils";
 
 const isDev = process.env.NODE_ENV == "development";
 const app = express();
@@ -24,6 +26,33 @@ app.use("/api/person", personRouter);
 app.use("/api/share", shareRouter);
 app.use("/api/field_def", fieldDefRouter);
 app.use("/api/field_val", fieldValRouter);
+
+app.get('/images/:imageName', async (req, res) => {
+    const user = await getLoggedInUser(req);
+    if (!user) {
+        res.status(400).send('Unauthorized');
+        return;
+    }
+
+    const imagePath = req.path;
+
+    if (!imageUtils.validateUrl(imagePath)) {
+        res.status(404).send('Image not found');
+        return;
+    }
+
+    const imageData = await imageUtils.getImageDataByUrl(imagePath);;
+    if (!imageData) {
+        res.status(404).send('Image not found');
+        return;
+    }
+
+    const imageBuffer = Buffer.from(imageData.split(',')[1], 'base64');
+
+    res.setHeader('Content-Type', 'image/jpeg');
+    res.send(imageBuffer);
+});
+  
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     console.error(err.stack);

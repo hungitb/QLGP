@@ -1,11 +1,11 @@
 
 import { Router } from "express";
 
-import { fieldDefDAO, fieldValDAO, personAdvanceDAO, personDAO, ttgpDASO, userDAO } from "../DAO";
+import { fieldDefDAO, fieldValDAO, imageUtils, personAdvanceDAO, personDAO, ttgpDASO, userDAO } from "../DAO";
 import getPersonController from "../controller/person";
 import { wrapHandlerAdvance } from "./utils";
 const router = Router();
-const personController = getPersonController(personDAO, userDAO, ttgpDASO, personAdvanceDAO, fieldDefDAO, fieldValDAO);
+const personController = getPersonController(personDAO, userDAO, ttgpDASO, personAdvanceDAO, fieldDefDAO, fieldValDAO, imageUtils);
 
 router.post("", wrapHandlerAdvance(personController.createPerson));
 router.delete("", wrapHandlerAdvance(personController.deletePerson));

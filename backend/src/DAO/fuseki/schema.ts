@@ -16,6 +16,8 @@ import { FieldVal } from "../../model/FieldVal";
 import { TableSchema, TableSchemaSingleRow } from "./TableSchema";
 import { getDefaultThongTinGiaPhaValue, ThongTinGiaPha } from "../../model/ThongTinGiaPha";
 import Fuseki from "./Fuseki";
+import { ImageUtils } from "../../model/IDAO";
+import { normalizeToJpegBase64 } from "../../utils/ImageUtils";
 
 const userSchema = new TableSchema<User>({
     name: "user",
@@ -144,6 +146,76 @@ export const userDAO = userSchema.getDAO();
 export const ttgpDASO = ttgpSchema.getDASO();
 export const fieldDefDAO = fieldDefSchema.getDAO();
 export const fieldValDAO = fieldValSchema.getDAO();
+
+export const imageUtils = (() => {
+    type Image = {
+        id: string,
+        data: string
+    };
+    const imageDAO = new TableSchema<Image>({
+        name: "image",
+        fields: {
+            id: {
+                primaryKey: true,
+                type: "string"
+            },
+            data: "string"
+        }
+    });
+
+    const letters = "abcdefghijklmnopqrstuvwxyz0123456789".split("");
+    const setLetters = new Set(letters);
+    const extractId = (url: string) => {
+        if (!url.startsWith("/images/") || !url.endsWith(".jpeg")) {
+            return null;
+        }
+
+        const id = url.substring("/images/".length, url.lastIndexOf(".jpeg"));
+        if (id.split("").some(c => !setLetters.has(c))) {
+            return null;
+        }
+
+        return id;
+    };
+
+    const randomId = () => {
+        let result = '';
+        for (let i = 0; i < 32; i++) result += letters[Math.floor(Math.random()*letters.length)];
+        return result;
+    };
+
+    const imageUtils: ImageUtils = {
+        validateUrl(url) {
+            return !!extractId(url);
+        },
+        async getImageDataByUrl(url: string) {
+            const id = extractId(url);
+            if (!id) throw Error(`Invalid image url: ${url}`);
+
+            const image = await imageDAO.findByPk(id);
+            if (!image) return null;
+
+            return image.data;
+        },
+        async saveImage(data: string) {
+            const id = randomId();
+            await imageDAO.create({
+                id, data: await normalizeToJpegBase64(data)
+            });
+            return `/images/${id}.jpeg`;
+        },
+        async deleteImageByUrl(url: string) {
+            const id = extractId(url);
+            if (!id) return;
+
+            await imageDAO.destroy({ where: { id } });
+            
+            return;
+        }
+    };
+
+    return imageUtils;
+})()
 
 export const personAdvanceDAO: PersonAdvanceDAO = (() => {
     const isDevMode = process.env.NODE_ENV == "development";

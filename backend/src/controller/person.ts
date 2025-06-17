@@ -5,7 +5,7 @@ import { isStringPureInterger } from "../utils/ValidationUtils";
 import { CommonResponse, paginateAndSortItems, type PaginateParams, type ControllerHandlerResult as CHR, Controller, ControllerHandler, applyUserGuards, CanWriteGuard, keysModel, SafeOmit } from "./utils";
 import { Gender, type Person, PersonAdvanceDAO, RelationshipAnalysisResult, LifeState, genderDisplayText } from "../model/Person";
 import type { User } from "../model/User";
-import type { IDAO, IDASO } from "../model/IDAO";
+import type { IDAO, IDASO, ImageUtils } from "../model/IDAO";
 import { extractEvents, type Event } from "./event";
 import { ThongTinGiaPha } from "../model/ThongTinGiaPha";
 import { FieldDef } from "../model/FieldDef";
@@ -310,7 +310,8 @@ export default function getPersonController(
     ttgpDASO: IDASO<ThongTinGiaPha>,
     personAdvanceDAO: PersonAdvanceDAO,
     fieldDefDAO: IDAO<FieldDef>,
-    fieldValDAO: IDAO<FieldVal>
+    fieldValDAO: IDAO<FieldVal>,
+    imageUtils: ImageUtils
 ) {
     const getAllPeopleBaseInfo = applyUserGuards<
         {},
@@ -678,15 +679,28 @@ export default function getPersonController(
             }
         }
 
+        try {
+            var personAvatarUrl = data.person.avatarUrl
+                ? await imageUtils.saveImage(data.person.avatarUrl)
+                : null;
+        } catch {
+            return CommonResponse.BAD_REQUEST;
+        }
+
         // Validation end
         const newPerson: Person = {
-            ...data.person,
             id: uuid(),
             callname: data.person.callname.trim(),
             birthdate: data.person.birthdate ? shortenDateString(data.person.birthdate) : null,
             deathdate: data.person.deathdate ? shortenDateString(data.person.deathdate) : null,
             createdAt: nowDate(),
-            youngnessLevel: Math.round((new Date()).getTime())
+            youngnessLevel: Math.round((new Date()).getTime()),
+            gender: data.person.gender,
+            status: data.person.status,
+            spouseId: data.person.spouseId,
+            fatherId: data.person.fatherId,
+            motherId: data.person.motherId,
+            avatarUrl: personAvatarUrl
         };
         await personDAO.create(newPerson);
 
@@ -763,6 +777,7 @@ export default function getPersonController(
             personDAO.update({ fatherId: null }, { where: { fatherId: id } }),
             personDAO.update({ motherId: null }, { where: { motherId: id } }),
             personDAO.update({ spouseId: null }, { where: { spouseId: id } }),
+            person.avatarUrl ? imageUtils.deleteImageByUrl(person.avatarUrl) : Promise.resolve()
         ]);
 
         await personDAO.destroy({ where: { id } });
@@ -813,7 +828,19 @@ export default function getPersonController(
             return CommonResponse.BAD_REQUEST;
         }
 
+        if (data.avatarUrl) {
+            try {
+                data.avatarUrl = await imageUtils.saveImage(data.avatarUrl);
+            } catch {
+                return CommonResponse.BAD_REQUEST;
+            }
+        }
+
         // End validation
+        if (person.avatarUrl) {
+            await imageUtils.deleteImageByUrl(person.avatarUrl);
+        }
+
         await Promise.all(Object.entries(data).map(async ([_field, value]) => {
             const field = _field as keyof typeof data;
 
@@ -855,6 +882,8 @@ export default function getPersonController(
             }
             else if (field == "deathdate" && value) {
                 data.status = "DEAD";
+            } else if (field == "avatarUrl") {
+                
             }
         }));
 

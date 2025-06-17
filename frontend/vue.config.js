@@ -26,6 +26,11 @@ module.exports = defineConfig({
               changeOrigin: true,
               pathRewrite: { "^/api": "/api" },
             },
+            "/images": {
+              target: "http://localhost:" + process.env.QLGP_BACKEND_PORT,
+              changeOrigin: true,
+              pathRewrite: { "^/images": "/images" },
+            },
           },
         },
       }
