@@ -794,7 +794,7 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                         }
                     }
                 } else if (delta == 1) {
-                    const vaiBeIsMale = vaiBe.gender == "MALE";
+                    const vaiLonIsMale = vaiLon.gender == "MALE";
                     var parentVaiBeIsMale: boolean;
                     if (p1IsVaiTren) {
                         if ("connectingPathP2P4" in data) {
@@ -814,7 +814,7 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                     vaiTrenCallVaiDuoi = "Cháu";
                     if (parentVaiBeIsMale) {
                         if (parentVaiBeIsVaiLonHon) {
-                            if (vaiBeIsMale) {
+                            if (vaiLonIsMale) {
                                 vaiDuoiCallVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["EmTraiCuaBo"].wayOfCalling;
                                 vaiDuoiCallSpouseVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["VoCuaEmTraiCuaBo"].wayOfCalling;
                             } else {
@@ -822,7 +822,7 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                                 vaiDuoiCallSpouseVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["ChongCuaEmGaiCuaBo"].wayOfCalling;
                             }
                         } else {
-                            if (vaiBeIsMale) {
+                            if (vaiLonIsMale) {
                                 vaiDuoiCallVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["AnhTraiCuaBo"].wayOfCalling;
                                 vaiDuoiCallSpouseVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["VoCuaAnhTraiCuaBo"].wayOfCalling;
                             } else {
@@ -832,7 +832,7 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                         }
                     } else {
                         if (parentVaiBeIsVaiLonHon) {
-                            if (vaiBeIsMale) {
+                            if (vaiLonIsMale) {
                                 vaiDuoiCallVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["EmTraiCuaMe"].wayOfCalling;
                                 vaiDuoiCallSpouseVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["VoCuaEmTraiCuaMe"].wayOfCalling;
                             } else {
@@ -840,7 +840,7 @@ export const personAdvanceDAO: PersonAdvanceDAO = (() => {
                                 vaiDuoiCallSpouseVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["ChongCuaEmGaiCuaMe"].wayOfCalling;
                             }
                         } else {
-                            if (vaiBeIsMale) {
+                            if (vaiLonIsMale) {
                                 vaiDuoiCallVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["AnhTraiCuaMe"].wayOfCalling;
                                 vaiDuoiCallSpouseVaiTren = ALL_QUAN_HE_TRUC_TIEP_INFO["VoCuaAnhTraiCuaMe"].wayOfCalling;
                             } else {
